@@ -29,6 +29,7 @@ function initFirestore(): Firestore {
   }
 
   db = getFirestore();
+  db.settings({ ignoreUndefinedProperties: true });
   return db;
 }
 
