@@ -6,7 +6,8 @@ import Link from "next/link";
 import {
   Gem, ArrowLeft, Star, Activity, BrainCircuit, LineChart, 
   ChevronRight, CheckCircle2, AlertCircle, Loader2, Play,
-  FileText, X, Target, ShieldAlert, Zap, TrendingUp, Users, Languages
+  FileText, X, Target, ShieldAlert, Zap, TrendingUp, Users, Languages,
+  RefreshCw, Database, Cloud
 } from "lucide-react";
 import type { StockMetrics, FilterCriterion, ScreenerResponse, StrategyType } from "@/lib/types";
 import type { StockAnalysisReport } from "@/lib/analysis-engine";
@@ -38,6 +39,11 @@ export default function FunnelScreenerPage() {
   const [selectedInStep2, setSelectedInStep2] = useState<Set<string>>(new Set());
   
   const [watchlist, setWatchlist] = useState<Set<string>>(new Set());
+  
+  // Data source tracking
+  const [dataSource, setDataSource] = useState<"fmp" | "mock">("mock");
+  const [poolUpdatedAt, setPoolUpdatedAt] = useState<string | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
   
   // Language Selection
   const [lang, setLang] = useState<"en" | "zh">("zh");
@@ -71,14 +77,33 @@ export default function FunnelScreenerPage() {
         body: JSON.stringify({ strategy: strategyId, filters, limit: 50 }),
       });
       if (!res.ok) throw new Error(`API error: ${res.status}`);
-      const data: ScreenerResponse = await res.json();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const data: ScreenerResponse & { dataSource?: string; poolUpdatedAt?: string } = await res.json();
       setStocks(data.stocks);
+      if (data.dataSource) setDataSource(data.dataSource as "fmp" | "mock");
+      if (data.poolUpdatedAt) setPoolUpdatedAt(data.poolUpdatedAt);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to fetch data");
     } finally {
       setLoading(false);
     }
   }, [strategyId, preset]);
+
+  const refreshPool = async () => {
+    setRefreshing(true);
+    try {
+      const res = await fetch("/api/stock-pool", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ force: true }),
+      });
+      if (res.ok) {
+        // Re-run screener with fresh data
+        await fetchStocks();
+      }
+    } catch { /* ignore */ }
+    setRefreshing(false);
+  };
 
   useEffect(() => { fetchStocks(); }, [fetchStocks]);
 
@@ -203,6 +228,33 @@ export default function FunnelScreenerPage() {
               {/* STEP 1: QUANTITATIVE */}
               {currentStep === 1 && (
                 <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                  {/* Data source indicator */}
+                  <div className="flex items-center gap-3 mb-4 px-4 py-2.5 rounded-lg bg-slate-900/80 border border-slate-800 text-xs">
+                    {dataSource === "fmp" ? (
+                      <span className="flex items-center gap-1.5 text-emerald-400">
+                        <Cloud className="w-3.5 h-3.5" /> FMP 实时数据
+                      </span>
+                    ) : (
+                      <span className="flex items-center gap-1.5 text-amber-400">
+                        <Database className="w-3.5 h-3.5" /> 模拟数据
+                      </span>
+                    )}
+                    <span className="text-slate-600">|</span>
+                    <span className="text-slate-500">
+                      {poolUpdatedAt
+                        ? `更新于 ${new Date(poolUpdatedAt).toLocaleString("zh-CN", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}`
+                        : "未刷新"}
+                    </span>
+                    <button
+                      onClick={refreshPool}
+                      disabled={refreshing}
+                      className="ml-auto flex items-center gap-1.5 px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition-colors disabled:opacity-50"
+                    >
+                      <RefreshCw className={`w-3 h-3 ${refreshing ? "animate-spin" : ""}`} />
+                      {refreshing ? "刷新中..." : "刷新数据"}
+                    </button>
+                  </div>
+
                   <div className="flex justify-between items-center mb-6">
                     <div>
                       <h2 className="text-xl font-bold text-white mb-1">Quantitative Pool ({stocks.length} matches)</h2>

@@ -1,11 +1,16 @@
 // ============================================================
 // POST /api/screener — Execute a stock screening query
+//
+// Data priority:
+//   1. Firestore stock pool (persisted FMP data)
+//   2. Mock data fallback (if pool is empty / Firestore unavailable)
 // ============================================================
 
 import { NextRequest, NextResponse } from "next/server";
 import { ScreenerRequest } from "@/lib/types";
 import { getStrategyPreset } from "@/lib/strategies";
 import { executeScreener } from "@/lib/screener-engine";
+import { loadStockPool } from "@/lib/stock-pool-store";
 import { generateMockStocks } from "@/lib/mock-data";
 
 export async function POST(request: NextRequest) {
@@ -28,11 +33,22 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Always use our rich mock data pool for the screener phase.
-    // Fetching 50+ live FMP profiles sequentially (due to free tier limits) 
-    // takes too long and exhausts the 250/day quota instantly.
-    // We reserve the live FMP API calls + Gemini AI purely for the "Read Report" deep-dive phase.
-    const stocks = generateMockStocks();
+    // Try loading from persisted stock pool first
+    let stocks;
+    let dataSource: "fmp" | "mock" = "mock";
+
+    const pool = await loadStockPool();
+    if (pool && pool.stocks.length > 0) {
+      stocks = pool.stocks;
+      dataSource = pool.meta.source;
+      console.log(
+        `[screener] Using ${dataSource} pool: ${stocks.length} stocks (updated ${pool.meta.updatedAt})`
+      );
+    } else {
+      // Fallback to mock data
+      stocks = generateMockStocks();
+      console.log("[screener] Using mock data fallback");
+    }
 
     const screenerRequest: ScreenerRequest = {
       ...body,
@@ -40,7 +56,11 @@ export async function POST(request: NextRequest) {
     };
 
     const result = executeScreener(stocks, screenerRequest);
-    return NextResponse.json(result);
+    return NextResponse.json({
+      ...result,
+      dataSource,
+      poolUpdatedAt: pool?.meta.updatedAt ?? null,
+    });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";
     return NextResponse.json(
