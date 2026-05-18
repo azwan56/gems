@@ -2,22 +2,27 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Gem, ArrowLeft, StarOff, Trash2, Shield, Sword, Rocket, CircleDollarSign, RefreshCcw, AlertTriangle, HelpCircle, ChevronDown } from "lucide-react";
+import { Gem, ArrowLeft, StarOff, Trash2, Shield, Sword, Rocket, CircleDollarSign, RefreshCcw, AlertTriangle, HelpCircle, ChevronDown, Languages } from "lucide-react";
 import type { WatchlistItem } from "@/lib/types";
+import { useLanguage } from "@/lib/language-context";
 
-const ROLE_CONFIGS = {
-  anchor: { icon: Shield, color: "text-blue-400", bg: "bg-blue-500/10", border: "border-blue-500/20", label: "Anchor (Stability)", desc: "Low volatility, strong cash flow" },
-  striker: { icon: Sword, color: "text-emerald-400", bg: "bg-emerald-500/10", border: "border-emerald-500/20", label: "Striker (Core Growth)", desc: "High conviction, steady compounding" },
-  rocket: { icon: Rocket, color: "text-purple-400", bg: "bg-purple-500/10", border: "border-purple-500/20", label: "Rocket (High Beta)", desc: "High risk/reward, hyper-growth" },
-  core_dividend: { icon: CircleDollarSign, color: "text-amber-400", bg: "bg-amber-500/10", border: "border-amber-500/20", label: "Core Dividend", desc: "Value: Reliable yield" },
-  turnaround: { icon: RefreshCcw, color: "text-cyan-400", bg: "bg-cyan-500/10", border: "border-cyan-500/20", label: "Turnaround", desc: "Value: Cyclical reversion" },
-  special_situation: { icon: AlertTriangle, color: "text-pink-400", bg: "bg-pink-500/10", border: "border-pink-500/20", label: "Special Sit.", desc: "Value: Event-driven" },
-  unassigned: { icon: HelpCircle, color: "text-slate-400", bg: "bg-slate-800", border: "border-slate-700", label: "Unassigned", desc: "Needs allocation" }
-};
-
-type RoleKey = keyof typeof ROLE_CONFIGS;
+type RoleKey = "anchor" | "striker" | "rocket" | "core_dividend" | "turnaround" | "special_situation" | "unassigned";
 
 export default function WatchlistPage() {
+  const { lang, setLang, t } = useLanguage();
+
+  const getRoleConfigs = () => ({
+    anchor: { icon: Shield, color: "text-blue-400", bg: "bg-blue-500/10", border: "border-blue-500/20", label: t("Anchor (Stability)", "压舱石 (稳健)"), desc: t("Low volatility, strong cash flow", "低波动，强现金流") },
+    striker: { icon: Sword, color: "text-emerald-400", bg: "bg-emerald-500/10", border: "border-emerald-500/20", label: t("Striker (Core Growth)", "攻击手 (核心成长)"), desc: t("High conviction, steady compounding", "高信念，稳健复利") },
+    rocket: { icon: Rocket, color: "text-purple-400", bg: "bg-purple-500/10", border: "border-purple-500/20", label: t("Rocket (High Beta)", "火箭 (高Beta)"), desc: t("High risk/reward, hyper-growth", "高风险高回报，超高速成长") },
+    core_dividend: { icon: CircleDollarSign, color: "text-amber-400", bg: "bg-amber-500/10", border: "border-amber-500/20", label: t("Core Dividend", "核心收息"), desc: t("Value: Reliable yield", "价值：可靠收益率") },
+    turnaround: { icon: RefreshCcw, color: "text-cyan-400", bg: "bg-cyan-500/10", border: "border-cyan-500/20", label: t("Turnaround", "困境反转"), desc: t("Value: Cyclical reversion", "价值：周期均值回归") },
+    special_situation: { icon: AlertTriangle, color: "text-pink-400", bg: "bg-pink-500/10", border: "border-pink-500/20", label: t("Special Sit.", "特殊情况"), desc: t("Value: Event-driven", "价值：事件驱动") },
+    unassigned: { icon: HelpCircle, color: "text-slate-400", bg: "bg-slate-800", border: "border-slate-700", label: t("Unassigned", "未分配"), desc: t("Needs allocation", "需要分配角色") }
+  });
+
+  const ROLE_CONFIGS = getRoleConfigs();
+
   const [watchlist, setWatchlist] = useState<WatchlistItem[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -83,12 +88,12 @@ export default function WatchlistPage() {
       <div className="flex justify-between items-start">
         <div>
           <h3 className="text-xl font-bold text-white">{item.symbol}</h3>
-          <p className="text-xs text-slate-500 mt-1">Added {new Date(item.addedAt).toLocaleDateString()}</p>
+          <p className="text-xs text-slate-500 mt-1">{t("Added", "添加于")} {new Date(item.addedAt).toLocaleDateString()}</p>
         </div>
         <button
           onClick={() => removeItem(item.symbol)}
           className="p-1.5 rounded-lg text-slate-500 hover:text-red-400 hover:bg-red-500/10 transition-colors opacity-0 group-hover:opacity-100"
-          title="Remove from portfolio"
+          title={t("Remove from portfolio", "从投资组合中移除")}
         >
           <Trash2 className="w-4 h-4" />
         </button>
@@ -100,16 +105,16 @@ export default function WatchlistPage() {
           onChange={(e) => updateRole(item.symbol, e.target.value as RoleKey)}
           className="w-full appearance-none bg-slate-900 border border-slate-700 text-sm text-slate-300 rounded-lg px-3 py-2 pr-8 outline-none focus:border-blue-500 transition-colors"
         >
-          <option value="unassigned">-- Select Role --</option>
-          <optgroup label="Growth & Scale">
-            <option value="anchor">Anchor (Stability)</option>
-            <option value="striker">Striker (Core Growth)</option>
-            <option value="rocket">Rocket (High Beta)</option>
+          <option value="unassigned">{t("-- Select Role --", "-- 选择角色 --")}</option>
+          <optgroup label={t("Growth & Scale", "成长与扩张")}>
+            <option value="anchor">{t("Anchor (Stability)", "压舱石 (稳健)")}</option>
+            <option value="striker">{t("Striker (Core Growth)", "攻击手 (核心成长)")}</option>
+            <option value="rocket">{t("Rocket (High Beta)", "火箭 (高Beta)")}</option>
           </optgroup>
-          <optgroup label="Value & Income">
-            <option value="core_dividend">Core Dividend</option>
-            <option value="turnaround">Turnaround</option>
-            <option value="special_situation">Special Situation</option>
+          <optgroup label={t("Value & Income", "价值与收益")}>
+            <option value="core_dividend">{t("Core Dividend", "核心收息")}</option>
+            <option value="turnaround">{t("Turnaround", "困境反转")}</option>
+            <option value="special_situation">{t("Special Situation", "特殊情况")}</option>
           </optgroup>
         </select>
         <ChevronDown className="w-4 h-4 text-slate-500 absolute right-3 top-2.5 pointer-events-none" />
@@ -139,7 +144,7 @@ export default function WatchlistPage() {
         <div className="p-4 flex-1 space-y-3 min-h-[150px]">
           {items.length === 0 ? (
             <div className="h-full flex items-center justify-center text-sm text-slate-600 border-2 border-dashed border-slate-800 rounded-xl p-6 text-center">
-              No stocks assigned to this role
+              {t("No stocks assigned to this role", "尚未有股票分配至此角色")}
             </div>
           ) : (
             items.map(renderStockCard)
@@ -161,10 +166,20 @@ export default function WatchlistPage() {
               <span className="font-bold text-white">Gems</span>
             </Link>
             <div className="h-5 w-px bg-slate-700" />
-            <h1 className="text-sm font-semibold">Portfolio Dashboard</h1>
+            <h1 className="text-sm font-semibold">{t("Portfolio Dashboard", "投资组合面板")}</h1>
           </div>
-          <div className="text-sm text-slate-400">
-            Total Conviction Picks: <span className="text-white font-bold">{watchlist.length}</span> / 10
+          <div className="flex items-center gap-6">
+            <div className="text-sm text-slate-400">
+              {t("Total Conviction Picks:", "总计高信念优选：")} <span className="text-white font-bold">{watchlist.length}</span> / 10
+            </div>
+            <div className="h-5 w-px bg-slate-700" />
+            <button 
+              onClick={() => setLang(lang === "en" ? "zh" : "en")}
+              className="flex items-center gap-2 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-sm transition-colors border border-slate-700"
+            >
+              <Languages className="w-4 h-4 text-blue-400" />
+              {lang === "en" ? "中文" : "English"}
+            </button>
           </div>
         </div>
       </header>
@@ -179,15 +194,15 @@ export default function WatchlistPage() {
           ) : watchlist.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-32 text-center">
               <StarOff className="w-16 h-16 text-slate-700 mb-6" />
-              <h2 className="text-2xl font-bold text-slate-300 mb-3">Your Portfolio is Empty</h2>
+              <h2 className="text-2xl font-bold text-slate-300 mb-3">{t("Your Portfolio is Empty", "您的投资组合为空")}</h2>
               <p className="text-slate-500 mb-8 max-w-md">
-                Run a screening strategy to find high-conviction stocks and assign them to your portfolio formation.
+                {t("Run a screening strategy to find high-conviction stocks and assign them to your portfolio formation.", "运行选股策略以寻找高信念股票，并将其分配到您的投资组合阵型中。")}
               </p>
               <Link
                 href="/"
                 className="px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold transition-all hover:scale-105 shadow-lg shadow-blue-500/20"
               >
-                Browse Strategies
+                {t("Browse Strategies", "浏览策略")}
               </Link>
             </div>
           ) : (
@@ -197,7 +212,7 @@ export default function WatchlistPage() {
               {(grouped["unassigned"]?.length > 0) && (
                 <div className="mb-8">
                   <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
-                    <HelpCircle className="w-4 h-4" /> Needs Allocation ({grouped["unassigned"].length})
+                    <HelpCircle className="w-4 h-4" /> {t("Needs Allocation", "待分配")} ({grouped["unassigned"].length})
                   </h3>
                   <div className="grid grid-cols-4 gap-4">
                     {grouped["unassigned"].map(renderStockCard)}
@@ -207,7 +222,7 @@ export default function WatchlistPage() {
 
               {/* Growth Formation */}
               <div>
-                <h3 className="text-sm font-bold text-blue-400 uppercase tracking-widest mb-4">Growth & Scale Formation</h3>
+                <h3 className="text-sm font-bold text-blue-400 uppercase tracking-widest mb-4">{t("Growth & Scale Formation", "成长与扩张阵型")}</h3>
                 <div className="grid grid-cols-3 gap-6">
                   {growthRoles.map(renderColumn)}
                 </div>
@@ -217,7 +232,7 @@ export default function WatchlistPage() {
 
               {/* Value Formation */}
               <div>
-                <h3 className="text-sm font-bold text-amber-400 uppercase tracking-widest mb-4">Value & Income Formation</h3>
+                <h3 className="text-sm font-bold text-amber-400 uppercase tracking-widest mb-4">{t("Value & Income Formation", "价值与收益阵型")}</h3>
                 <div className="grid grid-cols-3 gap-6">
                   {valueRoles.map(renderColumn)}
                 </div>

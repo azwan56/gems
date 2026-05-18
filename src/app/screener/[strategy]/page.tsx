@@ -12,6 +12,7 @@ import {
 import type { StockMetrics, FilterCriterion, ScreenerResponse, StrategyType } from "@/lib/types";
 import type { StockAnalysisReport } from "@/lib/analysis-engine";
 import { STRATEGY_PRESETS } from "@/lib/strategies";
+import { useLanguage } from "@/lib/language-context";
 
 function formatMarketCap(val: number): string {
   if (val >= 1e12) return `$${(val / 1e12).toFixed(2)}T`;
@@ -23,12 +24,12 @@ function formatNum(val: number | null, suffix = ""): string {
   return val === null || val === undefined ? "—" : `${val.toFixed(1)}${suffix}`;
 }
 
-
-
 export default function FunnelScreenerPage() {
   const params = useParams();
   const strategyId = params.strategy as StrategyType;
   const preset = STRATEGY_PRESETS[strategyId];
+
+  const { lang, setLang, t } = useLanguage();
 
   const [stocks, setStocks] = useState<StockMetrics[]>([]);
   const [loading, setLoading] = useState(true);
@@ -45,9 +46,6 @@ export default function FunnelScreenerPage() {
   const [dataSource, setDataSource] = useState<"fmp" | "mock">("mock");
   const [poolUpdatedAt, setPoolUpdatedAt] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
-  
-  // Language Selection
-  const [lang, setLang] = useState<"en" | "zh">("zh");
 
   // Slide-out Analysis Panel State
   const [analyzingStock, setAnalyzingStock] = useState<StockMetrics | null>(null);
@@ -146,24 +144,24 @@ export default function FunnelScreenerPage() {
 
   const step1Columns = useMemo(() => {
     if (isValue) return [
-      { key: "peRatio", label: "P/E", suffix: "x" },
-      { key: "pbRatio", label: "P/B", suffix: "x" },
-      { key: "freeCashFlowYield", label: "FCF Yield", suffix: "%" },
-      { key: "dividendYield", label: "Div Yield", suffix: "%" },
+      { key: "peRatio", label: t("P/E", "市盈率 (P/E)"), suffix: "x" },
+      { key: "pbRatio", label: t("P/B", "市净率 (P/B)"), suffix: "x" },
+      { key: "freeCashFlowYield", label: t("FCF Yield", "自由现金流收益率"), suffix: "%" },
+      { key: "dividendYield", label: t("Div Yield", "股息率"), suffix: "%" },
     ];
     if (isLarge) return [
-      { key: "revenueGrowthYoY", label: "Rev Growth", suffix: "%" },
-      { key: "epsGrowthYoY", label: "EPS Growth", suffix: "%" },
-      { key: "freeCashFlowYield", label: "FCF Yield", suffix: "%" },
-      { key: "roe", label: "ROE", suffix: "%" },
+      { key: "revenueGrowthYoY", label: t("Rev Growth", "营收增长"), suffix: "%" },
+      { key: "epsGrowthYoY", label: t("EPS Growth", "EPS增长"), suffix: "%" },
+      { key: "freeCashFlowYield", label: t("FCF Yield", "自由现金流收益率"), suffix: "%" },
+      { key: "roe", label: t("ROE", "净资产收益率"), suffix: "%" },
     ];
     return [
-      { key: "revenueGrowthYoY", label: "Rev Growth", suffix: "%" },
-      { key: "epsGrowthYoY", label: "EPS Growth", suffix: "%" },
-      { key: "pegRatio", label: "PEG", suffix: "x" },
-      { key: "priceVs50SMA", label: "vs 50SMA", suffix: "%" },
+      { key: "revenueGrowthYoY", label: t("Rev Growth", "营收增长"), suffix: "%" },
+      { key: "epsGrowthYoY", label: t("EPS Growth", "EPS增长"), suffix: "%" },
+      { key: "pegRatio", label: t("PEG", "PEG比率"), suffix: "x" },
+      { key: "priceVs50SMA", label: t("vs 50SMA", "相对50日均线"), suffix: "%" },
     ];
-  }, [isValue, isLarge]);
+  }, [isValue, isLarge, t]);
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-950 text-slate-200">
@@ -177,8 +175,12 @@ export default function FunnelScreenerPage() {
           </Link>
           <div className="h-5 w-px bg-slate-700" />
           <div className="flex flex-col">
-            <h1 className="text-sm font-bold text-white">{preset.name} Funnel</h1>
-            <p className="text-xs text-slate-500">{preset.nameZh} 选股漏斗</p>
+            <h1 className="text-sm font-bold text-white">
+              {lang === "en" ? `${preset.name} Funnel` : `${preset.nameZh} 选股漏斗`}
+            </h1>
+            <p className="text-xs text-slate-500">
+              {lang === "en" ? preset.nameZh : preset.name}
+            </p>
           </div>
           <div className="ml-auto flex items-center gap-3">
             <button 
@@ -186,7 +188,7 @@ export default function FunnelScreenerPage() {
               className="flex items-center gap-2 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-sm transition-colors border border-slate-700"
             >
               <Languages className="w-4 h-4 text-blue-400" />
-              {lang === "en" ? "English" : "简体中文"}
+              {lang === "en" ? "中文" : "English"}
             </button>
           </div>
         </div>
@@ -196,9 +198,9 @@ export default function FunnelScreenerPage() {
       <div className="bg-slate-900 border-b border-slate-800">
         <div className="max-w-[1400px] mx-auto px-6 py-4 flex items-center justify-between">
           {[
-            { step: 1, icon: Activity, title: "Quantitative", sub: isValue ? "Valuation & FCF" : "Growth & Scale" },
-            { step: 2, icon: BrainCircuit, title: "Qualitative", sub: isValue ? "Moat & Catalyst" : "TAM & Dominance" },
-            { step: 3, icon: LineChart, title: "Technical & Final", sub: "Timing & Analysis" },
+            { step: 1, icon: Activity, title: t("Step 1: Quantitative", "第一步：定量筛选"), sub: isValue ? t("Valuation & FCF", "估值与自由现金流") : t("Growth & Scale", "成长与规模") },
+            { step: 2, icon: BrainCircuit, title: t("Step 2: Qualitative", "第二步：定性深研"), sub: isValue ? t("Moat & Catalyst", "护城河与催化剂") : t("TAM & Dominance", "潜在市场与统治力") },
+            { step: 3, icon: LineChart, title: t("Step 3: Technical & Final", "第三步：技术与最终决策"), sub: t("Timing & Analysis", "择时与分析") },
           ].map((s, i) => (
             <div key={s.step} className="flex items-center flex-1">
               <div className={`flex items-center gap-3 ${currentStep === s.step ? "opacity-100" : currentStep > s.step ? "opacity-60" : "opacity-30 grayscale"}`}>
@@ -210,7 +212,7 @@ export default function FunnelScreenerPage() {
                   <s.icon className="w-5 h-5" />
                 </div>
                 <div>
-                  <p className={`text-sm font-bold ${currentStep === s.step ? "text-white" : ""}`}>Step {s.step}: {s.title}</p>
+                  <p className={`text-sm font-bold ${currentStep === s.step ? "text-white" : ""}`}>{s.title}</p>
                   <p className="text-xs text-slate-500">{s.sub}</p>
                 </div>
               </div>
@@ -236,18 +238,18 @@ export default function FunnelScreenerPage() {
                   <div className="flex items-center gap-3 mb-4 px-4 py-2.5 rounded-lg bg-slate-900/80 border border-slate-800 text-xs">
                     {dataSource === "fmp" ? (
                       <span className="flex items-center gap-1.5 text-emerald-400">
-                        <Cloud className="w-3.5 h-3.5" /> FMP 实时数据
+                        <Cloud className="w-3.5 h-3.5" /> {t("FMP Real-time Data", "FMP 实时数据")}
                       </span>
                     ) : (
                       <span className="flex items-center gap-1.5 text-amber-400">
-                        <Database className="w-3.5 h-3.5" /> 模拟数据
+                        <Database className="w-3.5 h-3.5" /> {t("Mock Data", "模拟数据")}
                       </span>
                     )}
                     <span className="text-slate-600">|</span>
                     <span className="text-slate-500">
                       {poolUpdatedAt
-                        ? `更新于 ${new Date(poolUpdatedAt).toLocaleString("zh-CN", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}`
-                        : "未刷新"}
+                        ? `${t("Updated at", "更新于")} ${new Date(poolUpdatedAt).toLocaleString(lang === "en" ? "en-US" : "zh-CN", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}`
+                        : t("Not updated", "未刷新")}
                     </span>
                     <button
                       onClick={refreshPool}
@@ -255,31 +257,31 @@ export default function FunnelScreenerPage() {
                       className="ml-auto flex items-center gap-1.5 px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition-colors disabled:opacity-50"
                     >
                       <RefreshCw className={`w-3 h-3 ${refreshing ? "animate-spin" : ""}`} />
-                      {refreshing ? "刷新中..." : "刷新数据"}
+                      {refreshing ? t("Refreshing...", "刷新中...") : t("Refresh Data", "刷新数据")}
                     </button>
                   </div>
 
                   <div className="flex justify-between items-center mb-6">
                     <div>
-                      <h2 className="text-xl font-bold text-white mb-1">Quantitative Pool ({stocks.length} matches)</h2>
-                      <p className="text-sm text-slate-400">Select candidates that pass the hard financial metrics to advance to deep dive.</p>
+                      <h2 className="text-xl font-bold text-white mb-1">{t("Quantitative Pool", "定量股票池")} ({stocks.length} {t("matches", "只符合条件")})</h2>
+                      <p className="text-sm text-slate-400">{t("Select candidates that pass the hard financial metrics to advance to deep dive.", "选择通过硬性财务指标筛选的候选股票进入定性深研环节。")}</p>
                     </div>
                     <button
                       disabled={selectedInStep1.size === 0}
                       onClick={() => setCurrentStep(2)}
                       className="px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:bg-slate-800 disabled:text-slate-500 text-white rounded-lg font-semibold flex items-center gap-2 transition-colors"
                     >
-                      Run Deep Dive ({selectedInStep1.size}) <ChevronRight className="w-4 h-4" />
+                      {t("Run Deep Dive", "进行定性深研")} ({selectedInStep1.size}) <ChevronRight className="w-4 h-4" />
                     </button>
                   </div>
                   <div className="border border-slate-800 rounded-xl overflow-hidden bg-slate-900/50">
                     <table className="w-full text-sm text-left">
                       <thead className="bg-slate-800/80 text-slate-400">
                         <tr>
-                          <th className="p-4 w-12 text-center">Select</th>
-                          <th className="p-4 font-semibold">Symbol</th>
-                          <th className="p-4 font-semibold">Company</th>
-                          <th className="p-4 font-semibold">Market Cap</th>
+                          <th className="p-4 w-12 text-center">{t("Select", "选择")}</th>
+                          <th className="p-4 font-semibold">{t("Symbol", "代码")}</th>
+                          <th className="p-4 font-semibold">{t("Company", "公司")}</th>
+                          <th className="p-4 font-semibold">{t("Market Cap", "市值")}</th>
                           {step1Columns.map(c => <th key={c.key} className="p-4 font-semibold">{c.label}</th>)}
                         </tr>
                       </thead>
@@ -315,17 +317,17 @@ export default function FunnelScreenerPage() {
                 <div className="animate-in fade-in slide-in-from-right-8 duration-500">
                   <div className="flex justify-between items-center mb-6">
                     <div>
-                      <h2 className="text-xl font-bold text-white mb-1">Qualitative Deep Dive ({selectedInStep1.size} stocks)</h2>
-                      <p className="text-sm text-slate-400">Evaluating Moat, TAM, and Pricing Power via AI constraints.</p>
+                      <h2 className="text-xl font-bold text-white mb-1">{t("Qualitative Deep Dive", "定性深度研究")} ({selectedInStep1.size} {t("stocks", "只股票")})</h2>
+                      <p className="text-sm text-slate-400">{t("Evaluating Moat, TAM, and Pricing Power via AI constraints.", "通过 AI 约束条件评估护城河、潜在市场规模（TAM）和定价权。")}</p>
                     </div>
                     <div className="flex gap-3">
-                      <button onClick={() => setCurrentStep(1)} className="px-4 py-2 border border-slate-700 text-slate-300 hover:bg-slate-800 rounded-lg font-semibold">Back</button>
+                      <button onClick={() => setCurrentStep(1)} className="px-4 py-2 border border-slate-700 text-slate-300 hover:bg-slate-800 rounded-lg font-semibold">{t("Back", "上一步")}</button>
                       <button
                         disabled={selectedInStep2.size === 0}
                         onClick={() => setCurrentStep(3)}
                         className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-800 disabled:text-slate-500 text-white rounded-lg font-semibold flex items-center gap-2 transition-colors"
                       >
-                        Technical Check ({selectedInStep2.size}) <ChevronRight className="w-4 h-4" />
+                        {t("Technical Check", "技术面校验")} ({selectedInStep2.size}) <ChevronRight className="w-4 h-4" />
                       </button>
                     </div>
                   </div>
@@ -345,13 +347,13 @@ export default function FunnelScreenerPage() {
                               </h3>
                               <p className="text-xs text-slate-400 line-clamp-1">{s.companyName}</p>
                             </div>
-                            <span className="text-xs font-mono bg-slate-800 px-2 py-1 rounded text-slate-300">{s.sector}</span>
+                            <span className="text-xs font-mono bg-slate-800 px-2 py-1 rounded text-slate-300">{t(s.sector, s.sector)}</span>
                           </div>
                           
                           <div className="space-y-4 mb-4">
                             <div>
                               <div className="flex justify-between text-xs mb-1">
-                                <span className="text-slate-400">Moat / Monopoly Power</span>
+                                <span className="text-slate-400">{t("Moat / Monopoly Power", "护城河 / 垄断能力")}</span>
                                 <span className="font-mono text-indigo-400">{moatScore}/10</span>
                               </div>
                               <div className="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden">
@@ -360,7 +362,7 @@ export default function FunnelScreenerPage() {
                             </div>
                             <div>
                               <div className="flex justify-between text-xs mb-1">
-                                <span className="text-slate-400">TAM Expansion</span>
+                                <span className="text-slate-400">{t("TAM Expansion", "潜在市场扩张")}</span>
                                 <span className="font-mono text-indigo-400">{tamScore}/10</span>
                               </div>
                               <div className="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden">
@@ -370,10 +372,10 @@ export default function FunnelScreenerPage() {
                           </div>
                           
                           <div className="text-xs text-slate-500 bg-slate-900 p-3 rounded-lg border border-slate-800">
-                            <span className="text-slate-300 font-semibold mb-1 block flex items-center gap-1"><BrainCircuit className="w-3 h-3"/> AI Summary:</span>
+                            <span className="text-slate-300 font-semibold mb-1 block flex items-center gap-1"><BrainCircuit className="w-3 h-3"/> {t("AI Summary:", "AI 摘要：")}</span>
                             {isValue 
-                              ? "Deep discount to intrinsic value. Management executing buybacks. Turnaround catalyst expected in Q3."
-                              : "High switching costs. Rapid AI integration driving ARPU expansion. Dominant market share."}
+                              ? t("Deep discount to intrinsic value. Management executing buybacks. Turnaround catalyst expected in Q3.", "深度折价，管理层正在执行股票回购，预计第三季度出现困境反转催化剂。")
+                              : t("High switching costs. Rapid AI integration driving ARPU expansion. Dominant market share.", "极高的转换成本，AI的快速整合推动单用户平均收入（ARPU）扩张，占据市场主导地位。")}
                           </div>
                         </div>
                       );
@@ -387,10 +389,10 @@ export default function FunnelScreenerPage() {
                 <div className="animate-in fade-in slide-in-from-right-8 duration-500">
                   <div className="flex justify-between items-center mb-6">
                     <div>
-                      <h2 className="text-xl font-bold text-white mb-1">Final Selection & Deep Analysis</h2>
-                      <p className="text-sm text-slate-400">Review comprehensive AI analysis and assign structural roles to your portfolio.</p>
+                      <h2 className="text-xl font-bold text-white mb-1">{t("Final Selection & Deep Analysis", "最终选择与深度分析")}</h2>
+                      <p className="text-sm text-slate-400">{t("Review comprehensive AI analysis and assign structural roles to your portfolio.", "审阅全面的 AI 分析报告，并为其分配投资组合中的结构性角色。")}</p>
                     </div>
-                    <button onClick={() => setCurrentStep(2)} className="px-4 py-2 border border-slate-700 text-slate-300 hover:bg-slate-800 rounded-lg font-semibold">Back to Qual</button>
+                    <button onClick={() => setCurrentStep(2)} className="px-4 py-2 border border-slate-700 text-slate-300 hover:bg-slate-800 rounded-lg font-semibold">{t("Back to Qual", "返回定性研究")}</button>
                   </div>
 
                   <div className="space-y-4">
@@ -406,7 +408,7 @@ export default function FunnelScreenerPage() {
                               <h3 className="text-lg font-bold text-white flex items-center gap-2">
                                 {s.symbol}
                                 <span className={`text-[10px] px-2 py-0.5 rounded-full border ${isUp ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : 'bg-red-500/10 border-red-500/20 text-red-400'}`}>
-                                  {isUp ? 'Bull Trend' : 'Bear Trend'}
+                                  {isUp ? t('Bull Trend', '多头趋势') : t('Bear Trend', '空头趋势')}
                                 </span>
                               </h3>
                               <p className="text-xs text-slate-400">{s.companyName}</p>
@@ -418,7 +420,7 @@ export default function FunnelScreenerPage() {
                               onClick={() => openAnalysis(s)}
                               className="px-3 py-1.5 rounded bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 border border-blue-500/20 text-xs font-semibold flex items-center gap-1.5 transition-colors"
                             >
-                              <FileText className="w-3.5 h-3.5" /> Read Report
+                              <FileText className="w-3.5 h-3.5" /> {t("Read Report", "查看报告")}
                             </button>
                           </div>
 
@@ -428,18 +430,18 @@ export default function FunnelScreenerPage() {
                               value={selectedRoles[s.symbol] || "unassigned"}
                               onChange={(e) => setSelectedRoles(prev => ({ ...prev, [s.symbol]: e.target.value }))}
                             >
-                              <option value="unassigned">-- Select Role --</option>
+                              <option value="unassigned">{t("-- Select Role --", "-- 选择角色 --")}</option>
                               {isValue ? (
                                 <>
-                                  <option value="core_dividend">💰 Core Dividend</option>
-                                  <option value="turnaround">🔄 Turnaround Play</option>
-                                  <option value="special_situation">✂️ Special Situation</option>
+                                  <option value="core_dividend">{t("💰 Core Dividend", "💰 核心收息")}</option>
+                                  <option value="turnaround">{t("🔄 Turnaround Play", "🔄 困境反转")}</option>
+                                  <option value="special_situation">{t("✂️ Special Situation", "✂️ 特殊情况")}</option>
                                 </>
                               ) : (
                                 <>
-                                  <option value="anchor">🛡️ Anchor (Stability)</option>
-                                  <option value="striker">⚔️ Striker (Core Growth)</option>
-                                  <option value="rocket">🚀 Rocket (High Beta)</option>
+                                  <option value="anchor">{t("🛡️ Anchor (Stability)", "🛡️ 压舱石 (稳健)")}</option>
+                                  <option value="striker">{t("⚔️ Striker (Core Growth)", "⚔️ 攻击手 (核心成长)")}</option>
+                                  <option value="rocket">{t("🚀 Rocket (High Beta)", "🚀 火箭 (高Beta)")}</option>
                                 </>
                               )}
                             </select>
@@ -453,7 +455,7 @@ export default function FunnelScreenerPage() {
                                   : "bg-white text-black hover:bg-slate-200"
                               }`}
                             >
-                              {saved ? <><CheckCircle2 className="w-4 h-4"/> Added</> : <><Star className="w-4 h-4"/> Add</>}
+                              {saved ? <><CheckCircle2 className="w-4 h-4"/> {t("Added", "已添加")}</> : <><Star className="w-4 h-4"/> {t("Add", "添加")}</>}
                             </button>
                           </div>
                         </div>
@@ -464,7 +466,7 @@ export default function FunnelScreenerPage() {
                   {watchlist.size > 0 && (
                     <div className="mt-8 flex justify-center">
                       <Link href="/watchlist" className="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white rounded-xl font-bold shadow-lg shadow-purple-500/20 transition-all hover:scale-105 flex items-center gap-2">
-                        View Portfolio Dashboard <ChevronRight className="w-5 h-5" />
+                        {t("View Portfolio Dashboard", "查看投资组合面板")} <ChevronRight className="w-5 h-5" />
                       </Link>
                     </div>
                   )}
@@ -499,7 +501,7 @@ export default function FunnelScreenerPage() {
               {analysisLoading ? (
                 <div className="flex flex-col items-center justify-center py-16">
                   <Loader2 className="w-8 h-8 text-blue-400 animate-spin mb-4" />
-                  <p className="text-slate-400 text-sm">Generating investment analysis...</p>
+                  <p className="text-slate-400 text-sm">{t("Generating investment analysis...", "正在生成投资分析报告...")}</p>
                 </div>
               ) : analysisReport ? (
                 <>
@@ -508,7 +510,7 @@ export default function FunnelScreenerPage() {
                     <div className="bg-gradient-to-br from-blue-900/30 to-indigo-900/30 border border-blue-500/20 rounded-xl p-5">
                       <div className="flex items-center gap-2 text-blue-400 mb-1">
                         <Target className="w-4 h-4" />
-                        <span className="text-xs font-bold uppercase tracking-wider">Price Target</span>
+                        <span className="text-xs font-bold uppercase tracking-wider">{t("Price Target", "目标价")}</span>
                       </div>
                       <div className="flex items-baseline gap-3">
                         <span className="text-3xl font-bold text-white">{analysisReport.analyst.targetPrice}</span>
@@ -518,13 +520,13 @@ export default function FunnelScreenerPage() {
                     <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-5">
                       <div className="flex items-center gap-2 text-slate-400 mb-1">
                         <Users className="w-4 h-4" />
-                        <span className="text-xs font-bold uppercase tracking-wider">Consensus</span>
+                        <span className="text-xs font-bold uppercase tracking-wider">{t("Consensus", "市场共识")}</span>
                       </div>
-                      <div className="text-xl font-bold text-emerald-400 mb-1">{analysisReport.analyst.consensus}</div>
+                      <div className="text-xl font-bold text-emerald-400 mb-1">{t(analysisReport.analyst.consensus, analysisReport.analyst.consensus)}</div>
                       <div className="text-xs text-slate-500 flex gap-2">
-                        <span>Buy: {analysisReport.analyst.breakdown.buy}</span>
-                        <span>Hold: {analysisReport.analyst.breakdown.hold}</span>
-                        <span>Sell: {analysisReport.analyst.breakdown.sell}</span>
+                        <span>{t("Buy", "买入")}: {analysisReport.analyst.breakdown.buy}</span>
+                        <span>{t("Hold", "持有")}: {analysisReport.analyst.breakdown.hold}</span>
+                        <span>{t("Sell", "卖出")}: {analysisReport.analyst.breakdown.sell}</span>
                       </div>
                     </div>
                   </div>
@@ -532,7 +534,7 @@ export default function FunnelScreenerPage() {
                   {/* Overview */}
                   <section>
                     <h3 className="text-sm font-bold text-slate-300 uppercase tracking-widest mb-3 flex items-center gap-2">
-                      <FileText className="w-4 h-4 text-blue-400" /> Company Overview
+                      <FileText className="w-4 h-4 text-blue-400" /> {t("Company Overview", "公司概况")}
                     </h3>
                     <p className="text-slate-400 text-sm leading-relaxed">{analysisReport.overview}</p>
                   </section>
@@ -540,7 +542,7 @@ export default function FunnelScreenerPage() {
                   {/* Fundamentals */}
                   <section>
                     <h3 className="text-sm font-bold text-slate-300 uppercase tracking-widest mb-3 flex items-center gap-2">
-                      <TrendingUp className="w-4 h-4 text-emerald-400" /> Fundamentals
+                      <TrendingUp className="w-4 h-4 text-emerald-400" /> {t("Fundamentals", "基本面")}
                     </h3>
                     <p className="text-slate-400 text-sm leading-relaxed">{analysisReport.fundamentals}</p>
                   </section>
@@ -548,7 +550,7 @@ export default function FunnelScreenerPage() {
                   {/* Products & Services */}
                   <section>
                     <h3 className="text-sm font-bold text-slate-300 uppercase tracking-widest mb-3 flex items-center gap-2">
-                      <Activity className="w-4 h-4 text-purple-400" /> Products & Services
+                      <Activity className="w-4 h-4 text-purple-400" /> {t("Products & Services", "产品与服务")}
                     </h3>
                     <p className="text-slate-400 text-sm leading-relaxed">{analysisReport.products}</p>
                   </section>
@@ -557,7 +559,7 @@ export default function FunnelScreenerPage() {
                     {/* Rationale */}
                     <section className="bg-emerald-500/5 border border-emerald-500/10 rounded-xl p-5">
                       <h3 className="text-sm font-bold text-emerald-400 uppercase tracking-widest mb-3 flex items-center gap-2">
-                        <Zap className="w-4 h-4" /> Why We Like It
+                        <Zap className="w-4 h-4" /> {t("Why We Like It", "看多理由")}
                       </h3>
                       <ul className="space-y-2 text-sm text-slate-400">
                         {analysisReport.rationale.map((line, i) => (
@@ -572,7 +574,7 @@ export default function FunnelScreenerPage() {
                     {/* Risks */}
                     <section className="bg-red-500/5 border border-red-500/10 rounded-xl p-5">
                       <h3 className="text-sm font-bold text-red-400 uppercase tracking-widest mb-3 flex items-center gap-2">
-                        <ShieldAlert className="w-4 h-4" /> Key Risks
+                        <ShieldAlert className="w-4 h-4" /> {t("Key Risks", "主要风险")}
                       </h3>
                       <ul className="space-y-2 text-sm text-slate-400">
                         {analysisReport.risks.map((line, i) => (
@@ -586,7 +588,7 @@ export default function FunnelScreenerPage() {
                   </div>
                 </>
               ) : (
-                <div className="text-center py-16 text-slate-500">Failed to load analysis.</div>
+                <div className="text-center py-16 text-slate-500">{t("Failed to load analysis.", "分析报告加载失败。")}</div>
               )}
             </div>
           </div>

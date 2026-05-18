@@ -1,7 +1,8 @@
 "use client";
 
-import { ShieldCheck, TrendingUp, Activity, Gem, Rocket } from "lucide-react";
+import { ShieldCheck, TrendingUp, Activity, Gem, Rocket, Languages } from "lucide-react";
 import Link from "next/link";
+import { useLanguage } from "@/lib/language-context";
 
 const strategies = [
   {
@@ -49,6 +50,8 @@ const strategies = [
 ];
 
 export default function Home() {
+  const { lang, setLang, t } = useLanguage();
+
   return (
     <main className="min-h-screen flex flex-col">
       {/* Header */}
@@ -57,12 +60,22 @@ export default function Home() {
           <div className="flex items-center gap-2">
             <Gem className="w-6 h-6 text-blue-400" />
             <span className="text-xl font-bold tracking-tight">Gems</span>
-            <span className="text-xs text-slate-500 ml-2 hidden sm:inline">US Stock Screener</span>
+            <span className="text-xs text-slate-500 ml-2 hidden sm:inline">
+              {t("US Stock Screener", "美股量化筛选器")}
+            </span>
           </div>
           <nav className="flex items-center gap-4">
             <Link href="/watchlist" className="text-sm text-slate-400 hover:text-white transition-colors">
-              Watchlist
+              {t("Watchlist", "自选股")}
             </Link>
+            {/* Language Toggle */}
+            <button
+              onClick={() => setLang(lang === "en" ? "zh" : "en")}
+              className="flex items-center gap-2 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-sm transition-all border border-slate-700 hover:border-slate-600"
+            >
+              <Languages className="w-4 h-4 text-blue-400" />
+              <span className="font-medium">{lang === "en" ? "中文" : "EN"}</span>
+            </button>
           </nav>
         </div>
       </header>
@@ -72,20 +85,36 @@ export default function Home() {
         <div className="max-w-[1400px] w-full flex flex-col items-center text-center mb-16">
           <div className="inline-flex items-center justify-center px-4 py-1.5 mb-8 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400">
             <Activity className="w-3.5 h-3.5 mr-2" />
-            <span className="text-xs font-semibold tracking-widest uppercase">Quantitative Screener</span>
+            <span className="text-xs font-semibold tracking-widest uppercase">
+              {t("Quantitative Screener", "量化选股系统")}
+            </span>
           </div>
 
           <h1 className="text-5xl md:text-7xl font-bold tracking-tight mb-6 leading-[1.1]">
-            Find your next{" "}
-            <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-400">
-              alpha
-            </span>
-            .
+            {lang === "en" ? (
+              <>
+                Find your next{" "}
+                <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-400">
+                  alpha
+                </span>
+                .
+              </>
+            ) : (
+              <>
+                发现下一个{" "}
+                <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-400">
+                  Alpha
+                </span>
+                。
+              </>
+            )}
           </h1>
 
           <p className="text-lg text-slate-400 max-w-2xl mb-12 leading-relaxed">
-            Professional-grade stock screening powered by quantitative analysis.
-            Choose a strategy below to start filtering US equities.
+            {t(
+              "Professional-grade stock screening powered by quantitative analysis. Choose a strategy below to start filtering US equities.",
+              "专业级量化分析驱动的股票筛选平台。选择以下策略，开始筛选美股标的。"
+            )}
           </p>
         </div>
 
@@ -93,7 +122,7 @@ export default function Home() {
         <div className="grid md:grid-cols-3 gap-6 w-full max-w-[1400px]">
           {strategies.map((strategy) => {
             const Icon = strategy.icon;
-            const colorClass = 
+            const colorClass =
               strategy.color === "blue" ? "text-blue-400 border-blue-500 bg-blue-500" :
               strategy.color === "indigo" ? "text-indigo-400 border-indigo-500 bg-indigo-500" :
               "text-purple-400 border-purple-500 bg-purple-500";
@@ -115,14 +144,18 @@ export default function Home() {
                     <Icon className="w-6 h-6" />
                   </div>
                   <div>
-                    <h2 className="text-xl font-bold">{strategy.name}</h2>
-                    <p className="text-sm text-slate-500">{strategy.nameZh}</p>
+                    <h2 className="text-xl font-bold">
+                      {lang === "en" ? strategy.name : strategy.nameZh}
+                    </h2>
+                    <p className="text-sm text-slate-500">
+                      {lang === "en" ? strategy.nameZh : strategy.name}
+                    </p>
                   </div>
                 </div>
 
                 {/* Description */}
                 <p className="text-sm text-slate-400 mb-6 leading-relaxed relative z-10 flex-1">
-                  {strategy.descriptionZh}
+                  {lang === "en" ? strategy.description : strategy.descriptionZh}
                 </p>
 
                 {/* Metrics */}
@@ -142,7 +175,7 @@ export default function Home() {
 
                 {/* CTA */}
                 <div className={`mt-auto text-sm font-semibold flex items-center gap-2 relative z-10 ${colorClass.split(" ")[0]} group-hover:gap-3 transition-all`}>
-                  Start Screening
+                  {t("Start Screening", "开始筛选")}
                   <span className="transition-transform group-hover:translate-x-1">→</span>
                 </div>
               </Link>
