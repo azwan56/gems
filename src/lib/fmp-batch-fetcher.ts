@@ -12,6 +12,7 @@
 
 import { StockMetrics } from "./types";
 import { getUniverseSymbols } from "./index-constituents";
+import { getSectorInfo } from "./sector-map";
 import {
   FmpRatios,
   FmpGrowth,
@@ -152,12 +153,14 @@ export async function fetchFullUniverse(): Promise<FetchResult> {
     const quote = quoteMap.get(upper);
     if (!quote) continue;
 
+    const { sector, industry } = getSectorInfo(upper);
+
     const screener: FmpScreenerResult = {
       symbol: quote.symbol || symbol,
       companyName: quote.name || symbol,
       marketCap: quote.marketCap || 0,
-      sector: "Unknown",
-      industry: "Unknown",
+      sector,
+      industry,
       price: quote.price || 0,
       volume: quote.volume || 0,
       exchangeShortName: quote.exchange || "US",
