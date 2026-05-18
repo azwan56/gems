@@ -1,23 +1,13 @@
 // ============================================================
-// FMP Batch Fetcher — optimized universe fetch for free tier
+// FMP Universe Fetcher — for free tier (250 calls/day)
 //
-// Free tier constraints:
-//   - 250 API calls/day
-//   - NO comma-separated batch queries (402 error)
-//   - Each endpoint call = 1 symbol, ~1s latency
+// With ~80 stocks in the universe:
+//   Phase 1: /stable/quote     × 80 = 80 calls  → price, SMA, 52wk
+//   Phase 2: /stable/ratios-ttm × 80 = 80 calls → PE, PB, ROE, FCF
+//   Phase 3: /stable/financial-growth × 80 = 80 calls → rev/EPS growth
+//   Total: ~240 calls ✅ (well under 250/day)
 //
-// To fit within Vercel function timeout (60s for pro, 10s hobby),
-// we use aggressive parallelism (20 concurrent requests).
-//
-// Budget allocation for ~160 symbols:
-//   Phase 1: /stable/quote × 160 = 160 calls
-//   Phase 2: /stable/ratios-ttm × 40 = 40 calls  (top 40 by market cap)
-//   Phase 3: /stable/financial-growth × 40 = 40 calls
-//   Total: ~240 calls ✅
-//
-// With 20-way parallelism: 160/20 = 8 rounds × ~1.5s = ~12s for phase 1
-// Plus phases 2-3: 40/20 × 2 = 4 rounds × ~1.5s = ~6s
-// Grand total: ~18s (fits within 60s Vercel Pro timeout)
+// Uses 20-way parallelism → ~12s total execution time
 // ============================================================
 
 import { StockMetrics } from "./types";
@@ -31,8 +21,7 @@ import {
 } from "./fmp-client";
 
 const FMP_STABLE_URL = "https://financialmodelingprep.com/stable";
-const MAX_API_CALLS = 245;
-const PARALLEL = 20; // concurrent requests
+const PARALLEL = 20;
 
 function getApiKey(): string {
   const key = process.env.FMP_API_KEY;
@@ -65,19 +54,16 @@ export interface FetchResult {
 async function parallelFetch<T>(
   symbols: string[],
   fetcher: (symbol: string) => Promise<{ key: string; value: T } | null>,
-  budget: { current: number; max: number },
   errors: string[]
-): Promise<Map<string, T>> {
+): Promise<{ map: Map<string, T>; calls: number }> {
   const result = new Map<string, T>();
+  let calls = 0;
 
-  for (let i = 0; i < symbols.length && budget.current < budget.max; i += PARALLEL) {
-    const batch = symbols.slice(
-      i,
-      Math.min(i + PARALLEL, symbols.length, i + (budget.max - budget.current))
-    );
+  for (let i = 0; i < symbols.length; i += PARALLEL) {
+    const batch = symbols.slice(i, Math.min(i + PARALLEL, symbols.length));
     const settled = await Promise.allSettled(
       batch.map(async (symbol) => {
-        budget.current++;
+        calls++;
         return fetcher(symbol);
       })
     );
@@ -85,68 +71,56 @@ async function parallelFetch<T>(
       if (r.status === "fulfilled" && r.value) {
         result.set(r.value.key, r.value.value);
       } else if (r.status === "rejected") {
-        errors.push(String(r.reason).slice(0, 100));
+        errors.push(String(r.reason).slice(0, 120));
       }
     }
   }
-  return result;
+  return { map: result, calls };
 }
 
 /**
- * Fetch the full universe of stocks from FMP.
+ * Fetch the full universe of stocks from FMP with all metrics.
  */
 export async function fetchFullUniverse(): Promise<FetchResult> {
   const symbols = getUniverseSymbols();
   const errors: string[] = [];
-  const budget = { current: 0, max: MAX_API_CALLS };
+  let totalCalls = 0;
 
-  // ---- Phase 1: Quote for ALL symbols ----
-  console.log(`[FMP] Phase 1: fetching quotes for ${symbols.length} symbols...`);
-  const quoteMap = await parallelFetch<FmpTechnical>(
+  // ---- Phase 1: Quote → price, marketCap, SMA, 52-week ----
+  console.log(`[FMP] Phase 1: quotes for ${symbols.length} symbols...`);
+  const { map: quoteMap, calls: quoteCalls } = await parallelFetch<FmpTechnical>(
     symbols,
     async (symbol) => {
       const data = await fmpGet<FmpTechnical[]>("/quote", { symbol });
       if (!data?.[0]?.symbol) return null;
       return { key: data[0].symbol.toUpperCase(), value: data[0] };
     },
-    budget,
     errors
   );
-  console.log(`[FMP] Phase 1 done: ${quoteMap.size} quotes, ${budget.current} calls`);
+  totalCalls += quoteCalls;
+  console.log(`[FMP] Phase 1 done: ${quoteMap.size} quotes (${quoteCalls} calls)`);
 
-  // Get list of symbols we have quote data for, sorted by market cap desc
-  const validSymbols = symbols
-    .filter((s) => quoteMap.has(s.toUpperCase()))
-    .sort((a, b) => {
-      const mcA = quoteMap.get(a.toUpperCase())?.marketCap ?? 0;
-      const mcB = quoteMap.get(b.toUpperCase())?.marketCap ?? 0;
-      return mcB - mcA; // largest first → they get ratios/growth priority
-    });
+  // Only proceed with symbols that have quote data
+  const validSymbols = symbols.filter((s) => quoteMap.has(s.toUpperCase()));
 
-  // ---- Phase 2: Ratios for top candidates ----
-  const ratiosBudget = Math.floor((budget.max - budget.current) / 2);
-  const ratioSymbols = validSymbols.slice(0, ratiosBudget);
-  console.log(`[FMP] Phase 2: fetching ratios for ${ratioSymbols.length} symbols...`);
-
-  const ratioMap = await parallelFetch<FmpRatios>(
-    ratioSymbols,
+  // ---- Phase 2: Ratios → PE, PB, ROE, FCF yield, margins ----
+  console.log(`[FMP] Phase 2: ratios for ${validSymbols.length} symbols...`);
+  const { map: ratioMap, calls: ratioCalls } = await parallelFetch<FmpRatios>(
+    validSymbols,
     async (symbol) => {
       const data = await fmpGet<FmpRatios[]>("/ratios-ttm", { symbol });
       if (!data?.[0]) return null;
       return { key: symbol.toUpperCase(), value: data[0] };
     },
-    budget,
     errors
   );
-  console.log(`[FMP] Phase 2 done: ${ratioMap.size} ratios, ${budget.current} calls`);
+  totalCalls += ratioCalls;
+  console.log(`[FMP] Phase 2 done: ${ratioMap.size} ratios (${ratioCalls} calls)`);
 
-  // ---- Phase 3: Growth for top candidates ----
-  const growthBudget = budget.max - budget.current;
-  const growthSymbols = ratioSymbols.slice(0, growthBudget);
-  console.log(`[FMP] Phase 3: fetching growth for ${growthSymbols.length} symbols...`);
-
-  const growthMap = await parallelFetch<FmpGrowth>(
-    growthSymbols,
+  // ---- Phase 3: Growth → revenue & EPS growth ----
+  console.log(`[FMP] Phase 3: growth for ${validSymbols.length} symbols...`);
+  const { map: growthMap, calls: growthCalls } = await parallelFetch<FmpGrowth>(
+    validSymbols,
     async (symbol) => {
       const data = await fmpGet<FmpGrowth[]>("/financial-growth", {
         symbol,
@@ -155,10 +129,10 @@ export async function fetchFullUniverse(): Promise<FetchResult> {
       if (!data?.[0]) return null;
       return { key: symbol.toUpperCase(), value: data[0] };
     },
-    budget,
     errors
   );
-  console.log(`[FMP] Phase 3 done: ${growthMap.size} growth, ${budget.current} calls`);
+  totalCalls += growthCalls;
+  console.log(`[FMP] Phase 3 done: ${growthMap.size} growth (${growthCalls} calls)`);
 
   // ---- Build StockMetrics ----
   const stocks: StockMetrics[] = [];
@@ -187,8 +161,8 @@ export async function fetchFullUniverse(): Promise<FetchResult> {
   }
 
   console.log(
-    `[FMP] Complete: ${stocks.length} stocks, ${budget.current} API calls, ${errors.length} errors`
+    `[FMP] Complete: ${stocks.length} stocks, ${totalCalls} API calls, ${errors.length} errors`
   );
 
-  return { stocks, apiCallsUsed: budget.current, errors };
+  return { stocks, apiCallsUsed: totalCalls, errors };
 }
