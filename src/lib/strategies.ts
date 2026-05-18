@@ -17,11 +17,11 @@ export const STRATEGY_PRESETS: Record<string, StrategyPreset> = {
     color: "blue",
     defaultFilters: [
       { field: "peRatio", operator: "gt", value: 0 },
-      { field: "peRatio", operator: "lt", value: 15 },
+      { field: "peRatio", operator: "lt", value: 20 },       // relaxed from 15 for real market valuations
       { field: "pbRatio", operator: "gt", value: 0 },
-      { field: "pbRatio", operator: "lt", value: 1.5 },
-      { field: "freeCashFlowYield", operator: "gt", value: 5 },
-      { field: "currentRatio", operator: "gt", value: 1.2 },
+      { field: "pbRatio", operator: "lt", value: 3.0 },      // relaxed from 1.5 — few real stocks below 1.5
+      { field: "freeCashFlowYield", operator: "gt", value: 3 }, // relaxed from 5%
+      { field: "currentRatio", operator: "gt", value: 1.0 },   // relaxed from 1.2
       { field: "marketCap", operator: "gt", value: 1_000_000_000 }, // > $1B
     ],
   },
@@ -37,10 +37,10 @@ export const STRATEGY_PRESETS: Record<string, StrategyPreset> = {
     color: "indigo",
     defaultFilters: [
       { field: "marketCap", operator: "gt", value: 100_000_000_000 }, // > $100B
-      { field: "revenueGrowthYoY", operator: "gt", value: 15 },
-      { field: "epsGrowthYoY", operator: "gt", value: 15 },
-      { field: "freeCashFlowYield", operator: "gt", value: 3 }, // Cash flow positive
-      { field: "roe", operator: "gt", value: 20 },
+      { field: "revenueGrowthYoY", operator: "gt", value: 10 },       // relaxed from 15%
+      { field: "epsGrowthYoY", operator: "gt", value: 10 },           // relaxed from 15%
+      { field: "freeCashFlowYield", operator: "gt", value: 1.5 },     // relaxed from 3% — growth reinvests
+      { field: "grossMargin", operator: "gt", value: 40 },            // quality proxy (replaces ROE which FMP often omits)
     ],
   },
   small_growth: {
@@ -51,13 +51,13 @@ export const STRATEGY_PRESETS: Record<string, StrategyPreset> = {
       "Russell 2000 Growth level innovators. Driven by disruptive tech and rapid market penetration. Often unprofitable but growing revenues explosively.",
     descriptionZh:
       "Russell 2000 级别的新兴颠覆者。依赖技术突破与渗透率提升，爆发力强但可能尚未盈利。",
-    icon: "Rocket", // We will need to import Rocket in page.tsx
+    icon: "Rocket",
     color: "purple",
     defaultFilters: [
-      { field: "marketCap", operator: "lt", value: 10_000_000_000 }, // < $10B
-      { field: "marketCap", operator: "gt", value: 300_000_000 }, // > $300M (exclude micro-caps)
-      { field: "revenueGrowthYoY", operator: "gt", value: 30 }, // Explosive growth
-      { field: "priceVs50SMA", operator: "gt", value: 0 }, // Positive momentum
+      { field: "marketCap", operator: "lt", value: 50_000_000_000 },  // raised from $10B — many mid-caps now $10-50B
+      { field: "marketCap", operator: "gt", value: 300_000_000 },     // > $300M (exclude micro-caps)
+      { field: "revenueGrowthYoY", operator: "gt", value: 20 },      // relaxed from 30%
+      { field: "priceVs50SMA", operator: "gt", value: 0 },           // Positive momentum
     ],
   },
 };
