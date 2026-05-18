@@ -6,6 +6,7 @@
 import { StockMetrics } from "./types";
 import { generateMockStocks } from "./mock-data";
 import { loadStockPool } from "./stock-pool-store";
+import { getSectorInfo } from "./sector-map";
 import { fetchRatiosBatch, fetchGrowthBatch, buildStockMetrics } from "./fmp-client";
 
 const FMP_STABLE_URL = "https://financialmodelingprep.com/stable";
@@ -30,7 +31,15 @@ export async function resolveStock(symbol: string): Promise<StockMetrics | undef
       const found = pool.stocks.find(
         (s: StockMetrics) => s.symbol.toUpperCase() === upperSymbol
       );
-      if (found) return found;
+      if (found) {
+        // Patch sector/industry if it was saved as "Unknown" in the old pool
+        if (found.sector === "Unknown" || !found.sector) {
+          const { sector, industry } = getSectorInfo(upperSymbol);
+          found.sector = sector;
+          found.industry = industry;
+        }
+        return found;
+      }
     }
   } catch {
     // Firestore not available, continue to next strategy
