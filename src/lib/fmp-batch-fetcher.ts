@@ -1,15 +1,23 @@
 // ============================================================
 // FMP Batch Fetcher — optimized universe fetch for free tier
 //
-// Budget: 250 API calls/day
-// Strategy:
-//   1. /stable/quote batch (comma-separated) → ~4 calls
-//   2. /stable/profile batch (comma-separated) → ~4 calls
-//   3. /stable/ratios-ttm individual → up to 120 calls
-//   4. /stable/financial-growth individual → up to 120 calls
-//   Total: ~248 calls, fits within 250/day
+// Free tier constraints:
+//   - 250 API calls/day
+//   - NO comma-separated batch queries (402 error)
+//   - Each endpoint call = 1 symbol, ~1s latency
 //
-// Parallel requests within each phase for speed.
+// To fit within Vercel function timeout (60s for pro, 10s hobby),
+// we use aggressive parallelism (20 concurrent requests).
+//
+// Budget allocation for ~160 symbols:
+//   Phase 1: /stable/quote × 160 = 160 calls
+//   Phase 2: /stable/ratios-ttm × 40 = 40 calls  (top 40 by market cap)
+//   Phase 3: /stable/financial-growth × 40 = 40 calls
+//   Total: ~240 calls ✅
+//
+// With 20-way parallelism: 160/20 = 8 rounds × ~1.5s = ~12s for phase 1
+// Plus phases 2-3: 40/20 × 2 = 4 rounds × ~1.5s = ~6s
+// Grand total: ~18s (fits within 60s Vercel Pro timeout)
 // ============================================================
 
 import { StockMetrics } from "./types";
@@ -23,6 +31,8 @@ import {
 } from "./fmp-client";
 
 const FMP_STABLE_URL = "https://financialmodelingprep.com/stable";
+const MAX_API_CALLS = 245;
+const PARALLEL = 20; // concurrent requests
 
 function getApiKey(): string {
   const key = process.env.FMP_API_KEY;
@@ -30,7 +40,10 @@ function getApiKey(): string {
   return key;
 }
 
-async function fmpGet<T>(endpoint: string, params: Record<string, string> = {}): Promise<T> {
+async function fmpGet<T>(
+  endpoint: string,
+  params: Record<string, string> = {}
+): Promise<T> {
   const url = new URL(`${FMP_STABLE_URL}${endpoint}`);
   url.searchParams.set("apikey", getApiKey());
   for (const [k, v] of Object.entries(params)) url.searchParams.set(k, v);
@@ -40,25 +53,6 @@ async function fmpGet<T>(endpoint: string, params: Record<string, string> = {}):
   return res.json() as Promise<T>;
 }
 
-/** Split array into chunks */
-function chunk<T>(arr: T[], size: number): T[][] {
-  const result: T[][] = [];
-  for (let i = 0; i < arr.length; i += size) {
-    result.push(arr.slice(i, i + size));
-  }
-  return result;
-}
-
-/** Small delay to be polite to the API */
-const delay = (ms: number) => new Promise((r) => setTimeout(r, ms));
-
-export interface FetchProgress {
-  phase: string;
-  current: number;
-  total: number;
-  apiCallsUsed: number;
-}
-
 export interface FetchResult {
   stocks: StockMetrics[];
   apiCallsUsed: number;
@@ -66,137 +60,122 @@ export interface FetchResult {
 }
 
 /**
- * Fetch the full universe of stocks from FMP, optimized for free tier.
- *
- * Phase 1: Batch quote → price, marketCap, SMA, 52-week range
- * Phase 2: Batch profile → sector, industry, companyName
- * Phase 3: Individual ratios-ttm → PE, PB, FCF yield, ROE, etc.
- * Phase 4: Individual financial-growth → revenue & EPS growth
+ * Run fetches in parallel batches, returning results as a Map.
+ */
+async function parallelFetch<T>(
+  symbols: string[],
+  fetcher: (symbol: string) => Promise<{ key: string; value: T } | null>,
+  budget: { current: number; max: number },
+  errors: string[]
+): Promise<Map<string, T>> {
+  const result = new Map<string, T>();
+
+  for (let i = 0; i < symbols.length && budget.current < budget.max; i += PARALLEL) {
+    const batch = symbols.slice(
+      i,
+      Math.min(i + PARALLEL, symbols.length, i + (budget.max - budget.current))
+    );
+    const settled = await Promise.allSettled(
+      batch.map(async (symbol) => {
+        budget.current++;
+        return fetcher(symbol);
+      })
+    );
+    for (const r of settled) {
+      if (r.status === "fulfilled" && r.value) {
+        result.set(r.value.key, r.value.value);
+      } else if (r.status === "rejected") {
+        errors.push(String(r.reason).slice(0, 100));
+      }
+    }
+  }
+  return result;
+}
+
+/**
+ * Fetch the full universe of stocks from FMP.
  */
 export async function fetchFullUniverse(): Promise<FetchResult> {
   const symbols = getUniverseSymbols();
-  let apiCalls = 0;
   const errors: string[] = [];
+  const budget = { current: 0, max: MAX_API_CALLS };
 
-  // ---- Phase 1: Batch Quote (supports comma-separated) ----
-  const quoteMap = new Map<string, FmpTechnical>();
-  const quoteBatches = chunk(symbols, 50);
-  for (const batch of quoteBatches) {
-    try {
-      const data = await fmpGet<FmpTechnical[]>("/quote", { symbol: batch.join(",") });
-      apiCalls++;
-      for (const q of data) {
-        if (q.symbol) quoteMap.set(q.symbol.toUpperCase(), q);
-      }
-    } catch (e) {
-      errors.push(`Quote batch error: ${e instanceof Error ? e.message : String(e)}`);
-    }
-  }
-  console.log(`[FMP] Phase 1 (quote): ${quoteMap.size} quotes, ${apiCalls} calls`);
-
-  // ---- Phase 2: Batch Profile (for sector/industry) ----
-  const profileMap = new Map<string, FmpScreenerResult>();
-  const profileBatches = chunk(symbols, 50);
-  for (const batch of profileBatches) {
-    try {
-      const data = await fmpGet<Array<{
-        symbol: string; companyName: string; marketCap: number;
-        sector: string; industry: string; price: number;
-        volume: number; exchange: string; country: string;
-        isEtf: boolean; isActivelyTrading: boolean;
-      }>>("/profile", { symbol: batch.join(",") });
-      apiCalls++;
-      for (const p of data) {
-        if (p.symbol) {
-          profileMap.set(p.symbol.toUpperCase(), {
-            symbol: p.symbol,
-            companyName: p.companyName || p.symbol,
-            marketCap: p.marketCap || 0,
-            sector: p.sector || "Unknown",
-            industry: p.industry || "Unknown",
-            price: p.price || 0,
-            volume: p.volume || 0,
-            exchangeShortName: p.exchange || "US",
-            country: p.country || "US",
-            isEtf: p.isEtf ?? false,
-            isActivelyTrading: p.isActivelyTrading ?? true,
-          });
-        }
-      }
-    } catch (e) {
-      errors.push(`Profile batch error: ${e instanceof Error ? e.message : String(e)}`);
-    }
-  }
-  console.log(`[FMP] Phase 2 (profile): ${profileMap.size} profiles, ${apiCalls} calls`);
-
-  // Determine which symbols we have data for
-  const validSymbols = symbols.filter(
-    (s) => quoteMap.has(s.toUpperCase()) || profileMap.has(s.toUpperCase())
+  // ---- Phase 1: Quote for ALL symbols ----
+  console.log(`[FMP] Phase 1: fetching quotes for ${symbols.length} symbols...`);
+  const quoteMap = await parallelFetch<FmpTechnical>(
+    symbols,
+    async (symbol) => {
+      const data = await fmpGet<FmpTechnical[]>("/quote", { symbol });
+      if (!data?.[0]?.symbol) return null;
+      return { key: data[0].symbol.toUpperCase(), value: data[0] };
+    },
+    budget,
+    errors
   );
+  console.log(`[FMP] Phase 1 done: ${quoteMap.size} quotes, ${budget.current} calls`);
 
-  // ---- Phase 3: Individual ratios-ttm (budget-limited) ----
-  const RATIO_BUDGET = Math.min(validSymbols.length, Math.floor((250 - apiCalls) / 2));
-  const ratioMap = new Map<string, FmpRatios>();
-  const ratioBatches = chunk(validSymbols.slice(0, RATIO_BUDGET), 10);
-  for (const batch of ratioBatches) {
-    const results = await Promise.allSettled(
-      batch.map(async (symbol) => {
-        const data = await fmpGet<FmpRatios[]>("/ratios-ttm", { symbol });
-        apiCalls++;
-        if (data?.[0]) ratioMap.set(symbol.toUpperCase(), data[0]);
-      })
-    );
-    for (const r of results) {
-      if (r.status === "rejected") {
-        errors.push(`Ratios error: ${r.reason}`);
-      }
-    }
-    await delay(100); // small pause between parallel batches
-  }
-  console.log(`[FMP] Phase 3 (ratios): ${ratioMap.size} ratios, ${apiCalls} calls`);
+  // Get list of symbols we have quote data for, sorted by market cap desc
+  const validSymbols = symbols
+    .filter((s) => quoteMap.has(s.toUpperCase()))
+    .sort((a, b) => {
+      const mcA = quoteMap.get(a.toUpperCase())?.marketCap ?? 0;
+      const mcB = quoteMap.get(b.toUpperCase())?.marketCap ?? 0;
+      return mcB - mcA; // largest first → they get ratios/growth priority
+    });
 
-  // ---- Phase 4: Individual financial-growth (budget-limited) ----
-  const GROWTH_BUDGET = Math.min(validSymbols.length, 250 - apiCalls);
-  const growthMap = new Map<string, FmpGrowth>();
-  const growthBatches = chunk(validSymbols.slice(0, GROWTH_BUDGET), 10);
-  for (const batch of growthBatches) {
-    const results = await Promise.allSettled(
-      batch.map(async (symbol) => {
-        const data = await fmpGet<FmpGrowth[]>("/financial-growth", {
-          symbol,
-          limit: "1",
-        });
-        apiCalls++;
-        if (data?.[0]) growthMap.set(symbol.toUpperCase(), data[0]);
-      })
-    );
-    for (const r of results) {
-      if (r.status === "rejected") {
-        errors.push(`Growth error: ${r.reason}`);
-      }
-    }
-    await delay(100);
-  }
-  console.log(`[FMP] Phase 4 (growth): ${growthMap.size} growth, ${apiCalls} calls`);
+  // ---- Phase 2: Ratios for top candidates ----
+  const ratiosBudget = Math.floor((budget.max - budget.current) / 2);
+  const ratioSymbols = validSymbols.slice(0, ratiosBudget);
+  console.log(`[FMP] Phase 2: fetching ratios for ${ratioSymbols.length} symbols...`);
+
+  const ratioMap = await parallelFetch<FmpRatios>(
+    ratioSymbols,
+    async (symbol) => {
+      const data = await fmpGet<FmpRatios[]>("/ratios-ttm", { symbol });
+      if (!data?.[0]) return null;
+      return { key: symbol.toUpperCase(), value: data[0] };
+    },
+    budget,
+    errors
+  );
+  console.log(`[FMP] Phase 2 done: ${ratioMap.size} ratios, ${budget.current} calls`);
+
+  // ---- Phase 3: Growth for top candidates ----
+  const growthBudget = budget.max - budget.current;
+  const growthSymbols = ratioSymbols.slice(0, growthBudget);
+  console.log(`[FMP] Phase 3: fetching growth for ${growthSymbols.length} symbols...`);
+
+  const growthMap = await parallelFetch<FmpGrowth>(
+    growthSymbols,
+    async (symbol) => {
+      const data = await fmpGet<FmpGrowth[]>("/financial-growth", {
+        symbol,
+        limit: "1",
+      });
+      if (!data?.[0]) return null;
+      return { key: symbol.toUpperCase(), value: data[0] };
+    },
+    budget,
+    errors
+  );
+  console.log(`[FMP] Phase 3 done: ${growthMap.size} growth, ${budget.current} calls`);
 
   // ---- Build StockMetrics ----
   const stocks: StockMetrics[] = [];
   for (const symbol of validSymbols) {
     const upper = symbol.toUpperCase();
-    const profile = profileMap.get(upper);
     const quote = quoteMap.get(upper);
+    if (!quote) continue;
 
-    if (!profile && !quote) continue;
-
-    const screener: FmpScreenerResult = profile ?? {
-      symbol: quote?.symbol || symbol,
-      companyName: quote?.name || symbol,
-      marketCap: quote?.marketCap || 0,
+    const screener: FmpScreenerResult = {
+      symbol: quote.symbol || symbol,
+      companyName: quote.name || symbol,
+      marketCap: quote.marketCap || 0,
       sector: "Unknown",
       industry: "Unknown",
-      price: quote?.price || 0,
-      volume: quote?.volume || 0,
-      exchangeShortName: quote?.exchange || "US",
+      price: quote.price || 0,
+      volume: quote.volume || 0,
+      exchangeShortName: quote.exchange || "US",
       country: "US",
       isEtf: false,
       isActivelyTrading: true,
@@ -208,8 +187,8 @@ export async function fetchFullUniverse(): Promise<FetchResult> {
   }
 
   console.log(
-    `[FMP] Fetch complete: ${stocks.length} stocks, ${apiCalls} API calls, ${errors.length} errors`
+    `[FMP] Complete: ${stocks.length} stocks, ${budget.current} API calls, ${errors.length} errors`
   );
 
-  return { stocks, apiCallsUsed: apiCalls, errors };
+  return { stocks, apiCallsUsed: budget.current, errors };
 }
