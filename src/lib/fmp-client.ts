@@ -74,12 +74,16 @@ export interface FmpRatios {
   debtToEquityRatioTTM?: number;
   dividendYieldTTM?: number;
   returnOnEquityTTM?: number;
+  // FMP sometimes uses different key for ROE
+  roeTTM?: number;
   freeCashFlowPerShareTTM?: number;
   priceToFreeCashFlowsRatioTTM?: number;
   priceToFreeCashFlowRatioTTM?: number;
   grossProfitMarginTTM?: number;
   netProfitMarginTTM?: number;
   priceToEarningsRatioTTM?: number;
+  // Catch-all for any fields FMP returns that we haven't typed
+  [key: string]: number | string | undefined;
 }
 
 /** /stable/financial-growth response */
@@ -292,6 +296,19 @@ export async function fetchQuoteBatch(symbols: string[]): Promise<Map<string, Fm
 /**
  * Build a full StockMetrics object by combining screener, ratios, growth, and quote data.
  */
+/**
+ * Safely convert a ratio value to a percentage, or return null.
+ * Uses proper null check instead of truthy check (avoids 0 being treated as missing).
+ */
+function toPercent(value: number | undefined | null): number | null {
+  return value != null ? value * 100 : null;
+}
+
+/** Get a numeric value, returning null only if truly missing */
+function numOrNull(value: number | undefined | null): number | null {
+  return value != null ? value : null;
+}
+
 export function buildStockMetrics(
   screener: FmpScreenerResult,
   ratios?: FmpRatios,
@@ -299,28 +316,31 @@ export function buildStockMetrics(
   quote?: FmpTechnical
 ): StockMetrics {
   const price = screener.price || 0;
-  const priceVs50 = quote?.priceAvg50
+  const priceVs50 = quote?.priceAvg50 != null
     ? ((price - quote.priceAvg50) / quote.priceAvg50) * 100
     : null;
-  const priceVs200 = quote?.priceAvg200
+  const priceVs200 = quote?.priceAvg200 != null
     ? ((price - quote.priceAvg200) / quote.priceAvg200) * 100
     : null;
 
   // Calculate FCF yield from priceToFreeCashFlowsRatio
   const fcfRatio = ratios?.priceToFreeCashFlowsRatioTTM ?? ratios?.priceToFreeCashFlowRatioTTM;
   const fcfYield =
-    fcfRatio && fcfRatio > 0
+    fcfRatio != null && fcfRatio > 0
       ? (1 / fcfRatio) * 100
       : null;
 
   // Get P/E from either field name
-  const pe = ratios?.peRatioTTM ?? ratios?.priceToEarningsRatioTTM ?? null;
+  const pe = numOrNull(ratios?.peRatioTTM ?? ratios?.priceToEarningsRatioTTM);
 
   // Get PEG from either field name
-  const peg = ratios?.pegRatioTTM ?? ratios?.priceToEarningsGrowthRatioTTM ?? null;
+  const peg = numOrNull(ratios?.pegRatioTTM ?? ratios?.priceToEarningsGrowthRatioTTM);
 
   // Get D/E from either field name
-  const debtToEquity = ratios?.debtEquityRatioTTM ?? ratios?.debtToEquityRatioTTM ?? null;
+  const debtToEquity = numOrNull(ratios?.debtEquityRatioTTM ?? ratios?.debtToEquityRatioTTM);
+
+  // Get ROE — FMP may use returnOnEquityTTM or roeTTM
+  const rawRoe = ratios?.returnOnEquityTTM ?? ratios?.roeTTM;
 
   return {
     symbol: screener.symbol,
@@ -330,30 +350,20 @@ export function buildStockMetrics(
     marketCap: screener.marketCap,
     price,
     peRatio: pe,
-    pbRatio: ratios?.priceToBookRatioTTM ?? null,
+    pbRatio: numOrNull(ratios?.priceToBookRatioTTM),
     freeCashFlowYield: fcfYield,
-    dividendYield: ratios?.dividendYieldTTM
-      ? ratios.dividendYieldTTM * 100
-      : null,
-    currentRatio: ratios?.currentRatioTTM ?? null,
+    dividendYield: toPercent(ratios?.dividendYieldTTM),
+    currentRatio: numOrNull(ratios?.currentRatioTTM),
     debtToEquity,
-    revenueGrowthYoY: growth?.revenueGrowth
-      ? growth.revenueGrowth * 100
-      : null,
-    epsGrowthYoY: growth?.epsgrowth ? growth.epsgrowth * 100 : null,
+    revenueGrowthYoY: toPercent(growth?.revenueGrowth),
+    epsGrowthYoY: toPercent(growth?.epsgrowth),
     pegRatio: peg,
-    roe: ratios?.returnOnEquityTTM
-      ? ratios.returnOnEquityTTM * 100
-      : null,
-    grossMargin: ratios?.grossProfitMarginTTM
-      ? ratios.grossProfitMarginTTM * 100
-      : null,
-    netMargin: ratios?.netProfitMarginTTM
-      ? ratios.netProfitMarginTTM * 100
-      : null,
+    roe: toPercent(rawRoe),
+    grossMargin: toPercent(ratios?.grossProfitMarginTTM),
+    netMargin: toPercent(ratios?.netProfitMarginTTM),
     priceVs50SMA: priceVs50,
     priceVs200SMA: priceVs200,
-    fiftyTwoWeekHigh: quote?.yearHigh ?? null,
-    fiftyTwoWeekLow: quote?.yearLow ?? null,
+    fiftyTwoWeekHigh: numOrNull(quote?.yearHigh),
+    fiftyTwoWeekLow: numOrNull(quote?.yearLow),
   };
 }

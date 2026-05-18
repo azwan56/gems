@@ -105,11 +105,22 @@ export async function fetchFullUniverse(): Promise<FetchResult> {
 
   // ---- Phase 2: Ratios → PE, PB, ROE, FCF yield, margins ----
   console.log(`[FMP] Phase 2: ratios for ${validSymbols.length} symbols...`);
+  let ratioDebugLogged = false;
   const { map: ratioMap, calls: ratioCalls } = await parallelFetch<FmpRatios>(
     validSymbols,
     async (symbol) => {
       const data = await fmpGet<FmpRatios[]>("/ratios-ttm", { symbol });
       if (!data?.[0]) return null;
+      // Log the first successful response to debug field names
+      if (!ratioDebugLogged) {
+        ratioDebugLogged = true;
+        const keys = Object.keys(data[0]);
+        const roeKeys = keys.filter(k => k.toLowerCase().includes('return') || k.toLowerCase().includes('roe') || k.toLowerCase().includes('equity'));
+        console.log(`[FMP] Ratios sample keys for ${symbol}:`, keys.join(', '));
+        console.log(`[FMP] ROE-related keys:`, roeKeys.join(', ') || 'NONE FOUND');
+        console.log(`[FMP] returnOnEquityTTM value:`, data[0].returnOnEquityTTM);
+        console.log(`[FMP] roeTTM value:`, data[0].roeTTM);
+      }
       return { key: symbol.toUpperCase(), value: data[0] };
     },
     errors
