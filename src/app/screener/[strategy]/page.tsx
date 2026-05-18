@@ -39,6 +39,7 @@ export default function FunnelScreenerPage() {
   const [selectedInStep2, setSelectedInStep2] = useState<Set<string>>(new Set());
   
   const [watchlist, setWatchlist] = useState<Set<string>>(new Set());
+  const [selectedRoles, setSelectedRoles] = useState<Record<string, string>>({});
   
   // Data source tracking
   const [dataSource, setDataSource] = useState<"fmp" | "mock">("mock");
@@ -124,12 +125,15 @@ export default function FunnelScreenerPage() {
     });
   };
 
-  const addToPortfolio = async (symbol: string) => {
+  const addToPortfolio = async (symbol: string, role?: string) => {
     try {
+      const payload: any = { userId: "demo-user", symbol };
+      if (role && role !== "unassigned") payload.role = role;
+      
       await fetch("/api/watchlist", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: "demo-user", symbol }),
+        body: JSON.stringify(payload),
       });
       setWatchlist(prev => new Set(prev).add(symbol));
     } catch {}
@@ -419,24 +423,29 @@ export default function FunnelScreenerPage() {
                           </div>
 
                           <div className="flex items-center gap-4 w-[40%] justify-end">
-                            <select className="bg-slate-950 border border-slate-700 text-sm text-slate-300 rounded-lg px-3 py-2 outline-none focus:border-purple-500">
+                            <select 
+                              className="bg-slate-950 border border-slate-700 text-sm text-slate-300 rounded-lg px-3 py-2 outline-none focus:border-purple-500"
+                              value={selectedRoles[s.symbol] || "unassigned"}
+                              onChange={(e) => setSelectedRoles(prev => ({ ...prev, [s.symbol]: e.target.value }))}
+                            >
+                              <option value="unassigned">-- Select Role --</option>
                               {isValue ? (
                                 <>
-                                  <option>🏛️ Core Dividend</option>
-                                  <option>🔄 Turnaround Play</option>
-                                  <option>✂️ Special Situation</option>
+                                  <option value="core_dividend">💰 Core Dividend</option>
+                                  <option value="turnaround">🔄 Turnaround Play</option>
+                                  <option value="special_situation">✂️ Special Situation</option>
                                 </>
                               ) : (
                                 <>
-                                  <option>🛡️ Anchor (Stability)</option>
-                                  <option>⚔️ Striker (Core Growth)</option>
-                                  <option>🚀 Rocket (High Beta)</option>
+                                  <option value="anchor">🛡️ Anchor (Stability)</option>
+                                  <option value="striker">⚔️ Striker (Core Growth)</option>
+                                  <option value="rocket">🚀 Rocket (High Beta)</option>
                                 </>
                               )}
                             </select>
                             
                             <button
-                              onClick={() => addToPortfolio(s.symbol)}
+                              onClick={() => addToPortfolio(s.symbol, selectedRoles[s.symbol])}
                               disabled={saved}
                               className={`px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-all min-w-[100px] justify-center ${
                                 saved 

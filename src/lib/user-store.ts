@@ -53,7 +53,8 @@ export async function getWatchlist(userId: string): Promise<WatchlistItem[]> {
 export async function addToWatchlist(
   userId: string,
   symbol: string,
-  notes?: string
+  notes?: string,
+  role?: WatchlistItem["role"]
 ): Promise<WatchlistItem> {
   const list = await getWatchlist(userId);
   const upperSymbol = symbol.toUpperCase();
@@ -62,6 +63,7 @@ export async function addToWatchlist(
   const existing = list.find((item) => item.symbol === upperSymbol);
   if (existing) {
     if (notes !== undefined) existing.notes = notes;
+    if (role !== undefined) existing.role = role;
     await _persistWatchlist(userId, list);
     return existing;
   }
@@ -70,6 +72,7 @@ export async function addToWatchlist(
     symbol: upperSymbol,
     addedAt: new Date().toISOString(),
     notes,
+    role,
   };
   list.push(item);
   await _persistWatchlist(userId, list);

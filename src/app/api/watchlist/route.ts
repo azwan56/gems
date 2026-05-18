@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { userId, symbol, notes } = body;
+    const { userId, symbol, notes, role } = body;
 
     if (!userId || !symbol) {
       return NextResponse.json(
@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const item = await addToWatchlist(userId, symbol, notes);
+    const item = await addToWatchlist(userId, symbol, notes, role);
     return NextResponse.json({ item }, { status: 201 });
   } catch {
     return NextResponse.json(
