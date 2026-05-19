@@ -5,6 +5,7 @@
 
 import { StockMetrics } from "./types";
 import { getUniverseSymbols } from "./index-constituents";
+import { getSectorInfo } from "./sector-map";
 
 const FMP_STABLE_URL = "https://financialmodelingprep.com/stable";
 
@@ -374,4 +375,78 @@ export function buildStockMetrics(
     fiftyTwoWeekHigh: numOrNull(quote?.yearHigh),
     fiftyTwoWeekLow: numOrNull(quote?.yearLow),
   };
+}
+
+/**
+ * Fetch complete StockMetrics for a list of symbols not in the pool.
+ * Used for Seeking Alpha custom list — fetches quote, ratios, growth, and key-metrics.
+ * Results are cached for 30 minutes.
+ */
+export async function fetchOnDemandStocks(symbols: string[]): Promise<StockMetrics[]> {
+  if (symbols.length === 0) return [];
+
+  const results: StockMetrics[] = [];
+  const BATCH = 5; // conservative parallelism for on-demand
+
+  for (let i = 0; i < symbols.length; i += BATCH) {
+    const batch = symbols.slice(i, Math.min(i + BATCH, symbols.length));
+
+    const settled = await Promise.allSettled(
+      batch.map(async (symbol) => {
+        // Check cache first
+        const cacheKey = `ondemand:${symbol}`;
+        const cached = getCached<StockMetrics>(cacheKey);
+        if (cached) return cached;
+
+        // Fetch all 4 endpoints
+        const [quoteData, ratiosData, growthData, kmData] = await Promise.allSettled([
+          fmpFetch<FmpTechnical[]>("/quote", { symbol }),
+          fmpFetch<FmpRatios[]>("/ratios-ttm", { symbol }),
+          fmpFetch<FmpGrowth[]>("/financial-growth", { symbol, limit: "1" }),
+          fmpFetch<FmpKeyMetrics[]>("/key-metrics-ttm", { symbol, limit: "1" }),
+        ]);
+
+        const quote = quoteData.status === "fulfilled" ? quoteData.value?.[0] : undefined;
+        const ratios = ratiosData.status === "fulfilled" ? ratiosData.value?.[0] : undefined;
+        const growth = growthData.status === "fulfilled" ? growthData.value?.[0] : undefined;
+        const km = kmData.status === "fulfilled" ? kmData.value?.[0] : undefined;
+
+        if (!quote?.symbol) return null;
+
+        // Try sector map first, then use "Unknown" (FMP quote doesn't include sector)
+        const sectorInfo = getSectorInfo(quote.symbol || symbol);
+
+        const screener: FmpScreenerResult = {
+          symbol: quote.symbol || symbol,
+          companyName: quote.name || symbol,
+          marketCap: quote.marketCap || 0,
+          sector: sectorInfo.sector,
+          industry: sectorInfo.industry,
+          price: quote.price || 0,
+          volume: quote.volume || 0,
+          exchangeShortName: quote.exchange || "US",
+          country: "US",
+          isEtf: false,
+          isActivelyTrading: true,
+        };
+
+        const metrics = buildStockMetrics(screener, ratios, growth, quote, km);
+        setCache(cacheKey, metrics);
+        return metrics;
+      })
+    );
+
+    for (const r of settled) {
+      if (r.status === "fulfilled" && r.value) {
+        results.push(r.value);
+      }
+    }
+
+    // Small delay between batches
+    if (i + BATCH < symbols.length) {
+      await new Promise((r) => setTimeout(r, 500));
+    }
+  }
+
+  return results;
 }

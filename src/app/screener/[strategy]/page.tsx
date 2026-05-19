@@ -130,7 +130,7 @@ export default function FunnelScreenerPage() {
       const res = await fetch("/api/screener", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ strategy: strategyId, filters, limit: 50 }),
+        body: JSON.stringify({ strategy: strategyId, filters, limit: 200 }),
       });
       if (!res.ok) throw new Error(`API error: ${res.status}`);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -138,12 +138,18 @@ export default function FunnelScreenerPage() {
       setStocks(data.stocks);
       if (data.dataSource) setDataSource(data.dataSource as "fmp" | "mock");
       if (data.poolUpdatedAt) setPoolUpdatedAt(data.poolUpdatedAt);
+
+      // SA strategy: auto-select all stocks and jump to Step 2
+      if (isSA && data.stocks.length > 0) {
+        setSelectedInStep1(new Set(data.stocks.map(s => s.symbol)));
+        setCurrentStep(2);
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to fetch data");
     } finally {
       setLoading(false);
     }
-  }, [strategyId, preset]);
+  }, [strategyId, preset, isSA]);
 
   const refreshPool = async () => {
     setRefreshing(true);
@@ -273,12 +279,12 @@ export default function FunnelScreenerPage() {
       <div className="bg-slate-900 border-b border-slate-800">
         <div className="max-w-[1400px] mx-auto px-6 py-4 flex items-center justify-between">
           {[
-            { step: 1, icon: Activity, title: t("Step 1: Quantitative", "第一步：定量筛选"), sub: isValue ? t("Valuation & FCF", "估值与自由现金流") : t("Growth & Scale", "成长与规模") },
+            { step: 1, icon: Activity, title: isSA ? t("Step 1: Skipped", "第一步：已跳过") : t("Step 1: Quantitative", "第一步：定量筛选"), sub: isSA ? t("SA Direct List", "SA 直选") : isValue ? t("Valuation & FCF", "估值与自由现金流") : t("Growth & Scale", "成长与规模") },
             { step: 2, icon: BrainCircuit, title: t("Step 2: Qualitative", "第二步：定性深研"), sub: isValue ? t("Moat & Catalyst", "护城河与催化剂") : t("TAM & Dominance", "潜在市场与统治力") },
             { step: 3, icon: LineChart, title: t("Step 3: Technical & Final", "第三步：技术与最终决策"), sub: t("Timing & Analysis", "择时与分析") },
           ].map((s, i) => (
             <div key={s.step} className="flex items-center flex-1">
-              <div className={`flex items-center gap-3 ${currentStep === s.step ? "opacity-100" : currentStep > s.step ? "opacity-60" : "opacity-30 grayscale"}`}>
+              <div className={`flex items-center gap-3 ${currentStep === s.step ? "opacity-100" : currentStep > s.step || (isSA && s.step === 1) ? "opacity-60" : "opacity-30 grayscale"}`}>
                 <div className={`p-2.5 rounded-lg border ${
                   currentStep === s.step 
                     ? `bg-${preset.color}-500/20 border-${preset.color}-500/50 text-${preset.color}-400`
@@ -473,16 +479,24 @@ export default function FunnelScreenerPage() {
                 </div>
               )}
 
-              {/* STEP 2: QUALITATIVE DEEP DIVE */}
+              {/* STEP 2: QUALITATIVE DEEP DIVE (with SA data reference table) */}
               {currentStep === 2 && (
                 <div className="animate-in fade-in slide-in-from-right-8 duration-500">
                   <div className="flex justify-between items-center mb-6">
                     <div>
-                      <h2 className="text-xl font-bold text-white mb-1">{t("Qualitative Deep Dive", "定性深度研究")} ({selectedInStep1.size} {t("stocks", "只股票")})</h2>
-                      <p className="text-sm text-slate-400">{t("Evaluating Moat, TAM, and Pricing Power via AI constraints.", "通过 AI 约束条件评估护城河、潜在市场规模（TAM）和定价权。")}</p>
+                      <h2 className="text-xl font-bold text-white mb-1">
+                        {isSA ? t("Seeking Alpha Watchlist", "Seeking Alpha 自选股") : t("Qualitative Deep Dive", "定性深度研究")} ({selectedInStep1.size} {t("stocks", "只股票")})
+                      </h2>
+                      <p className="text-sm text-slate-400">
+                        {isSA 
+                          ? t("All SA stocks shown with raw metrics. Select candidates for deep analysis.", "所有 SA 自选股的原始指标一览。选择候选标的进入深度分析。") 
+                          : t("Evaluating Moat, TAM, and Pricing Power via AI constraints.", "通过 AI 约束条件评估护城河、潜在市场规模（TAM）和定价权。")}
+                      </p>
                     </div>
                     <div className="flex gap-3">
-                      <button onClick={() => setCurrentStep(1)} className="px-4 py-2 border border-slate-700 text-slate-300 hover:bg-slate-800 rounded-lg font-semibold">{t("Back", "上一步")}</button>
+                      {!isSA && (
+                        <button onClick={() => setCurrentStep(1)} className="px-4 py-2 border border-slate-700 text-slate-300 hover:bg-slate-800 rounded-lg font-semibold">{t("Back", "上一步")}</button>
+                      )}
                       <button
                         disabled={selectedInStep2.size === 0}
                         onClick={() => setCurrentStep(3)}
@@ -492,11 +506,106 @@ export default function FunnelScreenerPage() {
                       </button>
                     </div>
                   </div>
-                  
+
+                  {/* SA Data Reference Table — full metrics overview */}
+                  {isSA && (
+                    <div className="mb-8 animate-in fade-in slide-in-from-bottom-4 duration-300">
+                      {/* SA list management */}
+                      <div className="mb-4 rounded-xl border border-amber-500/20 bg-gradient-to-br from-amber-900/10 to-amber-800/5 p-4">
+                        <div className="flex items-center gap-2 mb-3">
+                          <BookOpen className="w-4 h-4 text-amber-400" />
+                          <h3 className="text-sm font-bold text-amber-300 uppercase tracking-wider">
+                            {t("Manage SA Watchlist", "管理 SA 自选清单")}
+                          </h3>
+                          <span className="ml-auto text-xs text-slate-500 font-mono">
+                            {saSymbols.length} {t("symbols", "只标的")}
+                          </span>
+                        </div>
+                        {saSymbols.length > 0 && (
+                          <div className="flex flex-wrap gap-2 mb-3">
+                            {saSymbols.map((sym) => (
+                              <span key={sym} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-800/80 border border-slate-700 text-xs font-mono text-slate-300 hover:border-red-500/40 transition-colors">
+                                {sym}
+                                <button onClick={() => removeSASymbol(sym)} className="text-slate-600 hover:text-red-400 transition-colors">
+                                  <X className="w-3 h-3" />
+                                </button>
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                        <div className="flex gap-2">
+                          <input
+                            type="text"
+                            value={saInput}
+                            onChange={(e) => setSaInput(e.target.value)}
+                            onKeyDown={(e) => e.key === "Enter" && addSASymbols()}
+                            placeholder={t("Add symbols (e.g. PLTR, DDOG, ZS)", "添加标的（如 PLTR, DDOG, ZS）")}
+                            className="flex-1 px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-sm text-white placeholder:text-slate-600 outline-none focus:border-amber-500/50 transition-colors"
+                          />
+                          <button
+                            onClick={addSASymbols}
+                            disabled={saLoading || !saInput.trim()}
+                            className="px-4 py-2 rounded-lg bg-amber-600 hover:bg-amber-500 disabled:bg-slate-800 disabled:text-slate-600 text-white text-sm font-semibold flex items-center gap-1.5 transition-colors"
+                          >
+                            {saLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
+                            {t("Add", "添加")}
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Full metrics table */}
+                      <div className="border border-slate-800 rounded-xl bg-slate-900/50 overflow-x-auto">
+                        <table className="w-full text-sm text-left">
+                          <thead className="bg-slate-800/80 text-slate-400">
+                            <tr>
+                              <th className="p-3 font-semibold rounded-tl-xl sticky left-0 bg-slate-800/80 z-10">{t("Symbol", "代码")}</th>
+                              <th className="p-3 font-semibold">{t("Price", "价格")}</th>
+                              <th className="p-3 font-semibold">{t("MCap", "市值")}</th>
+                              <th className="p-3 font-semibold">{t("P/E", "P/E")}</th>
+                              <th className="p-3 font-semibold">{t("P/B", "P/B")}</th>
+                              <th className="p-3 font-semibold">{t("ROE%", "ROE%")}</th>
+                              <th className="p-3 font-semibold">{t("RevG%", "营收增长%")}</th>
+                              <th className="p-3 font-semibold">{t("EPSG%", "EPS增长%")}</th>
+                              <th className="p-3 font-semibold">{t("GM%", "毛利率%")}</th>
+                              <th className="p-3 font-semibold">{t("FCF%", "FCF%")}</th>
+                              <th className="p-3 font-semibold">{t("D/E", "D/E")}</th>
+                              <th className="p-3 font-semibold">{t("vs50SMA", "vs50日线")}</th>
+                              <th className="p-3 font-semibold rounded-tr-xl">{t("Sector", "板块")}</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-slate-800/50">
+                            {stocks.filter(s => selectedInStep1.has(s.symbol)).map(s => (
+                              <tr key={s.symbol} className="hover:bg-slate-800/30 transition-colors">
+                                <td className="p-3 font-bold text-white sticky left-0 bg-slate-900/90 z-10">
+                                  <div>
+                                    <span>{s.symbol}</span>
+                                    <p className="text-[10px] text-slate-500 font-normal truncate max-w-[100px]">{s.companyName}</p>
+                                  </div>
+                                </td>
+                                <td className="p-3 font-mono text-slate-300">${s.price.toFixed(2)}</td>
+                                <td className="p-3 font-mono text-slate-400">{formatMarketCap(s.marketCap)}</td>
+                                <td className={`p-3 font-mono ${s.peRatio != null && s.peRatio > 0 && s.peRatio < 25 ? 'text-emerald-400' : 'text-slate-400'}`}>{formatNum(s.peRatio, "x")}</td>
+                                <td className="p-3 font-mono text-slate-400">{formatNum(s.pbRatio, "x")}</td>
+                                <td className={`p-3 font-mono ${s.roe != null && s.roe > 15 ? 'text-emerald-400' : 'text-slate-400'}`}>{formatNum(s.roe, "%")}</td>
+                                <td className={`p-3 font-mono ${s.revenueGrowthYoY != null && s.revenueGrowthYoY > 20 ? 'text-emerald-400' : s.revenueGrowthYoY != null && s.revenueGrowthYoY < 0 ? 'text-red-400' : 'text-slate-400'}`}>{formatNum(s.revenueGrowthYoY, "%")}</td>
+                                <td className={`p-3 font-mono ${s.epsGrowthYoY != null && s.epsGrowthYoY > 20 ? 'text-emerald-400' : s.epsGrowthYoY != null && s.epsGrowthYoY < 0 ? 'text-red-400' : 'text-slate-400'}`}>{formatNum(s.epsGrowthYoY, "%")}</td>
+                                <td className={`p-3 font-mono ${s.grossMargin != null && s.grossMargin > 50 ? 'text-emerald-400' : 'text-slate-400'}`}>{formatNum(s.grossMargin, "%")}</td>
+                                <td className={`p-3 font-mono ${s.freeCashFlowYield != null && s.freeCashFlowYield > 3 ? 'text-emerald-400' : 'text-slate-400'}`}>{formatNum(s.freeCashFlowYield, "%")}</td>
+                                <td className="p-3 font-mono text-slate-400">{formatNum(s.debtToEquity, "x")}</td>
+                                <td className={`p-3 font-mono ${s.priceVs50SMA != null && s.priceVs50SMA > 0 ? 'text-emerald-400' : 'text-red-400'}`}>{formatNum(s.priceVs50SMA, "%")}</td>
+                                <td className="p-3 text-xs text-slate-500">{s.sector}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+
                   <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {stocks.filter(s => selectedInStep1.has(s.symbol)).map(s => {
                       const isSelected = selectedInStep2.has(s.symbol);
-                      const moatScore = (s.symbol.length * 2) % 10 + 6; 
+                      const moatScore = (s.symbol.length * 2) % 10 + 6;
                       const tamScore = (s.companyName.length) % 10 + 5;
                       
                       return (

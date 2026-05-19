@@ -65,17 +65,12 @@ export const STRATEGY_PRESETS: Record<string, StrategyPreset> = {
     name: "Seeking Alpha Picks",
     nameZh: "Seeking Alpha 精选",
     description:
-      "A curated stock list imported from Seeking Alpha. Applies the same growth-oriented screening logic as Small/Mid-Cap Growth to a custom symbol list you manage.",
+      "A curated stock list imported from Seeking Alpha. Bypasses quantitative screening — all stocks are displayed with their raw metrics for direct qualitative analysis.",
     descriptionZh:
-      "从 Seeking Alpha 导入的自选股清单。使用与中小盘成长股一致的选股逻辑进行筛选，可手工添加和管理标的。",
+      "从 Seeking Alpha 导入的自选股清单。跳过定量筛选步骤，直接展示所有标的的原始指标数据，作为定性深研的参考。",
     icon: "BookOpen",
     color: "amber",
-    defaultFilters: [
-      { field: "marketCap", operator: "lt", value: 50_000_000_000 },
-      { field: "marketCap", operator: "gt", value: 300_000_000 },
-      { field: "revenueGrowthYoY", operator: "gt", value: 20 },
-      { field: "priceVs50SMA", operator: "gt", value: 0 },
-    ],
+    defaultFilters: [], // No filters — SA stocks bypass Step 1
   },
 };
 

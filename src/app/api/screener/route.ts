@@ -55,15 +55,36 @@ export async function POST(request: NextRequest) {
       console.log("[screener] Using mock data fallback");
     }
 
-    // For seeking_alpha strategy: pre-filter to only include symbols in the SA list
+    // For seeking_alpha strategy: show all SA list symbols without filtering
     let saListSymbols: string[] | null = null;
     if (body.strategy === "seeking_alpha") {
       const saList = await loadSAList();
       saListSymbols = saList.symbols;
       const saSet = new Set(saListSymbols.map((s) => s.toUpperCase()));
-      stocks = stocks.filter((s) => saSet.has(s.symbol.toUpperCase()));
+      
+      // Find SA symbols that are already in the pool
+      const inPool = stocks.filter((s) => saSet.has(s.symbol.toUpperCase()));
+      const inPoolSet = new Set(inPool.map((s) => s.symbol.toUpperCase()));
+      
+      // Find SA symbols NOT in the pool — fetch from FMP on demand
+      const missingSymbols = saListSymbols.filter(
+        (s) => !inPoolSet.has(s.toUpperCase())
+      );
+      
+      if (missingSymbols.length > 0) {
+        console.log(
+          `[screener] SA: ${missingSymbols.length} symbols not in pool, fetching on demand: ${missingSymbols.join(", ")}`
+        );
+        const { fetchOnDemandStocks } = await import("@/lib/fmp-client");
+        const onDemand = await fetchOnDemandStocks(missingSymbols);
+        console.log(`[screener] SA: fetched ${onDemand.length} on-demand stocks`);
+        stocks = [...inPool, ...onDemand];
+      } else {
+        stocks = inPool;
+      }
+      
       console.log(
-        `[screener] Seeking Alpha: ${saListSymbols.length} symbols in list, ${stocks.length} found in pool`
+        `[screener] Seeking Alpha: ${saListSymbols.length} in list, ${stocks.length} with data`
       );
     }
 

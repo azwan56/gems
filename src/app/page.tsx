@@ -54,14 +54,14 @@ const strategies = [
     id: "seeking_alpha",
     name: "Seeking Alpha Picks",
     nameZh: "Seeking Alpha 精选",
-    description: "Curated stock list imported from Seeking Alpha. Same growth screening logic as Small/Mid-Cap with a custom watchlist you manage.",
-    descriptionZh: "从 Seeking Alpha 导入的自选股清单。使用与中小盘成长股一致的选股逻辑，可手工添加管理标的。",
+    description: "Your curated watchlist from Seeking Alpha. Bypasses quantitative screening — view all metrics at a glance and jump directly to deep analysis.",
+    descriptionZh: "Seeking Alpha 自选股清单。跳过定量筛选，直接展示所有指标数据，一键进入深度分析。",
     icon: BookOpen,
     color: "amber",
     metrics: [
       { label: "Source", value: "Seeking Alpha" },
-      { label: "Rev Growth", value: "> 20%" },
-      { label: "Momentum", value: "vs 50SMA > 0" },
+      { label: "Screening", value: "Bypassed" },
+      { label: "Direct to", value: "Step 2" },
     ],
   },
 ];
