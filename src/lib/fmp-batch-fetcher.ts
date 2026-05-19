@@ -18,6 +18,7 @@ import {
   FmpGrowth,
   FmpTechnical,
   FmpScreenerResult,
+  FmpKeyMetrics,
   buildStockMetrics,
 } from "./fmp-client";
 
@@ -146,6 +147,23 @@ export async function fetchFullUniverse(): Promise<FetchResult> {
   totalCalls += growthCalls;
   console.log(`[FMP] Phase 3 done: ${growthMap.size} growth (${growthCalls} calls)`);
 
+  // ---- Phase 4: Key Metrics → ROE ----
+  console.log(`[FMP] Phase 4: key metrics for ${validSymbols.length} symbols...`);
+  const { map: keyMetricsMap, calls: keyMetricsCalls } = await parallelFetch<FmpKeyMetrics>(
+    validSymbols,
+    async (symbol) => {
+      const data = await fmpGet<FmpKeyMetrics[]>("/key-metrics-ttm", {
+        symbol,
+        limit: "1",
+      });
+      if (!data?.[0]) return null;
+      return { key: symbol.toUpperCase(), value: data[0] };
+    },
+    errors
+  );
+  totalCalls += keyMetricsCalls;
+  console.log(`[FMP] Phase 4 done: ${keyMetricsMap.size} key metrics (${keyMetricsCalls} calls)`);
+
   // ---- Build StockMetrics ----
   const stocks: StockMetrics[] = [];
   for (const symbol of validSymbols) {
@@ -170,7 +188,7 @@ export async function fetchFullUniverse(): Promise<FetchResult> {
     };
 
     stocks.push(
-      buildStockMetrics(screener, ratioMap.get(upper), growthMap.get(upper), quote)
+      buildStockMetrics(screener, ratioMap.get(upper), growthMap.get(upper), quote, keyMetricsMap.get(upper))
     );
   }
 

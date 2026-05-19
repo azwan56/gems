@@ -94,16 +94,22 @@ export async function POST(request: NextRequest) {
     console.log("[stock-pool] Starting FMP universe fetch...");
     const result = await fetchFullUniverse();
 
-    if (result.stocks.length === 0) {
-      return NextResponse.json(
-        {
-          error: "FETCH_FAILED",
-          message: "No stocks returned from FMP",
-          errors: result.errors,
-          apiCallsUsed: result.apiCallsUsed,
-        },
-        { status: 502 }
-      );
+    const hasRateLimitError = result.errors.some(e => e.includes("429") || e.toLowerCase().includes("limit reach"));
+
+    if (result.stocks.length === 0 || hasRateLimitError) {
+      console.log("[stock-pool] FMP API limit reached or fetch failed, falling back to mock data.");
+      const mockStocks = generateMockStocks();
+      const meta = await saveStockPool(mockStocks, "mock", result.apiCallsUsed);
+      
+      return NextResponse.json({
+        status: "ok",
+        source: "mock",
+        meta,
+        message: hasRateLimitError ? "Fallback to mock data due to FMP API limits." : "Fallback to mock data due to fetch failure.",
+        apiCallsUsed: result.apiCallsUsed,
+        errorCount: result.errors.length,
+        errors: result.errors.slice(0, 10),
+      });
     }
 
     // Persist to Firestore

@@ -1,11 +1,11 @@
 // ============================================================
 // Hardcoded index constituents for free-tier FMP usage
-// Curated ~80 stocks across value, growth, and small-cap
-// to fit within 250 API calls/day (80×3 endpoints = 240 calls)
+// Curated 60 stocks across value, growth, and small-cap
+// to fit within 250 API calls/day (60×4 endpoints = 240 calls)
 // ============================================================
 
 /**
- * Core universe: ~80 high-quality stocks covering all 3 strategies.
+ * Core universe: 60 high-quality stocks covering all 3 strategies.
  *
  * Large-Cap Growth candidates (MC > $100B):
  *   Tech mega-caps, AI plays, healthcare leaders
@@ -17,28 +17,24 @@
  *   Disruptive tech, high-growth SaaS, quantum, AI
  */
 export const UNIVERSE: string[] = [
-  // ---- Mega-Cap Tech / Growth (top 25) ----
+  // ---- Mega-Cap Tech / Growth (20) ----
   "AAPL", "MSFT", "AMZN", "NVDA", "META", "GOOGL", "AVGO", "TSLA",
   "NFLX", "ADBE", "AMD", "CRM", "ORCL", "INTU", "QCOM",
   "ISRG", "AMAT", "PANW", "CRWD", "PLTR",
-  "ARM", "MELI", "BKNG", "SNPS", "CDNS",
 
-  // ---- Value / Dividend / Financials (25) ----
-  "BRK-B", "JPM", "V", "MA", "BAC", "GS", "MS", "SCHW", "AXP",
-  "JNJ", "PFE", "ABBV", "MRK", "BMY",
+  // ---- Value / Dividend / Financials (20) ----
+  "BRK-B", "JPM", "V", "MA", "BAC", "GS", "MS", "AXP",
+  "JNJ", "PFE", "ABBV", "MRK", 
   "XOM", "CVX",
-  "KO", "PG", "WMT", "MCD", "PM", "CL",
-  "GM", "F", "T",
+  "KO", "PG", "WMT", "MCD", "PM", "T",
 
-  // ---- Mid/Large crossover (10) ----
-  "LLY", "UNH", "HD", "CAT", "DE",
-  "GE", "RTX", "BA", "LOW", "NKE",
+  // ---- Mid/Large crossover (5) ----
+  "LLY", "UNH", "HD", "CAT", "LOW",
 
-  // ---- Small/Mid-Cap Growth (20) ----
+  // ---- Small/Mid-Cap Growth (15) ----
   "AXON", "DDOG", "MDB", "ZS", "FTNT",
-  "COIN", "HOOD", "APP", "TTD", "DASH",
-  "SMCI", "MSTR", "CELH", "DUOL", "CAVA",
-  "SOUN", "IONQ", "RKLB", "JOBY", "SOFI",
+  "COIN", "HOOD", "APP", "TTD", "SMCI", 
+  "CELH", "DUOL", "CAVA", "SOUN", "IONQ",
 ];
 
 /** All symbols in our universe (deduplicated) */

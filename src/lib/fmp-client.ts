@@ -86,6 +86,13 @@ export interface FmpRatios {
   [key: string]: number | string | undefined;
 }
 
+/** /stable/key-metrics-ttm response */
+export interface FmpKeyMetrics {
+  symbol?: string;
+  returnOnEquityTTM?: number;
+  [key: string]: number | string | undefined;
+}
+
 /** /stable/financial-growth response */
 export interface FmpGrowth {
   symbol?: string;
@@ -313,7 +320,8 @@ export function buildStockMetrics(
   screener: FmpScreenerResult,
   ratios?: FmpRatios,
   growth?: FmpGrowth,
-  quote?: FmpTechnical
+  quote?: FmpTechnical,
+  keyMetrics?: FmpKeyMetrics
 ): StockMetrics {
   const price = screener.price || 0;
   const priceVs50 = quote?.priceAvg50 != null
@@ -339,8 +347,8 @@ export function buildStockMetrics(
   // Get D/E from either field name
   const debtToEquity = numOrNull(ratios?.debtEquityRatioTTM ?? ratios?.debtToEquityRatioTTM);
 
-  // Get ROE — FMP may use returnOnEquityTTM or roeTTM
-  const rawRoe = ratios?.returnOnEquityTTM ?? ratios?.roeTTM;
+  // Get ROE from keyMetrics if available, fallback to ratios
+  const rawRoe = keyMetrics?.returnOnEquityTTM ?? ratios?.returnOnEquityTTM ?? ratios?.roeTTM;
 
   return {
     symbol: screener.symbol,
