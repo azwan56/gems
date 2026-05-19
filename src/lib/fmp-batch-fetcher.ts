@@ -25,7 +25,7 @@ import {
 
 const FMP_STABLE_URL = "https://financialmodelingprep.com/stable";
 const PARALLEL = 10;
-const BATCH_DELAY_MS = 1200; // 1.2s between batches to respect per-minute rate limits
+const BATCH_DELAY_MS = 2500; // 2.5s between batches to respect 300/min rate limits
 
 function sleep(ms: number) { return new Promise(r => setTimeout(r, ms)); }
 
