@@ -32,7 +32,7 @@ export interface StockMetrics {
 }
 
 /** The strategy types supported by the MVP */
-export type StrategyType = "value" | "large_growth" | "small_growth";
+export type StrategyType = "value" | "large_growth" | "small_growth" | "seeking_alpha";
 
 /** A single filter criterion for screening */
 export interface FilterCriterion {

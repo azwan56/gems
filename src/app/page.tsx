@@ -1,6 +1,6 @@
 "use client";
 
-import { ShieldCheck, TrendingUp, Activity, Gem, Rocket, Languages } from "lucide-react";
+import { ShieldCheck, TrendingUp, Activity, Gem, Rocket, Languages, BookOpen } from "lucide-react";
 import Link from "next/link";
 import { useLanguage } from "@/lib/language-context";
 
@@ -44,6 +44,20 @@ const strategies = [
     metrics: [
       { label: "Market Cap", value: "< $10B" },
       { label: "Rev Growth", value: "> 30%" },
+      { label: "Momentum", value: "vs 50SMA > 0" },
+    ],
+  },
+  {
+    id: "seeking_alpha",
+    name: "Seeking Alpha Picks",
+    nameZh: "Seeking Alpha 精选",
+    description: "Curated stock list imported from Seeking Alpha. Same growth screening logic as Small/Mid-Cap with a custom watchlist you manage.",
+    descriptionZh: "从 Seeking Alpha 导入的自选股清单。使用与中小盘成长股一致的选股逻辑，可手工添加管理标的。",
+    icon: BookOpen,
+    color: "amber",
+    metrics: [
+      { label: "Source", value: "Seeking Alpha" },
+      { label: "Rev Growth", value: "> 20%" },
       { label: "Momentum", value: "vs 50SMA > 0" },
     ],
   },
@@ -119,12 +133,13 @@ export default function Home() {
         </div>
 
         {/* Strategy Cards */}
-        <div className="grid md:grid-cols-3 gap-6 w-full max-w-[1400px]">
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 w-full max-w-[1400px]">
           {strategies.map((strategy) => {
             const Icon = strategy.icon;
             const colorClass =
               strategy.color === "blue" ? "text-blue-400 border-blue-500 bg-blue-500" :
               strategy.color === "indigo" ? "text-indigo-400 border-indigo-500 bg-indigo-500" :
+              strategy.color === "amber" ? "text-amber-400 border-amber-500 bg-amber-500" :
               "text-purple-400 border-purple-500 bg-purple-500";
 
             return (

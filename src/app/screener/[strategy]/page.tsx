@@ -7,7 +7,7 @@ import {
   Gem, ArrowLeft, Star, Activity, BrainCircuit, LineChart, 
   ChevronRight, CheckCircle2, AlertCircle, Loader2, Play,
   FileText, X, Target, ShieldAlert, Zap, TrendingUp, Users, Languages,
-  RefreshCw, Database, Cloud
+  RefreshCw, Database, Cloud, BookOpen, Plus, Trash2
 } from "lucide-react";
 import type { StockMetrics, FilterCriterion, ScreenerResponse, StrategyType } from "@/lib/types";
 import type { StockAnalysisReport } from "@/lib/analysis-engine";
@@ -51,6 +51,60 @@ export default function FunnelScreenerPage() {
   const [analyzingStock, setAnalyzingStock] = useState<StockMetrics | null>(null);
   const [analysisReport, setAnalysisReport] = useState<StockAnalysisReport | null>(null);
   const [analysisLoading, setAnalysisLoading] = useState(false);
+
+  // Seeking Alpha custom list management
+  const [saSymbols, setSaSymbols] = useState<string[]>([]);
+  const [saInput, setSaInput] = useState("");
+  const [saLoading, setSaLoading] = useState(false);
+  const isSA = strategyId === "seeking_alpha";
+
+  // Load SA list on mount if strategy is seeking_alpha
+  useEffect(() => {
+    if (!isSA) return;
+    fetch("/api/seeking-alpha")
+      .then((r) => r.json())
+      .then((d) => setSaSymbols(d.symbols || []))
+      .catch(() => {});
+  }, [isSA]);
+
+  const addSASymbols = async () => {
+    const raw = saInput.toUpperCase().trim();
+    if (!raw) return;
+    // Support comma, space, or newline separated
+    const newSymbols = raw.split(/[,\s\n]+/).map((s) => s.trim()).filter(Boolean);
+    if (newSymbols.length === 0) return;
+    setSaLoading(true);
+    try {
+      const res = await fetch("/api/seeking-alpha", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ symbols: newSymbols }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setSaSymbols(data.symbols || []);
+        setSaInput("");
+        // Re-run screener
+        await fetchStocks();
+      }
+    } catch { /* ignore */ }
+    setSaLoading(false);
+  };
+
+  const removeSASymbol = async (symbol: string) => {
+    try {
+      const res = await fetch("/api/seeking-alpha", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ symbol }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setSaSymbols(data.symbols || []);
+        await fetchStocks();
+      }
+    } catch { /* ignore */ }
+  };
 
   const openAnalysis = async (stock: StockMetrics) => {
     setAnalyzingStock(stock);
@@ -234,6 +288,78 @@ export default function FunnelScreenerPage() {
               {/* STEP 1: QUANTITATIVE */}
               {currentStep === 1 && (
                 <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                  {/* Seeking Alpha Custom List Management */}
+                  {isSA && (
+                    <div className="mb-4 rounded-xl border border-amber-500/20 bg-gradient-to-br from-amber-900/10 to-amber-800/5 p-5">
+                      <div className="flex items-center gap-2 mb-3">
+                        <BookOpen className="w-4.5 h-4.5 text-amber-400" />
+                        <h3 className="text-sm font-bold text-amber-300 uppercase tracking-wider">
+                          {t("Seeking Alpha Custom List", "Seeking Alpha 自选清单")}
+                        </h3>
+                        <span className="ml-auto text-xs text-slate-500 font-mono">
+                          {saSymbols.length} {t("symbols", "只标的")}
+                        </span>
+                      </div>
+
+                      {/* Current symbols */}
+                      {saSymbols.length > 0 && (
+                        <div className="flex flex-wrap gap-2 mb-3">
+                          {saSymbols.map((sym) => (
+                            <span
+                              key={sym}
+                              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-800/80 border border-slate-700 text-xs font-mono text-slate-300 hover:border-red-500/40 group transition-colors"
+                            >
+                              {sym}
+                              <button
+                                onClick={() => removeSASymbol(sym)}
+                                className="text-slate-600 hover:text-red-400 transition-colors"
+                                title={t("Remove", "移除")}
+                              >
+                                <X className="w-3 h-3" />
+                              </button>
+                            </span>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Add symbols input */}
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={saInput}
+                          onChange={(e) => setSaInput(e.target.value)}
+                          onKeyDown={(e) => e.key === "Enter" && addSASymbols()}
+                          placeholder={t(
+                            "Add symbols (e.g. PLTR, DDOG, ZS)",
+                            "添加标的（如 PLTR, DDOG, ZS）"
+                          )}
+                          className="flex-1 px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-sm text-white placeholder:text-slate-600 outline-none focus:border-amber-500/50 transition-colors"
+                        />
+                        <button
+                          onClick={addSASymbols}
+                          disabled={saLoading || !saInput.trim()}
+                          className="px-4 py-2 rounded-lg bg-amber-600 hover:bg-amber-500 disabled:bg-slate-800 disabled:text-slate-600 text-white text-sm font-semibold flex items-center gap-1.5 transition-colors"
+                        >
+                          {saLoading ? (
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          ) : (
+                            <Plus className="w-3.5 h-3.5" />
+                          )}
+                          {t("Add", "添加")}
+                        </button>
+                      </div>
+
+                      {saSymbols.length === 0 && (
+                        <p className="mt-3 text-xs text-slate-500 text-center py-2">
+                          {t(
+                            "No symbols added yet. Add symbols above to start screening.",
+                            "尚未添加标的。在上方输入股票代码开始筛选。"
+                          )}
+                        </p>
+                      )}
+                    </div>
+                  )}
+
                   {/* Data source indicator */}
                   <div className="flex items-center gap-3 mb-4 px-4 py-2.5 rounded-lg bg-slate-900/80 border border-slate-800 text-xs">
                     {dataSource === "fmp" ? (

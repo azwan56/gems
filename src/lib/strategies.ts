@@ -60,6 +60,23 @@ export const STRATEGY_PRESETS: Record<string, StrategyPreset> = {
       { field: "priceVs50SMA", operator: "gt", value: 0 },           // Positive momentum
     ],
   },
+  seeking_alpha: {
+    id: "seeking_alpha",
+    name: "Seeking Alpha Picks",
+    nameZh: "Seeking Alpha 精选",
+    description:
+      "A curated stock list imported from Seeking Alpha. Applies the same growth-oriented screening logic as Small/Mid-Cap Growth to a custom symbol list you manage.",
+    descriptionZh:
+      "从 Seeking Alpha 导入的自选股清单。使用与中小盘成长股一致的选股逻辑进行筛选，可手工添加和管理标的。",
+    icon: "BookOpen",
+    color: "amber",
+    defaultFilters: [
+      { field: "marketCap", operator: "lt", value: 50_000_000_000 },
+      { field: "marketCap", operator: "gt", value: 300_000_000 },
+      { field: "revenueGrowthYoY", operator: "gt", value: 20 },
+      { field: "priceVs50SMA", operator: "gt", value: 0 },
+    ],
+  },
 };
 
 /** Returns the preset for a given strategy type, or undefined */
