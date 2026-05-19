@@ -7,15 +7,14 @@
 
 import { useState, useRef, useEffect } from "react";
 import { LogIn, LogOut, Crown, User, ChevronDown } from "lucide-react";
-import { useAuth, type UserTier } from "@/lib/auth-context";
+import { useAuth, type PlanType } from "@/lib/auth-context";
 import { useLanguage } from "@/lib/language-context";
 import AuthModal from "./AuthModal";
 
-const TIER_BADGE: Record<UserTier, { label: string; labelZh: string; bg: string; text: string }> = {
-  free: { label: "Free", labelZh: "免费", bg: "bg-slate-700", text: "text-slate-300" },
-  premium: { label: "Premium", labelZh: "高级", bg: "bg-blue-500/20", text: "text-blue-400" },
-  elite: { label: "Elite", labelZh: "精英", bg: "bg-purple-500/20", text: "text-purple-400" },
-  super_elite: { label: "Super Elite", labelZh: "超级精英", bg: "bg-amber-500/20", text: "text-amber-400" },
+const PLAN_BADGE: Record<PlanType, { label: string; labelZh: string; bg: string; text: string }> = {
+  trial: { label: "Trial", labelZh: "试用", bg: "bg-slate-700", text: "text-slate-300" },
+  paid: { label: "Paid", labelZh: "付费", bg: "bg-blue-500/20", text: "text-blue-400" },
+  super: { label: "Super", labelZh: "超级", bg: "bg-amber-500/20", text: "text-amber-400" },
 };
 
 export default function UserMenu() {
@@ -60,7 +59,7 @@ export default function UserMenu() {
   }
 
   // Logged in — show avatar + dropdown
-  const tierBadge = TIER_BADGE[user.tier];
+  const planBadge = PLAN_BADGE[user.planType];
   const initials = (user.displayName || user.email || "U")
     .charAt(0)
     .toUpperCase();
@@ -85,8 +84,8 @@ export default function UserMenu() {
         <span className="text-sm text-slate-300 font-medium hidden sm:inline max-w-[120px] truncate">
           {user.displayName || user.email}
         </span>
-        <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${tierBadge.bg} ${tierBadge.text}`}>
-          {t(tierBadge.label, tierBadge.labelZh)}
+        <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${planBadge.bg} ${planBadge.text}`}>
+          {t(planBadge.label, planBadge.labelZh)}
         </span>
         <ChevronDown className="w-3.5 h-3.5 text-slate-500" />
       </button>
@@ -102,15 +101,20 @@ export default function UserMenu() {
             <p className="text-xs text-slate-500 truncate">{user.email}</p>
           </div>
 
-          {/* Tier info */}
+          {/* Plan info */}
           <div className="px-4 py-3 border-b border-slate-800 flex items-center gap-2">
-            <Crown className={`w-4 h-4 ${tierBadge.text}`} />
+            <Crown className={`w-4 h-4 ${planBadge.text}`} />
             <span className="text-sm text-slate-400">
               {t("Plan:", "计划：")}
             </span>
-            <span className={`text-sm font-bold ${tierBadge.text}`}>
-              {t(tierBadge.label, tierBadge.labelZh)}
+            <span className={`text-sm font-bold ${planBadge.text}`}>
+              {t(planBadge.label, planBadge.labelZh)}
             </span>
+            {user.isExpired && (
+              <span className="text-[10px] text-red-400 bg-red-500/10 px-1.5 py-0.5 rounded">
+                {t("Expired", "已过期")}
+              </span>
+            )}
           </div>
 
           {/* Actions */}

@@ -21,18 +21,22 @@ import { getClientAuth, getClientDb } from "./firebase-client";
 
 // ---- Types ----
 
-export type UserTier = "free" | "premium" | "elite" | "super_elite";
+/** Maps to DailyStock's `plan_type` field in Firestore `users` collection */
+export type PlanType = "trial" | "paid" | "super";
 
 export interface UserProfile {
   uid: string;
   email: string | null;
   displayName: string | null;
   photoURL: string | null;
-  tier: UserTier;
-  /** Whether the user has premium access (premium, elite, super_elite) */
+  /** DailyStock plan type: trial, paid, super */
+  planType: PlanType;
+  /** Whether the user has paid access (paid or super) */
   isPremium: boolean;
-  /** Source platform where the user first registered */
-  registeredFrom?: string;
+  /** Plan expiry date string (YYYY-MM-DD) */
+  planEndDate?: string;
+  /** Whether the plan has expired */
+  isExpired: boolean;
 }
 
 interface AuthContextValue {
@@ -51,12 +55,24 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
-// ---- Premium tiers ----
+// ---- Premium check ----
 
-const PREMIUM_TIERS: UserTier[] = ["premium", "elite", "super_elite"];
+/** paid and super users have premium access */
+const PREMIUM_PLANS: PlanType[] = ["paid", "super"];
 
-function isTierPremium(tier: UserTier): boolean {
-  return PREMIUM_TIERS.includes(tier);
+function isPlanPremium(planType: PlanType, planEndDate?: string): { isPremium: boolean; isExpired: boolean } {
+  if (!PREMIUM_PLANS.includes(planType)) {
+    return { isPremium: false, isExpired: false };
+  }
+  // Check expiry
+  if (planEndDate) {
+    const expiry = new Date(planEndDate);
+    const now = new Date();
+    if (expiry < now) {
+      return { isPremium: false, isExpired: true };
+    }
+  }
+  return { isPremium: true, isExpired: false };
 }
 
 // ---- Provider ----
@@ -75,28 +91,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     if (snap.exists()) {
       const data = snap.data();
-      const tier = (data.tier as UserTier) || "free";
+      // DailyStock uses `plan_type` field with values: trial, paid, super
+      const planType = (data.plan_type as PlanType) || "trial";
+      const planEndDate = data.plan_end_date as string | undefined;
+      const { isPremium, isExpired } = isPlanPremium(planType, planEndDate);
+
       return {
         uid: fbUser.uid,
         email: fbUser.email,
         displayName: fbUser.displayName || data.displayName || null,
         photoURL: fbUser.photoURL || data.photoURL || null,
-        tier,
-        isPremium: isTierPremium(tier),
-        registeredFrom: data.registeredFrom,
+        planType,
+        isPremium,
+        planEndDate,
+        isExpired,
       };
     }
 
-    // New user — create profile (registered from Gems)
+    // New user from Gems — create profile matching DailyStock schema
+    const now = new Date();
+    const trialEnd = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000); // 30 days trial
+    const planEndDate = trialEnd.toISOString().split("T")[0];
+
     const newProfile = {
-      uid: fbUser.uid,
       email: fbUser.email,
-      displayName: fbUser.displayName,
-      photoURL: fbUser.photoURL,
-      tier: "free" as UserTier,
-      registeredFrom: "gems",
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
+      plan_type: "trial",
+      plan_end_date: planEndDate,
+      language: "zh-CN",
+      timezone: "Asia/Shanghai",
+      watchlist: [],
+      created_at: serverTimestamp(),
     };
     await setDoc(userRef, newProfile, { merge: true });
 
@@ -105,9 +129,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       email: fbUser.email,
       displayName: fbUser.displayName,
       photoURL: fbUser.photoURL,
-      tier: "free",
+      planType: "trial",
       isPremium: false,
-      registeredFrom: "gems",
+      planEndDate,
+      isExpired: false,
     };
   }, []);
 

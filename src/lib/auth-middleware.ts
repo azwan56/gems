@@ -1,6 +1,8 @@
 // ============================================================
 // Server-side Auth Middleware — verifies Firebase ID tokens
 // on API routes. Uses firebase-admin (already configured).
+// Reads `plan_type` and `plan_end_date` from Firestore `users`
+// collection (shared with DailyStock platform).
 // ============================================================
 
 import { NextRequest, NextResponse } from "next/server";
@@ -8,19 +10,22 @@ import { getDb } from "./firebase";
 
 // ---- Types ----
 
+export type PlanType = "trial" | "paid" | "super";
+
 export interface AuthenticatedUser {
   uid: string;
   email?: string;
-  tier: string;
+  planType: PlanType;
   isPremium: boolean;
+  isExpired: boolean;
 }
 
 type AuthResult =
   | { success: true; user: AuthenticatedUser }
   | { success: false; response: NextResponse };
 
-// Premium tiers that have access to Gems features
-const PREMIUM_TIERS = ["premium", "elite", "super_elite"];
+// paid and super users have premium access
+const PREMIUM_PLANS: PlanType[] = ["paid", "super"];
 
 // ---- Token Verification ----
 
@@ -49,20 +54,27 @@ export async function verifyAuth(request: NextRequest): Promise<AuthResult> {
     const decodedToken = await getAuth().verifyIdToken(idToken);
     const uid = decodedToken.uid;
 
-    // Fetch user tier from Firestore
+    // Fetch user plan from Firestore (DailyStock schema)
     const db = getDb();
     const userDoc = await db.collection("users").doc(uid).get();
     const userData = userDoc.data();
-    const tier = userData?.tier || "free";
+    const planType = (userData?.plan_type as PlanType) || "trial";
+    const planEndDate = userData?.plan_end_date as string | undefined;
+
+    // Check if plan is premium and not expired
+    let isPremium = PREMIUM_PLANS.includes(planType);
+    let isExpired = false;
+    if (isPremium && planEndDate) {
+      const expiry = new Date(planEndDate);
+      if (expiry < new Date()) {
+        isPremium = false;
+        isExpired = true;
+      }
+    }
 
     return {
       success: true,
-      user: {
-        uid,
-        email: decodedToken.email,
-        tier,
-        isPremium: PREMIUM_TIERS.includes(tier),
-      },
+      user: { uid, email: decodedToken.email, planType, isPremium, isExpired },
     };
   } catch (error) {
     console.error("Token verification failed:", error);
@@ -77,7 +89,7 @@ export async function verifyAuth(request: NextRequest): Promise<AuthResult> {
 }
 
 /**
- * Verify auth AND require premium tier.
+ * Verify auth AND require premium plan (paid or super).
  * Returns the authenticated premium user or an error response.
  */
 export async function requirePremium(request: NextRequest): Promise<AuthResult> {
@@ -86,13 +98,14 @@ export async function requirePremium(request: NextRequest): Promise<AuthResult> 
   if (!authResult.success) return authResult;
 
   if (!authResult.user.isPremium) {
+    const message = authResult.user.isExpired
+      ? "Your premium plan has expired. Please renew to continue using this feature."
+      : "This feature requires a paid subscription. Please upgrade your plan.";
+
     return {
       success: false,
       response: NextResponse.json(
-        {
-          error: "PREMIUM_REQUIRED",
-          message: "This feature requires a premium subscription. Please upgrade your plan.",
-        },
+        { error: "PREMIUM_REQUIRED", message },
         { status: 403 }
       ),
     };
@@ -100,3 +113,4 @@ export async function requirePremium(request: NextRequest): Promise<AuthResult> 
 
   return authResult;
 }
+
