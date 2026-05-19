@@ -21,6 +21,7 @@ export interface StockAnalysisReport {
   products: string;
   rationale: string[];
   risks: string[];
+  positionSuggestion: string;
   analyst: AnalystConsensus;
 }
 
@@ -134,6 +135,12 @@ export function generateAnalysis(
     ],
   };
 
+  const positionSuggestionMap: Record<string, string> = {
+    value: "Consider building a full position (5-8%) on weakness. Maintain a medium-to-long term holding horizon to allow for mean reversion.",
+    large_growth: "Core portfolio holding. Target 8-12% weight. Accumulate via dollar-cost averaging on broader market pullbacks.",
+    small_growth: "Speculative position. Cap weight at 2-4%. Implement trailing stop losses to manage downside volatility.",
+  };
+
   const consensusOptions: AnalystConsensus["consensus"][] = ["Strong Buy", "Buy", "Hold"];
 
   return {
@@ -143,6 +150,7 @@ export function generateAnalysis(
     products: productsMap[strategyType] ?? productsMap.large_growth,
     rationale: rationaleMap[strategyType] ?? rationaleMap.large_growth,
     risks: risksMap[strategyType] ?? risksMap.large_growth,
+    positionSuggestion: positionSuggestionMap[strategyType] ?? positionSuggestionMap.large_growth,
     analyst: {
       consensus: consensusOptions[seed % consensusOptions.length],
       targetPrice: `$${targetPrice}`,

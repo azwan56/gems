@@ -46,6 +46,7 @@ Rules for fields:
 - products: A paragraph explaining their core revenue drivers and product/service ecosystem.
 - rationale: Array of 3 specific reasons to buy or hold this stock right now.
 - risks: Array of 3 specific risks (macro, competitive, or execution).
+- positionSuggestion: A short paragraph (1-2 sentences) giving specific sizing or holding horizon advice (持仓建议).
 - analyst.consensus: Must be exactly one of: "Strong Buy", "Buy", "Hold", "Sell", "Strong Sell".
 - analyst.targetPrice: Estimate a realistic 12-month target price formatted as "$X.XX".
 - analyst.upside: Calculate the percentage upside to your target price formatted as "+X.X%" or "-X.X%".
@@ -67,6 +68,7 @@ Rules for fields:
           products: { type: Type.STRING },
           rationale: { type: Type.ARRAY, items: { type: Type.STRING } },
           risks: { type: Type.ARRAY, items: { type: Type.STRING } },
+          positionSuggestion: { type: Type.STRING },
           analyst: {
             type: Type.OBJECT,
             properties: {
@@ -93,6 +95,7 @@ Rules for fields:
           "products",
           "rationale",
           "risks",
+          "positionSuggestion",
           "analyst",
         ],
       },

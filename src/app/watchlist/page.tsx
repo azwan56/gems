@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Gem, ArrowLeft, StarOff, Trash2, Shield, Sword, Rocket, CircleDollarSign, RefreshCcw, AlertTriangle, HelpCircle, ChevronDown, Languages } from "lucide-react";
+import { Gem, ArrowLeft, StarOff, Trash2, Shield, Sword, Rocket, CircleDollarSign, RefreshCcw, AlertTriangle, HelpCircle, ChevronDown, Languages, X, Loader2, FileText, CheckCircle2, Target } from "lucide-react";
 import type { WatchlistItem } from "@/lib/types";
+import type { StockAnalysisReport } from "@/lib/analysis-engine";
 import { useLanguage } from "@/lib/language-context";
 
 type RoleKey = "anchor" | "striker" | "rocket" | "core_dividend" | "turnaround" | "special_situation" | "unassigned";
@@ -25,6 +26,10 @@ export default function WatchlistPage() {
 
   const [watchlist, setWatchlist] = useState<WatchlistItem[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const [selectedReport, setSelectedReport] = useState<string | null>(null);
+  const [reportData, setReportData] = useState<StockAnalysisReport | null>(null);
+  const [reportLoading, setReportLoading] = useState(false);
 
   useEffect(() => {
     fetchWatchlist();
@@ -71,6 +76,30 @@ export default function WatchlistPage() {
     }
   };
 
+  const viewReport = async (item: WatchlistItem) => {
+    setSelectedReport(item.symbol);
+    setReportLoading(true);
+    setReportData(null);
+    try {
+      // Find strategy from role if possible, fallback to large_growth
+      let strategy = "large_growth";
+      if (item.role) {
+        if (["core_dividend", "turnaround", "special_situation"].includes(item.role)) {
+          strategy = "value";
+        } else if (item.role === "rocket") {
+          strategy = "small_growth";
+        }
+      }
+      
+      const res = await fetch(`/api/analysis?symbol=${item.symbol}&strategy=${strategy}&lang=${lang}`);
+      if (res.ok) {
+        const data = await res.json();
+        setReportData(data.report);
+      }
+    } catch { /* ignore */ }
+    setReportLoading(false);
+  };
+
   // Group items
   const grouped = watchlist.reduce((acc, item) => {
     const role = item.role || "unassigned";
@@ -90,13 +119,22 @@ export default function WatchlistPage() {
           <h3 className="text-xl font-bold text-white">{item.symbol}</h3>
           <p className="text-xs text-slate-500 mt-1">{t("Added", "添加于")} {new Date(item.addedAt).toLocaleDateString()}</p>
         </div>
-        <button
-          onClick={() => removeItem(item.symbol)}
-          className="p-1.5 rounded-lg text-slate-500 hover:text-red-400 hover:bg-red-500/10 transition-colors opacity-0 group-hover:opacity-100"
-          title={t("Remove from portfolio", "从投资组合中移除")}
-        >
-          <Trash2 className="w-4 h-4" />
-        </button>
+        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          <button
+            onClick={() => viewReport(item)}
+            className="p-1.5 rounded-lg text-slate-400 hover:text-blue-400 hover:bg-blue-500/10 transition-colors"
+            title={t("View Full Analysis", "查看完整报告")}
+          >
+            <FileText className="w-4 h-4" />
+          </button>
+          <button
+            onClick={() => removeItem(item.symbol)}
+            className="p-1.5 rounded-lg text-slate-400 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+            title={t("Remove from portfolio", "从投资组合中移除")}
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
+        </div>
       </div>
 
       <div className="relative mt-2">
@@ -242,6 +280,118 @@ export default function WatchlistPage() {
           )}
         </div>
       </div>
+
+      {/* Report Modal */}
+      {selectedReport && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-2xl max-h-[85vh] overflow-hidden flex flex-col shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+            <div className="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-800/50">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-blue-500/20 text-blue-400 rounded-lg">
+                  <FileText className="w-5 h-5" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-bold text-white">{selectedReport} {t("Analysis Report", "分析报告")}</h2>
+                </div>
+              </div>
+              <button onClick={() => setSelectedReport(null)} className="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl transition-colors">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <div className="p-6 overflow-y-auto flex-1 custom-scrollbar">
+              {reportLoading ? (
+                <div className="flex flex-col items-center justify-center py-20 text-slate-400">
+                  <Loader2 className="w-8 h-8 animate-spin mb-4 text-blue-500" />
+                  <p>{t("Generating complete analysis...", "正在生成完整分析报告...")}</p>
+                </div>
+              ) : reportData ? (
+                <div className="space-y-6">
+                  {/* Consensus & Target */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="p-4 rounded-xl bg-slate-800/50 border border-slate-700">
+                      <div className="text-sm text-slate-400 mb-1">{t("Analyst Consensus", "市场共识")}</div>
+                      <div className={`text-xl font-bold ${reportData.analyst.consensus.includes("Buy") ? "text-emerald-400" : reportData.analyst.consensus.includes("Sell") ? "text-red-400" : "text-amber-400"}`}>
+                        {reportData.analyst.consensus}
+                      </div>
+                      <div className="text-xs text-slate-500 mt-2 flex gap-3">
+                        <span className="text-emerald-400/80">{reportData.analyst.breakdown.buy} {t("Buy", "买入")}</span>
+                        <span className="text-amber-400/80">{reportData.analyst.breakdown.hold} {t("Hold", "持有")}</span>
+                        <span className="text-red-400/80">{reportData.analyst.breakdown.sell} {t("Sell", "卖出")}</span>
+                      </div>
+                    </div>
+                    <div className="p-4 rounded-xl bg-slate-800/50 border border-slate-700">
+                      <div className="text-sm text-slate-400 mb-1">{t("Target Price (12m)", "12个月目标价")}</div>
+                      <div className="text-xl font-bold text-white">{reportData.analyst.targetPrice}</div>
+                      <div className={`text-sm mt-1 ${reportData.analyst.upside.startsWith("+") ? "text-emerald-400" : "text-red-400"}`}>
+                        {reportData.analyst.upside} {t("Upside", "上涨空间")}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Position Suggestion */}
+                  {reportData.positionSuggestion && (
+                    <div>
+                      <h3 className="text-sm font-bold text-slate-300 mb-2 flex items-center gap-2">
+                        <Target className="w-4 h-4 text-blue-400" /> {t("Position Suggestion", "持仓建议")}
+                      </h3>
+                      <div className="p-4 bg-blue-900/10 border border-blue-500/20 rounded-xl text-blue-200 text-sm leading-relaxed">
+                        {reportData.positionSuggestion}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Basic Info */}
+                  <div>
+                    <h3 className="text-sm font-bold text-slate-300 mb-2">{t("Overview", "业务概览")}</h3>
+                    <p className="text-sm text-slate-400 leading-relaxed bg-slate-800/30 p-4 rounded-xl border border-slate-800">{reportData.overview}</p>
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-slate-300 mb-2">{t("Fundamentals", "基本面分析")}</h3>
+                    <p className="text-sm text-slate-400 leading-relaxed bg-slate-800/30 p-4 rounded-xl border border-slate-800">{reportData.fundamentals}</p>
+                  </div>
+
+                  {/* Bullish & Risks */}
+                  <div className="grid grid-cols-2 gap-6">
+                    <div>
+                      <h3 className="text-sm font-bold text-emerald-400 mb-3 flex items-center gap-2">
+                        <CheckCircle2 className="w-4 h-4" /> {t("Bullish Rationale", "看多理由")}
+                      </h3>
+                      <ul className="space-y-3">
+                        {reportData.rationale.map((r, i) => (
+                          <li key={i} className="text-sm text-slate-400 flex gap-2">
+                            <span className="text-emerald-500 mt-0.5">•</span>
+                            <span className="leading-relaxed">{r}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-bold text-red-400 mb-3 flex items-center gap-2">
+                        <AlertTriangle className="w-4 h-4" /> {t("Key Risks", "核心风险")}
+                      </h3>
+                      <ul className="space-y-3">
+                        {reportData.risks.map((r, i) => (
+                          <li key={i} className="text-sm text-slate-400 flex gap-2">
+                            <span className="text-red-500 mt-0.5">•</span>
+                            <span className="leading-relaxed">{r}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-20 text-center">
+                  <AlertTriangle className="w-10 h-10 text-amber-500 mb-4" />
+                  <p className="text-slate-300">{t("Failed to load report", "无法加载分析报告")}</p>
+                  <p className="text-sm text-slate-500 mt-2">{t("Please try again later.", "请稍后再试。")}</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
