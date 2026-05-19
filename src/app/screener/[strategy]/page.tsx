@@ -7,7 +7,7 @@ import {
   Gem, ArrowLeft, Star, Activity, BrainCircuit, LineChart, 
   ChevronRight, CheckCircle2, AlertCircle, Loader2, Play,
   FileText, X, Target, ShieldAlert, Zap, TrendingUp, Users, Languages,
-  RefreshCw, Database, Cloud, BookOpen, Plus, Trash2
+  RefreshCw, Database, Cloud, BookOpen, Plus, Trash2, HelpCircle
 } from "lucide-react";
 import type { StockMetrics, FilterCriterion, ScreenerResponse, StrategyType } from "@/lib/types";
 import type { StockAnalysisReport } from "@/lib/analysis-engine";
@@ -198,22 +198,22 @@ export default function FunnelScreenerPage() {
 
   const step1Columns = useMemo(() => {
     if (isValue) return [
-      { key: "peRatio", label: t("P/E", "市盈率 (P/E)"), suffix: "x" },
-      { key: "pbRatio", label: t("P/B", "市净率 (P/B)"), suffix: "x" },
-      { key: "freeCashFlowYield", label: t("FCF Yield", "自由现金流收益率"), suffix: "%" },
-      { key: "dividendYield", label: t("Div Yield", "股息率"), suffix: "%" },
+      { key: "peRatio", label: t("P/E", "市盈率 (P/E)"), suffix: "x", desc: t("Price to Earnings ratio. A lower value may indicate undervaluation.", "市盈率：公司市值与净利润的比例，较低通常代表估值较便宜。") },
+      { key: "pbRatio", label: t("P/B", "市净率 (P/B)"), suffix: "x", desc: t("Price to Book ratio. Useful for valuing asset-heavy companies.", "市净率：公司市值与净资产的比例，常用于评估重资产公司。") },
+      { key: "freeCashFlowYield", label: t("FCF Yield", "自由现金流收益率"), suffix: "%", desc: t("Free cash flow per share divided by share price. Shows cash generation efficiency.", "自由现金流收益率：公司每股自由现金流与股价的比例，代表产生真实现金的能力。") },
+      { key: "dividendYield", label: t("Div Yield", "股息率"), suffix: "%", desc: t("Annual dividend compared to share price. Shows dividend return.", "股息率：年度分红与股价的比率，体现分红回报水平。") },
     ];
     if (isLarge) return [
-      { key: "revenueGrowthYoY", label: t("Rev Growth", "营收增长"), suffix: "%" },
-      { key: "epsGrowthYoY", label: t("EPS Growth", "EPS增长"), suffix: "%" },
-      { key: "freeCashFlowYield", label: t("FCF Yield", "自由现金流收益率"), suffix: "%" },
-      { key: "roe", label: t("ROE", "净资产收益率"), suffix: "%" },
+      { key: "revenueGrowthYoY", label: t("Rev Growth", "营收增长"), suffix: "%", desc: t("Revenue growth year-over-year. Indicates business expansion.", "营收增长：营业收入同比上一年的增长率，反映业务扩张速度。") },
+      { key: "epsGrowthYoY", label: t("EPS Growth", "EPS增长"), suffix: "%", desc: t("Earnings per share growth. Shows profitability growth.", "EPS增长：每股收益同比增长率，反映盈利增长速度。") },
+      { key: "freeCashFlowYield", label: t("FCF Yield", "自由现金流收益率"), suffix: "%", desc: t("Free cash flow per share divided by share price. Shows cash generation efficiency.", "自由现金流收益率：公司每股自由现金流与股价的比例，代表产生真实现金的能力。") },
+      { key: "roe", label: t("ROE", "净资产收益率"), suffix: "%", desc: t("Return on Equity. Measures profitability relative to shareholder's equity.", "净资产收益率：净利润与股东权益的比率，衡量资本运作效率。") },
     ];
     return [
-      { key: "revenueGrowthYoY", label: t("Rev Growth", "营收增长"), suffix: "%" },
-      { key: "epsGrowthYoY", label: t("EPS Growth", "EPS增长"), suffix: "%" },
-      { key: "pegRatio", label: t("PEG", "PEG比率"), suffix: "x" },
-      { key: "priceVs50SMA", label: t("vs 50SMA", "相对50日均线"), suffix: "%" },
+      { key: "revenueGrowthYoY", label: t("Rev Growth", "营收增长"), suffix: "%", desc: t("Revenue growth year-over-year. Indicates business expansion.", "营收增长：营业收入同比上一年的增长率，反映业务扩张速度。") },
+      { key: "epsGrowthYoY", label: t("EPS Growth", "EPS增长"), suffix: "%", desc: t("Earnings per share growth. Shows profitability growth.", "EPS增长：每股收益同比增长率，反映盈利增长速度。") },
+      { key: "pegRatio", label: t("PEG", "PEG比率"), suffix: "x", desc: t("P/E ratio divided by growth rate. A lower PEG suggests better value relative to growth.", "PEG比率：市盈率除以盈利增长率，综合考量估值与成长性。") },
+      { key: "priceVs50SMA", label: t("vs 50SMA", "相对50日均线"), suffix: "%", desc: t("Price relative to 50-day simple moving average. Positive means upward momentum.", "相对50日均线：当前股价高于过去50天平均价格的百分比，正值代表近期动量向上。") },
     ];
   }, [isValue, isLarge, t]);
 
@@ -408,7 +408,21 @@ export default function FunnelScreenerPage() {
                           <th className="p-4 font-semibold">{t("Symbol", "代码")}</th>
                           <th className="p-4 font-semibold">{t("Company", "公司")}</th>
                           <th className="p-4 font-semibold">{t("Market Cap", "市值")}</th>
-                          {step1Columns.map(c => <th key={c.key} className="p-4 font-semibold">{c.label}</th>)}
+                          {step1Columns.map(c => (
+                            <th key={c.key} className="p-4 font-semibold">
+                              <div className="flex items-center gap-1.5 group relative">
+                                {c.label}
+                                {c.desc && (
+                                  <>
+                                    <HelpCircle className="w-3.5 h-3.5 text-slate-500 hover:text-slate-300 cursor-help transition-colors" />
+                                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-2.5 bg-slate-800 text-slate-200 text-xs rounded-lg shadow-xl border border-slate-700 opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-10 font-normal leading-relaxed text-left">
+                                      {c.desc}
+                                    </div>
+                                  </>
+                                )}
+                              </div>
+                            </th>
+                          ))}
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-800/50">
