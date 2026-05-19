@@ -94,7 +94,7 @@ export async function POST(request: NextRequest) {
     console.log("[stock-pool] Starting FMP universe fetch...");
     const result = await fetchFullUniverse();
 
-    const hasRateLimitError = result.errors.some(e => e.includes("429") || e.toLowerCase().includes("limit reach"));
+    const hasRateLimitError = result.errors.some(e => e.includes("429") || e.includes("402") || e.toLowerCase().includes("limit reach"));
 
     if (result.stocks.length === 0 || hasRateLimitError) {
       console.log("[stock-pool] FMP API limit reached or fetch failed, falling back to mock data.");

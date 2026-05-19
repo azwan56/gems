@@ -1,13 +1,14 @@
 // ============================================================
-// FMP Universe Fetcher — for free tier (250 calls/day)
+// FMP Universe Fetcher — for Starter tier (10,000 calls/day)
 //
-// With ~80 stocks in the universe:
-//   Phase 1: /stable/quote     × 80 = 80 calls  → price, SMA, 52wk
-//   Phase 2: /stable/ratios-ttm × 80 = 80 calls → PE, PB, ROE, FCF
-//   Phase 3: /stable/financial-growth × 80 = 80 calls → rev/EPS growth
-//   Total: ~240 calls ✅ (well under 250/day)
+// With ~155 stocks in the universe:
+//   Phase 1: /stable/quote            × 155 → price, SMA, 52wk
+//   Phase 2: /stable/ratios-ttm       × 155 → PE, PB, FCF, margins
+//   Phase 3: /stable/financial-growth  × 155 → rev/EPS growth
+//   Phase 4: /stable/key-metrics-ttm  × 155 → ROE, ROIC, etc.
+//   Total: ~620 calls (well under 10,000/day)
 //
-// Uses 20-way parallelism → ~12s total execution time
+// Uses 30-way parallelism → ~20s total execution time
 // ============================================================
 
 import { StockMetrics } from "./types";
@@ -23,7 +24,10 @@ import {
 } from "./fmp-client";
 
 const FMP_STABLE_URL = "https://financialmodelingprep.com/stable";
-const PARALLEL = 20;
+const PARALLEL = 10;
+const BATCH_DELAY_MS = 1200; // 1.2s between batches to respect per-minute rate limits
+
+function sleep(ms: number) { return new Promise(r => setTimeout(r, ms)); }
 
 function getApiKey(): string {
   const key = process.env.FMP_API_KEY;
@@ -33,15 +37,25 @@ function getApiKey(): string {
 
 async function fmpGet<T>(
   endpoint: string,
-  params: Record<string, string> = {}
+  params: Record<string, string> = {},
+  retries = 3
 ): Promise<T> {
   const url = new URL(`${FMP_STABLE_URL}${endpoint}`);
   url.searchParams.set("apikey", getApiKey());
   for (const [k, v] of Object.entries(params)) url.searchParams.set(k, v);
 
-  const res = await fetch(url.toString());
-  if (!res.ok) throw new Error(`FMP ${res.status}: ${res.statusText}`);
-  return res.json() as Promise<T>;
+  for (let attempt = 0; attempt < retries; attempt++) {
+    const res = await fetch(url.toString());
+    if (res.ok) return res.json() as Promise<T>;
+    if (res.status === 429) {
+      const wait = (attempt + 1) * 3000;
+      console.log(`[FMP] Rate limited on ${endpoint}, retrying in ${wait/1000}s...`);
+      await sleep(wait);
+      continue;
+    }
+    throw new Error(`FMP ${res.status}: ${res.statusText}`);
+  }
+  throw new Error(`FMP 429: Rate Limited (after ${retries} retries)`);
 }
 
 export interface FetchResult {
@@ -76,6 +90,10 @@ async function parallelFetch<T>(
         errors.push(String(r.reason).slice(0, 120));
       }
     }
+    // Throttle between batches to respect per-minute rate limits
+    if (i + PARALLEL < symbols.length) {
+      await sleep(BATCH_DELAY_MS);
+    }
   }
   return { map: result, calls };
 }
@@ -105,24 +123,13 @@ export async function fetchFullUniverse(): Promise<FetchResult> {
   // Only proceed with symbols that have quote data
   const validSymbols = symbols.filter((s) => quoteMap.has(s.toUpperCase()));
 
-  // ---- Phase 2: Ratios → PE, PB, ROE, FCF yield, margins ----
+  // ---- Phase 2: Ratios → PE, PB, FCF yield, margins ----
   console.log(`[FMP] Phase 2: ratios for ${validSymbols.length} symbols...`);
-  let ratioDebugLogged = false;
   const { map: ratioMap, calls: ratioCalls } = await parallelFetch<FmpRatios>(
     validSymbols,
     async (symbol) => {
       const data = await fmpGet<FmpRatios[]>("/ratios-ttm", { symbol });
       if (!data?.[0]) return null;
-      // Log the first successful response to debug field names
-      if (!ratioDebugLogged) {
-        ratioDebugLogged = true;
-        const keys = Object.keys(data[0]);
-        const roeKeys = keys.filter(k => k.toLowerCase().includes('return') || k.toLowerCase().includes('roe') || k.toLowerCase().includes('equity'));
-        console.log(`[FMP] Ratios sample keys for ${symbol}:`, keys.join(', '));
-        console.log(`[FMP] ROE-related keys:`, roeKeys.join(', ') || 'NONE FOUND');
-        console.log(`[FMP] returnOnEquityTTM value:`, data[0].returnOnEquityTTM);
-        console.log(`[FMP] roeTTM value:`, data[0].roeTTM);
-      }
       return { key: symbol.toUpperCase(), value: data[0] };
     },
     errors
@@ -147,7 +154,7 @@ export async function fetchFullUniverse(): Promise<FetchResult> {
   totalCalls += growthCalls;
   console.log(`[FMP] Phase 3 done: ${growthMap.size} growth (${growthCalls} calls)`);
 
-  // ---- Phase 4: Key Metrics → ROE ----
+  // ---- Phase 4: Key Metrics → ROE, ROIC ----
   console.log(`[FMP] Phase 4: key metrics for ${validSymbols.length} symbols...`);
   const { map: keyMetricsMap, calls: keyMetricsCalls } = await parallelFetch<FmpKeyMetrics>(
     validSymbols,

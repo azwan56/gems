@@ -1,7 +1,14 @@
+// ============================================================
+// Local incremental FMP data fetch script
+// Reads .env, connects to Firestore, fetches all missing data
+// Usage: npx tsx fetch-missing.ts
+// ============================================================
+
 import { getApps, initializeApp, cert } from "firebase-admin/app";
 import { getFirestore } from "firebase-admin/firestore";
 import fs from "fs";
 
+// Load environment variables from .env file
 const envContent = fs.readFileSync(".env", "utf-8");
 envContent.split("\n").forEach(line => {
   const match = line.match(/^([^=]+)=(.*)$/);
@@ -11,92 +18,35 @@ envContent.split("\n").forEach(line => {
 });
 
 const FMP_STABLE_URL = "https://financialmodelingprep.com/stable";
+const PARALLEL = 10;
+const BATCH_DELAY_MS = 1200; // 1.2s between batches to avoid per-minute rate limits
 
-const UNIVERSE = [
-  "AAPL", "MSFT", "AMZN", "NVDA", "META", "GOOGL", "AVGO", "TSLA",
-  "NFLX", "ADBE", "AMD", "CRM", "ORCL", "INTU", "QCOM",
-  "ISRG", "AMAT", "PANW", "CRWD", "PLTR",
-  "BRK-B", "JPM", "V", "MA", "BAC", "GS", "MS", "AXP",
-  "JNJ", "PFE", "ABBV", "MRK", 
-  "XOM", "CVX",
-  "KO", "PG", "WMT", "MCD", "PM", "T",
-  "LLY", "UNH", "HD", "CAT", "LOW",
-  "AXON", "DDOG", "MDB", "ZS", "FTNT",
-  "COIN", "HOOD", "APP", "TTD", "SMCI", 
-  "CELH", "DUOL", "CAVA", "SOUN", "IONQ"
-];
+function sleep(ms: number) { return new Promise(r => setTimeout(r, ms)); }
 
-const SECTOR_MAP: Record<string, any> = {
-  AAPL: { sector: "Technology", industry: "Consumer Electronics" },
-  MSFT: { sector: "Technology", industry: "Software—Infrastructure" },
-  AMZN: { sector: "Consumer Cyclical", industry: "Internet Retail" },
-  NVDA: { sector: "Technology", industry: "Semiconductors" },
-  META: { sector: "Technology", industry: "Internet Content & Information" },
-  GOOGL: { sector: "Technology", industry: "Internet Content & Information" },
-  AVGO: { sector: "Technology", industry: "Semiconductors" },
-  TSLA: { sector: "Consumer Cyclical", industry: "Auto Manufacturers" },
-  NFLX: { sector: "Communication Services", industry: "Entertainment" },
-  ADBE: { sector: "Technology", industry: "Software—Application" },
-  AMD: { sector: "Technology", industry: "Semiconductors" },
-  CRM: { sector: "Technology", industry: "Software—Application" },
-  ORCL: { sector: "Technology", industry: "Software—Infrastructure" },
-  INTU: { sector: "Technology", industry: "Software—Application" },
-  QCOM: { sector: "Technology", industry: "Semiconductors" },
-  ISRG: { sector: "Healthcare", industry: "Medical Instruments" },
-  AMAT: { sector: "Technology", industry: "Semiconductor Equipment" },
-  PANW: { sector: "Technology", industry: "Software—Infrastructure" },
-  CRWD: { sector: "Technology", industry: "Software—Infrastructure" },
-  PLTR: { sector: "Technology", industry: "Software—Infrastructure" },
-  "BRK-B": { sector: "Financial Services", industry: "Insurance—Diversified" },
-  JPM: { sector: "Financial Services", industry: "Banks—Diversified" },
-  V: { sector: "Financial Services", industry: "Credit Services" },
-  MA: { sector: "Financial Services", industry: "Credit Services" },
-  BAC: { sector: "Financial Services", industry: "Banks—Diversified" },
-  GS: { sector: "Financial Services", industry: "Capital Markets" },
-  MS: { sector: "Financial Services", industry: "Capital Markets" },
-  AXP: { sector: "Financial Services", industry: "Credit Services" },
-  JNJ: { sector: "Healthcare", industry: "Drug Manufacturers" },
-  PFE: { sector: "Healthcare", industry: "Drug Manufacturers" },
-  ABBV: { sector: "Healthcare", industry: "Drug Manufacturers" },
-  MRK: { sector: "Healthcare", industry: "Drug Manufacturers" },
-  XOM: { sector: "Energy", industry: "Oil & Gas Integrated" },
-  CVX: { sector: "Energy", industry: "Oil & Gas Integrated" },
-  KO: { sector: "Consumer Defensive", industry: "Beverages" },
-  PG: { sector: "Consumer Defensive", industry: "Household Products" },
-  WMT: { sector: "Consumer Defensive", industry: "Discount Stores" },
-  MCD: { sector: "Consumer Cyclical", industry: "Restaurants" },
-  PM: { sector: "Consumer Defensive", industry: "Tobacco" },
-  T: { sector: "Communication Services", industry: "Telecom Services" },
-  LLY: { sector: "Healthcare", industry: "Drug Manufacturers" },
-  UNH: { sector: "Healthcare", industry: "Healthcare Plans" },
-  HD: { sector: "Consumer Cyclical", industry: "Home Improvement" },
-  CAT: { sector: "Industrials", industry: "Farm & Heavy Construction" },
-  LOW: { sector: "Consumer Cyclical", industry: "Home Improvement" },
-  AXON: { sector: "Industrials", industry: "Aerospace & Defense" },
-  DDOG: { sector: "Technology", industry: "Software—Application" },
-  MDB: { sector: "Technology", industry: "Software—Infrastructure" },
-  ZS: { sector: "Technology", industry: "Software—Infrastructure" },
-  FTNT: { sector: "Technology", industry: "Software—Infrastructure" },
-  COIN: { sector: "Financial Services", industry: "Financial Data" },
-  HOOD: { sector: "Financial Services", industry: "Capital Markets" },
-  APP: { sector: "Technology", industry: "Software—Application" },
-  TTD: { sector: "Technology", industry: "Software—Application" },
-  SMCI: { sector: "Technology", industry: "Computer Hardware" },
-  CELH: { sector: "Consumer Defensive", industry: "Beverages" },
-  DUOL: { sector: "Technology", industry: "Software—Application" },
-  CAVA: { sector: "Consumer Cyclical", industry: "Restaurants" },
-  SOUN: { sector: "Technology", industry: "Software—Application" },
-  IONQ: { sector: "Technology", industry: "Computer Hardware" }
-};
+// Import universe from the project source
+import { UNIVERSE } from "./src/lib/index-constituents";
 
-async function fmpGet(endpoint: string, symbol: string) {
-  const url = `${FMP_STABLE_URL}${endpoint}?symbol=${symbol}&limit=1&apikey=${process.env.FMP_API_KEY}`;
-  const res = await fetch(url);
-  if (!res.ok) {
+// Inline sector map for the script (matches sector-map.ts)
+import { getSectorInfo } from "./src/lib/sector-map";
+
+async function fmpGet(endpoint: string, params: Record<string, string> = {}, retries = 3): Promise<any> {
+  const url = new URL(`${FMP_STABLE_URL}${endpoint}`);
+  url.searchParams.set("apikey", process.env.FMP_API_KEY!);
+  for (const [k, v] of Object.entries(params)) url.searchParams.set(k, v);
+
+  for (let attempt = 0; attempt < retries; attempt++) {
+    const res = await fetch(url.toString());
+    if (res.ok) return res.json();
+    if (res.status === 429) {
+      const wait = (attempt + 1) * 3000; // 3s, 6s, 9s backoff
+      console.log(`  ⏳ Rate limited on ${endpoint} ${params.symbol || ''}, waiting ${wait/1000}s...`);
+      await sleep(wait);
+      continue;
+    }
     if (res.status === 402) throw new Error("FMP 402: Payment Required");
     throw new Error(`FMP Error: ${res.status}`);
   }
-  return res.json();
+  throw new Error("FMP 429: Rate Limited (after retries)");
 }
 
 function numOrNull(val: any) {
@@ -107,6 +57,62 @@ function toPercent(val: any) {
   return val != null ? val * 100 : null;
 }
 
+interface StockData {
+  symbol: string;
+  companyName: string;
+  sector: string;
+  industry: string;
+  marketCap: number;
+  price: number;
+  peRatio: number | null;
+  pbRatio: number | null;
+  freeCashFlowYield: number | null;
+  dividendYield: number | null;
+  currentRatio: number | null;
+  debtToEquity: number | null;
+  revenueGrowthYoY: number | null;
+  epsGrowthYoY: number | null;
+  pegRatio: number | null;
+  roe: number | null;
+  grossMargin: number | null;
+  netMargin: number | null;
+  priceVs50SMA: number | null;
+  priceVs200SMA: number | null;
+  fiftyTwoWeekHigh: number | null;
+  fiftyTwoWeekLow: number | null;
+}
+
+async function parallelFetch<T>(
+  symbols: string[],
+  fetcher: (symbol: string) => Promise<{ key: string; value: T } | null>,
+  errors: string[]
+): Promise<{ map: Map<string, T>; calls: number }> {
+  const result = new Map<string, T>();
+  let calls = 0;
+
+  for (let i = 0; i < symbols.length; i += PARALLEL) {
+    const batch = symbols.slice(i, Math.min(i + PARALLEL, symbols.length));
+    const settled = await Promise.allSettled(
+      batch.map(async (symbol) => {
+        calls++;
+        return fetcher(symbol);
+      })
+    );
+    for (const r of settled) {
+      if (r.status === "fulfilled" && r.value) {
+        result.set(r.value.key, r.value.value);
+      } else if (r.status === "rejected") {
+        errors.push(String(r.reason).slice(0, 120));
+      }
+    }
+    // Throttle between batches to avoid per-minute rate limits
+    if (i + PARALLEL < symbols.length) {
+      await sleep(BATCH_DELAY_MS);
+    }
+  }
+  return { map: result, calls };
+}
+
 async function run() {
   if (getApps().length === 0) {
     const cred = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY!);
@@ -115,109 +121,152 @@ async function run() {
   const db = getFirestore();
   db.settings({ ignoreUndefinedProperties: true });
 
-  const doc = await db.collection("stock_pools").doc("latest").get();
-  const pool = doc.data() || { meta: {}, stocks: [] };
-  const existingStocks = pool.stocks as any[];
+  const symbols = [...new Set(UNIVERSE)];
+  const errors: string[] = [];
+  let totalCalls = 0;
 
-  // Map of symbol -> stock object
-  const stockMap = new Map<string, any>();
-  for (const s of existingStocks) {
-    stockMap.set(s.symbol, s);
+  console.log(`\n🚀 Fetching data for ${symbols.length} stocks...\n`);
+
+  // ---- Phase 1: Quote ----
+  console.log(`[Phase 1] Fetching quotes for ${symbols.length} symbols...`);
+  const { map: quoteMap, calls: quoteCalls } = await parallelFetch<any>(
+    symbols,
+    async (symbol) => {
+      const data: any = await fmpGet("/quote", { symbol });
+      if (!data?.[0]?.symbol) return null;
+      return { key: data[0].symbol.toUpperCase(), value: data[0] };
+    },
+    errors
+  );
+  totalCalls += quoteCalls;
+  console.log(`[Phase 1] ✅ ${quoteMap.size} quotes (${quoteCalls} calls)`);
+
+  const validSymbols = symbols.filter(s => quoteMap.has(s.toUpperCase()));
+
+  // ---- Phase 2: Ratios ----
+  console.log(`[Phase 2] Fetching ratios for ${validSymbols.length} symbols...`);
+  const { map: ratioMap, calls: ratioCalls } = await parallelFetch<any>(
+    validSymbols,
+    async (symbol) => {
+      const data: any = await fmpGet("/ratios-ttm", { symbol });
+      if (!data?.[0]) return null;
+      return { key: symbol.toUpperCase(), value: data[0] };
+    },
+    errors
+  );
+  totalCalls += ratioCalls;
+  console.log(`[Phase 2] ✅ ${ratioMap.size} ratios (${ratioCalls} calls)`);
+
+  // ---- Phase 3: Growth ----
+  console.log(`[Phase 3] Fetching growth for ${validSymbols.length} symbols...`);
+  const { map: growthMap, calls: growthCalls } = await parallelFetch<any>(
+    validSymbols,
+    async (symbol) => {
+      const data: any = await fmpGet("/financial-growth", { symbol, limit: "1" });
+      if (!data?.[0]) return null;
+      return { key: symbol.toUpperCase(), value: data[0] };
+    },
+    errors
+  );
+  totalCalls += growthCalls;
+  console.log(`[Phase 3] ✅ ${growthMap.size} growth (${growthCalls} calls)`);
+
+  // ---- Phase 4: Key Metrics (ROE) ----
+  console.log(`[Phase 4] Fetching key metrics for ${validSymbols.length} symbols...`);
+  const { map: keyMetricsMap, calls: keyMetricsCalls } = await parallelFetch<any>(
+    validSymbols,
+    async (symbol) => {
+      const data: any = await fmpGet("/key-metrics-ttm", { symbol, limit: "1" });
+      if (!data?.[0]) return null;
+      return { key: symbol.toUpperCase(), value: data[0] };
+    },
+    errors
+  );
+  totalCalls += keyMetricsCalls;
+  console.log(`[Phase 4] ✅ ${keyMetricsMap.size} key metrics (${keyMetricsCalls} calls)`);
+
+  // ---- Build stock data ----
+  const stocks: StockData[] = [];
+  for (const symbol of validSymbols) {
+    const upper = symbol.toUpperCase();
+    const quote = quoteMap.get(upper);
+    if (!quote) continue;
+
+    const ratios = ratioMap.get(upper);
+    const growth = growthMap.get(upper);
+    const km = keyMetricsMap.get(upper);
+    const { sector, industry } = getSectorInfo(upper);
+
+    const price = quote.price || 0;
+    const priceVs50 = quote.priceAvg50 != null
+      ? ((price - quote.priceAvg50) / quote.priceAvg50) * 100 : null;
+    const priceVs200 = quote.priceAvg200 != null
+      ? ((price - quote.priceAvg200) / quote.priceAvg200) * 100 : null;
+
+    const fcfRatio = ratios?.priceToFreeCashFlowsRatioTTM ?? ratios?.priceToFreeCashFlowRatioTTM;
+    const fcfYield = fcfRatio != null && fcfRatio > 0 ? (1 / fcfRatio) * 100 : null;
+
+    const pe = numOrNull(ratios?.peRatioTTM ?? ratios?.priceToEarningsRatioTTM);
+    const peg = numOrNull(ratios?.pegRatioTTM ?? ratios?.priceToEarningsGrowthRatioTTM);
+    const debtToEquity = numOrNull(ratios?.debtEquityRatioTTM ?? ratios?.debtToEquityRatioTTM);
+    const rawRoe = km?.returnOnEquityTTM ?? ratios?.returnOnEquityTTM ?? ratios?.roeTTM;
+
+    stocks.push({
+      symbol: quote.symbol || symbol,
+      companyName: quote.name || symbol,
+      sector,
+      industry,
+      marketCap: quote.marketCap || 0,
+      price,
+      peRatio: pe,
+      pbRatio: numOrNull(ratios?.priceToBookRatioTTM),
+      freeCashFlowYield: fcfYield,
+      dividendYield: toPercent(ratios?.dividendYieldTTM),
+      currentRatio: numOrNull(ratios?.currentRatioTTM),
+      debtToEquity,
+      revenueGrowthYoY: toPercent(growth?.revenueGrowth),
+      epsGrowthYoY: toPercent(growth?.epsgrowth),
+      pegRatio: peg,
+      roe: toPercent(rawRoe),
+      grossMargin: toPercent(ratios?.grossProfitMarginTTM),
+      netMargin: toPercent(ratios?.netProfitMarginTTM),
+      priceVs50SMA: priceVs50,
+      priceVs200SMA: priceVs200,
+      fiftyTwoWeekHigh: numOrNull(quote.yearHigh),
+      fiftyTwoWeekLow: numOrNull(quote.yearLow),
+    });
   }
 
-  let calls = 0;
-
-  try {
-    for (const symbol of UNIVERSE) {
-      const stock = stockMap.get(symbol) || {};
-      const { sector, industry } = SECTOR_MAP[symbol] || { sector: "Unknown", industry: "Unknown" };
-      
-      let needsUpdate = false;
-      
-      // We need quote, ratios, growth, key-metrics
-      if (!stock.price) {
-        console.log(`Fetching quote for ${symbol}`);
-        const data: any = await fmpGet("/quote", symbol);
-        calls++;
-        if (data?.[0]) {
-          stock.symbol = data[0].symbol;
-          stock.companyName = data[0].name;
-          stock.price = data[0].price;
-          stock.marketCap = data[0].marketCap;
-          stock.priceVs50SMA = data[0].priceAvg50 != null ? ((data[0].price - data[0].priceAvg50) / data[0].priceAvg50) * 100 : null;
-          stock.priceVs200SMA = data[0].priceAvg200 != null ? ((data[0].price - data[0].priceAvg200) / data[0].priceAvg200) * 100 : null;
-          stock.fiftyTwoWeekHigh = data[0].yearHigh;
-          stock.fiftyTwoWeekLow = data[0].yearLow;
-          stock.sector = sector;
-          stock.industry = industry;
-        }
-        needsUpdate = true;
-      }
-
-      if (stock.peRatio === undefined || stock.peRatio === null) {
-        console.log(`Fetching ratios for ${symbol}`);
-        const data: any = await fmpGet("/ratios-ttm", symbol);
-        calls++;
-        if (data?.[0]) {
-          const r = data[0];
-          stock.peRatio = numOrNull(r.peRatioTTM ?? r.priceToEarningsRatioTTM);
-          stock.pbRatio = numOrNull(r.priceToBookRatioTTM);
-          
-          const fcfRatio = r.priceToFreeCashFlowsRatioTTM ?? r.priceToFreeCashFlowRatioTTM;
-          stock.freeCashFlowYield = fcfRatio != null && fcfRatio > 0 ? (1 / fcfRatio) * 100 : null;
-          
-          stock.dividendYield = toPercent(r.dividendYieldTTM);
-          stock.currentRatio = numOrNull(r.currentRatioTTM);
-          stock.debtToEquity = numOrNull(r.debtEquityRatioTTM ?? r.debtToEquityRatioTTM);
-          stock.pegRatio = numOrNull(r.pegRatioTTM ?? r.priceToEarningsGrowthRatioTTM);
-          stock.grossMargin = toPercent(r.grossProfitMarginTTM);
-          stock.netMargin = toPercent(r.netProfitMarginTTM);
-        }
-        needsUpdate = true;
-      }
-
-      if (stock.revenueGrowthYoY === undefined || stock.revenueGrowthYoY === null) {
-        console.log(`Fetching growth for ${symbol}`);
-        const data: any = await fmpGet("/financial-growth", symbol);
-        calls++;
-        if (data?.[0]) {
-          stock.revenueGrowthYoY = toPercent(data[0].revenueGrowth);
-          stock.epsGrowthYoY = toPercent(data[0].epsgrowth);
-        }
-        needsUpdate = true;
-      }
-
-      if (stock.roe === undefined || stock.roe === null) {
-        console.log(`Fetching key-metrics for ${symbol}`);
-        const data: any = await fmpGet("/key-metrics-ttm", symbol);
-        calls++;
-        if (data?.[0]) {
-          stock.roe = toPercent(data[0].returnOnEquityTTM);
-        }
-        needsUpdate = true;
-      }
-
-      if (needsUpdate) {
-        stockMap.set(symbol, stock);
-      }
-    }
-  } catch (err: any) {
-    console.error("Fetch stopped:", err.message);
-  }
-
-  const finalStocks = Array.from(stockMap.values()).filter(s => s.price);
-  
+  // ---- Save to Firestore ----
+  console.log(`\n📊 Saving ${stocks.length} stocks to Firestore...`);
   await db.collection("stock_pools").doc("latest").set({
     meta: {
       updatedAt: new Date().toISOString(),
-      symbolCount: finalStocks.length,
+      symbolCount: stocks.length,
       source: "fmp",
-      apiCallsUsed: (pool.meta?.apiCallsUsed || 0) + calls
+      apiCallsUsed: totalCalls,
     },
-    stocks: finalStocks
+    stocks,
   });
 
-  console.log(`Done. Total stocks: ${finalStocks.length}. API calls used in this run: ${calls}`);
+  // Print summary
+  const withRoe = stocks.filter(s => s.roe != null).length;
+  const withPe = stocks.filter(s => s.peRatio != null).length;
+  const withGrowth = stocks.filter(s => s.revenueGrowthYoY != null).length;
+
+  console.log(`\n✅ Done!`);
+  console.log(`   Total stocks: ${stocks.length}`);
+  console.log(`   API calls used: ${totalCalls}`);
+  console.log(`   Errors: ${errors.length}`);
+  console.log(`   Data coverage:`);
+  console.log(`     • ROE: ${withRoe}/${stocks.length}`);
+  console.log(`     • PE:  ${withPe}/${stocks.length}`);
+  console.log(`     • Revenue Growth: ${withGrowth}/${stocks.length}`);
+
+  if (errors.length > 0) {
+    console.log(`\n⚠️ First 10 errors:`);
+    errors.slice(0, 10).forEach(e => console.log(`   ${e}`));
+  }
 }
 
 run().catch(console.error);

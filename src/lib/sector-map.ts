@@ -4,7 +4,7 @@
 // ============================================================
 
 const SECTOR_MAP: Record<string, { sector: string; industry: string }> = {
-  // Mega-Cap Tech / Growth
+  // ---- Mega-Cap Tech / Growth ----
   AAPL: { sector: "Technology", industry: "Consumer Electronics" },
   MSFT: { sector: "Technology", industry: "Software—Infrastructure" },
   AMZN: { sector: "Consumer Cyclical", industry: "Internet Retail" },
@@ -30,8 +30,13 @@ const SECTOR_MAP: Record<string, { sector: string; industry: string }> = {
   BKNG: { sector: "Consumer Cyclical", industry: "Travel Services" },
   SNPS: { sector: "Technology", industry: "Software—Application" },
   CDNS: { sector: "Technology", industry: "Software—Application" },
+  NOW: { sector: "Technology", industry: "Software—Application" },
+  UBER: { sector: "Technology", industry: "Software—Application" },
+  SHOP: { sector: "Technology", industry: "Software—Application" },
+  SQ: { sector: "Financial Services", industry: "Software—Infrastructure" },
+  SNOW: { sector: "Technology", industry: "Software—Application" },
 
-  // Value / Dividend / Financials
+  // ---- Value / Dividend / Financials ----
   "BRK-B": { sector: "Financial Services", industry: "Insurance—Diversified" },
   JPM: { sector: "Financial Services", industry: "Banks—Diversified" },
   V: { sector: "Financial Services", industry: "Credit Services" },
@@ -48,6 +53,9 @@ const SECTOR_MAP: Record<string, { sector: string; industry: string }> = {
   BMY: { sector: "Healthcare", industry: "Drug Manufacturers" },
   XOM: { sector: "Energy", industry: "Oil & Gas Integrated" },
   CVX: { sector: "Energy", industry: "Oil & Gas Integrated" },
+  COP: { sector: "Energy", industry: "Oil & Gas E&P" },
+  SLB: { sector: "Energy", industry: "Oil & Gas Equipment" },
+  EOG: { sector: "Energy", industry: "Oil & Gas E&P" },
   KO: { sector: "Consumer Defensive", industry: "Beverages" },
   PG: { sector: "Consumer Defensive", industry: "Household Products" },
   WMT: { sector: "Consumer Defensive", industry: "Discount Stores" },
@@ -57,8 +65,15 @@ const SECTOR_MAP: Record<string, { sector: string; industry: string }> = {
   GM: { sector: "Consumer Cyclical", industry: "Auto Manufacturers" },
   F: { sector: "Consumer Cyclical", industry: "Auto Manufacturers" },
   T: { sector: "Communication Services", industry: "Telecom Services" },
+  VZ: { sector: "Communication Services", industry: "Telecom Services" },
+  BLK: { sector: "Financial Services", industry: "Asset Management" },
+  C: { sector: "Financial Services", industry: "Banks—Diversified" },
+  WFC: { sector: "Financial Services", industry: "Banks—Diversified" },
+  USB: { sector: "Financial Services", industry: "Banks—Regional" },
+  PNC: { sector: "Financial Services", industry: "Banks—Regional" },
+  TFC: { sector: "Financial Services", industry: "Banks—Regional" },
 
-  // Mid/Large crossover
+  // ---- Mid/Large Crossover ----
   LLY: { sector: "Healthcare", industry: "Drug Manufacturers" },
   UNH: { sector: "Healthcare", industry: "Healthcare Plans" },
   HD: { sector: "Consumer Cyclical", industry: "Home Improvement" },
@@ -69,8 +84,62 @@ const SECTOR_MAP: Record<string, { sector: string; industry: string }> = {
   BA: { sector: "Industrials", industry: "Aerospace & Defense" },
   LOW: { sector: "Consumer Cyclical", industry: "Home Improvement" },
   NKE: { sector: "Consumer Cyclical", industry: "Footwear & Accessories" },
+  COST: { sector: "Consumer Defensive", industry: "Discount Stores" },
+  TGT: { sector: "Consumer Defensive", industry: "Discount Stores" },
+  SBUX: { sector: "Consumer Cyclical", industry: "Restaurants" },
+  CMG: { sector: "Consumer Cyclical", industry: "Restaurants" },
+  YUM: { sector: "Consumer Cyclical", industry: "Restaurants" },
+  NEE: { sector: "Utilities", industry: "Utilities—Regulated Electric" },
+  DUK: { sector: "Utilities", industry: "Utilities—Regulated Electric" },
+  SO: { sector: "Utilities", industry: "Utilities—Regulated Electric" },
+  AEP: { sector: "Utilities", industry: "Utilities—Regulated Electric" },
+  D: { sector: "Utilities", industry: "Utilities—Regulated Electric" },
+  MMM: { sector: "Industrials", industry: "Conglomerates" },
+  HON: { sector: "Industrials", industry: "Conglomerates" },
+  UPS: { sector: "Industrials", industry: "Integrated Freight" },
+  FDX: { sector: "Industrials", industry: "Integrated Freight" },
+  LMT: { sector: "Industrials", industry: "Aerospace & Defense" },
 
-  // Small/Mid-Cap Growth
+  // ---- Healthcare / Biotech ----
+  TMO: { sector: "Healthcare", industry: "Diagnostics & Research" },
+  DHR: { sector: "Healthcare", industry: "Diagnostics & Research" },
+  ABT: { sector: "Healthcare", industry: "Medical Devices" },
+  AMGN: { sector: "Healthcare", industry: "Drug Manufacturers" },
+  GILD: { sector: "Healthcare", industry: "Drug Manufacturers" },
+  VRTX: { sector: "Healthcare", industry: "Drug Manufacturers" },
+  REGN: { sector: "Healthcare", industry: "Drug Manufacturers" },
+  MRNA: { sector: "Healthcare", industry: "Drug Manufacturers" },
+  BIIB: { sector: "Healthcare", industry: "Drug Manufacturers" },
+  ZTS: { sector: "Healthcare", industry: "Drug Manufacturers" },
+  MDT: { sector: "Healthcare", industry: "Medical Devices" },
+  EW: { sector: "Healthcare", industry: "Medical Devices" },
+  SYK: { sector: "Healthcare", industry: "Medical Devices" },
+  BSX: { sector: "Healthcare", industry: "Medical Devices" },
+  HCA: { sector: "Healthcare", industry: "Medical Care Facilities" },
+
+  // ---- Tech / SaaS / Semis ----
+  MRVL: { sector: "Technology", industry: "Semiconductors" },
+  MU: { sector: "Technology", industry: "Semiconductors" },
+  LRCX: { sector: "Technology", industry: "Semiconductor Equipment" },
+  KLAC: { sector: "Technology", industry: "Semiconductor Equipment" },
+  TXN: { sector: "Technology", industry: "Semiconductors" },
+  PYPL: { sector: "Financial Services", industry: "Credit Services" },
+  INTC: { sector: "Technology", industry: "Semiconductors" },
+  CSCO: { sector: "Technology", industry: "Communication Equipment" },
+  IBM: { sector: "Technology", industry: "Information Technology Services" },
+  ACN: { sector: "Technology", industry: "Information Technology Services" },
+  NET: { sector: "Technology", industry: "Software—Infrastructure" },
+  TEAM: { sector: "Technology", industry: "Software—Application" },
+  WDAY: { sector: "Technology", industry: "Software—Application" },
+  ZM: { sector: "Technology", industry: "Software—Application" },
+  VEEV: { sector: "Technology", industry: "Software—Application" },
+  HUBS: { sector: "Technology", industry: "Software—Application" },
+  DOCU: { sector: "Technology", industry: "Software—Application" },
+  MNDY: { sector: "Technology", industry: "Software—Application" },
+  OKTA: { sector: "Technology", industry: "Software—Infrastructure" },
+  BILL: { sector: "Technology", industry: "Software—Application" },
+
+  // ---- Small/Mid-Cap Growth ----
   AXON: { sector: "Industrials", industry: "Aerospace & Defense" },
   DDOG: { sector: "Technology", industry: "Software—Application" },
   MDB: { sector: "Technology", industry: "Software—Infrastructure" },
@@ -91,15 +160,18 @@ const SECTOR_MAP: Record<string, { sector: string; industry: string }> = {
   RKLB: { sector: "Industrials", industry: "Aerospace & Defense" },
   JOBY: { sector: "Industrials", industry: "Aerospace & Defense" },
   SOFI: { sector: "Financial Services", industry: "Credit Services" },
+  UPST: { sector: "Financial Services", industry: "Credit Services" },
+  AFRM: { sector: "Financial Services", industry: "Credit Services" },
+  RIVN: { sector: "Consumer Cyclical", industry: "Auto Manufacturers" },
+  LCID: { sector: "Consumer Cyclical", industry: "Auto Manufacturers" },
+  RBLX: { sector: "Technology", industry: "Electronic Gaming" },
 
-  // Other common ones
-  PYPL: { sector: "Financial Services", industry: "Credit Services" },
-  INTC: { sector: "Technology", industry: "Semiconductors" },
-  CSCO: { sector: "Technology", industry: "Communication Equipment" },
+  // ---- Media / Communication / Other ----
   DIS: { sector: "Communication Services", industry: "Entertainment" },
-  VZ: { sector: "Communication Services", industry: "Telecom Services" },
-  IBM: { sector: "Technology", industry: "Information Technology Services" },
-  SIRI: { sector: "Communication Services", industry: "Broadcasting" },
+  CMCSA: { sector: "Communication Services", industry: "Telecom Services" },
+  ABNB: { sector: "Consumer Cyclical", industry: "Travel Services" },
+  SPOT: { sector: "Communication Services", industry: "Internet Content & Information" },
+  PINS: { sector: "Communication Services", industry: "Internet Content & Information" },
 };
 
 /**
