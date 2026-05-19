@@ -3,32 +3,35 @@
 // POST /api/watchlist — Add to watchlist
 // DELETE /api/watchlist — Remove from watchlist
 // PATCH /api/watchlist — Update portfolio role
+// All routes require authentication (Firebase ID token).
 // ============================================================
 
 import { NextRequest, NextResponse } from "next/server";
 import { getWatchlist, addToWatchlist, removeFromWatchlist, updateWatchlistRole } from "@/lib/user-store";
+import { verifyAuth } from "@/lib/auth-middleware";
 
 export async function GET(request: NextRequest) {
-  const userId = request.nextUrl.searchParams.get("userId");
-  if (!userId) {
-    return NextResponse.json(
-      { error: "MISSING_USER_ID", message: "userId query parameter is required" },
-      { status: 400 }
-    );
-  }
+  // Verify auth
+  const authResult = await verifyAuth(request);
+  if (!authResult.success) return authResult.response;
 
+  const userId = authResult.user.uid;
   const watchlist = await getWatchlist(userId);
   return NextResponse.json({ watchlist });
 }
 
 export async function POST(request: NextRequest) {
+  const authResult = await verifyAuth(request);
+  if (!authResult.success) return authResult.response;
+
   try {
     const body = await request.json();
-    const { userId, symbol, notes, role } = body;
+    const { symbol, notes, role } = body;
+    const userId = authResult.user.uid;
 
-    if (!userId || !symbol) {
+    if (!symbol) {
       return NextResponse.json(
-        { error: "MISSING_FIELDS", message: "userId and symbol are required" },
+        { error: "MISSING_FIELDS", message: "symbol is required" },
         { status: 400 }
       );
     }
@@ -44,13 +47,17 @@ export async function POST(request: NextRequest) {
 }
 
 export async function DELETE(request: NextRequest) {
+  const authResult = await verifyAuth(request);
+  if (!authResult.success) return authResult.response;
+
   try {
     const body = await request.json();
-    const { userId, symbol } = body;
+    const { symbol } = body;
+    const userId = authResult.user.uid;
 
-    if (!userId || !symbol) {
+    if (!symbol) {
       return NextResponse.json(
-        { error: "MISSING_FIELDS", message: "userId and symbol are required" },
+        { error: "MISSING_FIELDS", message: "symbol is required" },
         { status: 400 }
       );
     }
@@ -73,13 +80,17 @@ export async function DELETE(request: NextRequest) {
 }
 
 export async function PATCH(request: NextRequest) {
+  const authResult = await verifyAuth(request);
+  if (!authResult.success) return authResult.response;
+
   try {
     const body = await request.json();
-    const { userId, symbol, role } = body;
+    const { symbol, role } = body;
+    const userId = authResult.user.uid;
 
-    if (!userId || !symbol) {
+    if (!symbol) {
       return NextResponse.json(
-        { error: "MISSING_FIELDS", message: "userId and symbol are required" },
+        { error: "MISSING_FIELDS", message: "symbol is required" },
         { status: 400 }
       );
     }

@@ -13,6 +13,8 @@ import type { StockMetrics, FilterCriterion, ScreenerResponse, StrategyType } fr
 import type { StockAnalysisReport } from "@/lib/analysis-engine";
 import { STRATEGY_PRESETS } from "@/lib/strategies";
 import { useLanguage } from "@/lib/language-context";
+import { useAuth } from "@/lib/auth-context";
+import UserMenu from "@/components/UserMenu";
 
 function formatMarketCap(val: number): string {
   if (val >= 1e12) return `$${(val / 1e12).toFixed(2)}T`;
@@ -30,6 +32,7 @@ export default function FunnelScreenerPage() {
   const preset = STRATEGY_PRESETS[strategyId];
 
   const { lang, setLang, t } = useLanguage();
+  const { user, getIdToken } = useAuth();
 
   const [stocks, setStocks] = useState<StockMetrics[]>([]);
   const [loading, setLoading] = useState(true);
@@ -161,11 +164,17 @@ export default function FunnelScreenerPage() {
   useEffect(() => { fetchStocks(); }, [fetchStocks]);
 
   useEffect(() => {
-    fetch("/api/watchlist?userId=demo-user")
-      .then(r => r.json())
-      .then(d => setWatchlist(new Set(d.watchlist.map((w: any) => w.symbol))))
-      .catch(() => {});
-  }, []);
+    if (user?.uid) {
+      getIdToken().then(token => {
+        fetch(`/api/watchlist?userId=${user.uid}`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        })
+          .then(r => r.json())
+          .then(d => setWatchlist(new Set(d.watchlist.map((w: any) => w.symbol))))
+          .catch(() => {});
+      });
+    }
+  }, [user?.uid]);
 
   const toggleSelection = (step: 1 | 2, symbol: string) => {
     const setter = step === 1 ? setSelectedInStep1 : setSelectedInStep2;
@@ -178,13 +187,18 @@ export default function FunnelScreenerPage() {
   };
 
   const addToPortfolio = async (symbol: string, role?: string) => {
+    if (!user?.uid) return;
     try {
-      const payload: any = { userId: "demo-user", symbol };
+      const token = await getIdToken();
+      const payload: any = { symbol };
       if (role && role !== "unassigned") payload.role = role;
       
       await fetch("/api/watchlist", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify(payload),
       });
       setWatchlist(prev => new Set(prev).add(symbol));
@@ -244,6 +258,7 @@ export default function FunnelScreenerPage() {
               <Languages className="w-4 h-4 text-blue-400" />
               {lang === "en" ? "中文" : "English"}
             </button>
+            <UserMenu />
           </div>
         </div>
       </header>

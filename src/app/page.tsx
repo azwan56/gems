@@ -3,6 +3,9 @@
 import { ShieldCheck, TrendingUp, Activity, Gem, Rocket, Languages, BookOpen } from "lucide-react";
 import Link from "next/link";
 import { useLanguage } from "@/lib/language-context";
+import { useAuth } from "@/lib/auth-context";
+import UserMenu from "@/components/UserMenu";
+import PremiumGate from "@/components/PremiumGate";
 
 const strategies = [
   {
@@ -65,6 +68,7 @@ const strategies = [
 
 export default function Home() {
   const { lang, setLang, t } = useLanguage();
+  const { user } = useAuth();
 
   return (
     <main className="min-h-screen flex flex-col">
@@ -79,9 +83,11 @@ export default function Home() {
             </span>
           </div>
           <nav className="flex items-center gap-4">
-            <Link href="/watchlist" className="text-sm text-slate-400 hover:text-white transition-colors">
-              {t("Watchlist", "自选股")}
-            </Link>
+            {user?.isPremium && (
+              <Link href="/watchlist" className="text-sm text-slate-400 hover:text-white transition-colors">
+                {t("Watchlist", "自选股")}
+              </Link>
+            )}
             {/* Language Toggle */}
             <button
               onClick={() => setLang(lang === "en" ? "zh" : "en")}
@@ -90,6 +96,7 @@ export default function Home() {
               <Languages className="w-4 h-4 text-blue-400" />
               <span className="font-medium">{lang === "en" ? "中文" : "EN"}</span>
             </button>
+            <UserMenu />
           </nav>
         </div>
       </header>
@@ -132,7 +139,8 @@ export default function Home() {
           </p>
         </div>
 
-        {/* Strategy Cards */}
+        {/* Strategy Cards — Premium Only */}
+        <PremiumGate featureName={t("Quantitative Stock Screener", "量化选股系统")}>
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 w-full max-w-[1400px]">
           {strategies.map((strategy) => {
             const Icon = strategy.icon;
@@ -197,6 +205,7 @@ export default function Home() {
             );
           })}
         </div>
+        </PremiumGate>
       </section>
     </main>
   );

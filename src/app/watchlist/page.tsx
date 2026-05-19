@@ -6,11 +6,15 @@ import { Gem, ArrowLeft, StarOff, Trash2, Shield, Sword, Rocket, CircleDollarSig
 import type { WatchlistItem } from "@/lib/types";
 import type { StockAnalysisReport } from "@/lib/analysis-engine";
 import { useLanguage } from "@/lib/language-context";
+import { useAuth } from "@/lib/auth-context";
+import UserMenu from "@/components/UserMenu";
+import PremiumGate from "@/components/PremiumGate";
 
 type RoleKey = "anchor" | "striker" | "rocket" | "core_dividend" | "turnaround" | "special_situation" | "unassigned";
 
 export default function WatchlistPage() {
   const { lang, setLang, t } = useLanguage();
+  const { user, getIdToken } = useAuth();
 
   const getRoleConfigs = () => ({
     anchor: { icon: Shield, color: "text-blue-400", bg: "bg-blue-500/10", border: "border-blue-500/20", label: t("Anchor (Stability)", "压舱石 (稳健)"), desc: t("Low volatility, strong cash flow", "低波动，强现金流") },
@@ -32,12 +36,16 @@ export default function WatchlistPage() {
   const [reportLoading, setReportLoading] = useState(false);
 
   useEffect(() => {
-    fetchWatchlist();
-  }, []);
+    if (user?.uid) fetchWatchlist();
+  }, [user?.uid]);
 
   const fetchWatchlist = async () => {
+    if (!user?.uid) return;
     try {
-      const res = await fetch("/api/watchlist?userId=demo-user");
+      const token = await getIdToken();
+      const res = await fetch(`/api/watchlist?userId=${user.uid}`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
       if (res.ok) {
         const data = await res.json();
         setWatchlist(data.watchlist);
@@ -47,17 +55,23 @@ export default function WatchlistPage() {
   };
 
   const removeItem = async (symbol: string) => {
+    if (!user?.uid) return;
     try {
+      const token = await getIdToken();
       await fetch("/api/watchlist", {
         method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: "demo-user", symbol }),
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ userId: user.uid, symbol }),
       });
       setWatchlist((prev) => prev.filter((w) => w.symbol !== symbol));
     } catch { /* ignore */ }
   };
 
   const updateRole = async (symbol: string, newRole: RoleKey) => {
+    if (!user?.uid) return;
     const roleToSend = newRole === "unassigned" ? undefined : newRole;
     try {
       // Optimistic UI update
@@ -65,10 +79,14 @@ export default function WatchlistPage() {
         item.symbol === symbol ? { ...item, role: roleToSend } : item
       ));
 
+      const token = await getIdToken();
       await fetch("/api/watchlist", {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: "demo-user", symbol, role: roleToSend }),
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ userId: user.uid, symbol, role: roleToSend }),
       });
     } catch { 
       // Revert on failure by refetching
@@ -218,11 +236,13 @@ export default function WatchlistPage() {
               <Languages className="w-4 h-4 text-blue-400" />
               {lang === "en" ? "中文" : "English"}
             </button>
+            <UserMenu />
           </div>
         </div>
       </header>
 
-      {/* Content */}
+      {/* Content — Premium Only */}
+      <PremiumGate featureName={t("Portfolio Dashboard", "投资组合面板")}>
       <div className="flex-1 px-6 py-8 overflow-x-auto">
         <div className="max-w-7xl mx-auto min-w-[1000px]">
           {loading ? (
@@ -280,6 +300,7 @@ export default function WatchlistPage() {
           )}
         </div>
       </div>
+      </PremiumGate>
 
       {/* Report Modal */}
       {selectedReport && (
