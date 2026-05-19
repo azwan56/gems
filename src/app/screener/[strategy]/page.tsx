@@ -400,22 +400,22 @@ export default function FunnelScreenerPage() {
                       {t("Run Deep Dive", "进行定性深研")} ({selectedInStep1.size}) <ChevronRight className="w-4 h-4" />
                     </button>
                   </div>
-                  <div className="border border-slate-800 rounded-xl overflow-hidden bg-slate-900/50">
+                  <div className="border border-slate-800 rounded-xl bg-slate-900/50">
                     <table className="w-full text-sm text-left">
                       <thead className="bg-slate-800/80 text-slate-400">
                         <tr>
-                          <th className="p-4 w-12 text-center">{t("Select", "选择")}</th>
+                          <th className="p-4 w-12 text-center rounded-tl-xl">{t("Select", "选择")}</th>
                           <th className="p-4 font-semibold">{t("Symbol", "代码")}</th>
                           <th className="p-4 font-semibold">{t("Company", "公司")}</th>
                           <th className="p-4 font-semibold">{t("Market Cap", "市值")}</th>
-                          {step1Columns.map(c => (
-                            <th key={c.key} className="p-4 font-semibold">
+                          {step1Columns.map((c, i) => (
+                            <th key={c.key} className={`p-4 font-semibold ${i === step1Columns.length - 1 ? 'rounded-tr-xl' : ''}`}>
                               <div className="flex items-center gap-1.5 group relative">
                                 {c.label}
                                 {c.desc && (
                                   <>
                                     <HelpCircle className="w-3.5 h-3.5 text-slate-500 hover:text-slate-300 cursor-help transition-colors" />
-                                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-2.5 bg-slate-800 text-slate-200 text-xs rounded-lg shadow-xl border border-slate-700 opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-10 font-normal leading-relaxed text-left">
+                                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-56 p-3 bg-slate-800 text-slate-200 text-xs rounded-lg shadow-xl border border-slate-700 opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 font-normal leading-relaxed text-left whitespace-normal">
                                       {c.desc}
                                     </div>
                                   </>
@@ -427,7 +427,7 @@ export default function FunnelScreenerPage() {
                       </thead>
                       <tbody className="divide-y divide-slate-800/50">
                         {stocks.map(s => (
-                          <tr key={s.symbol} className={`hover:bg-slate-800/30 transition-colors ${selectedInStep1.has(s.symbol) ? 'bg-blue-900/10' : ''}`}>
+                          <tr key={s.symbol} className={`hover:bg-slate-800/30 transition-colors ${selectedInStep1.has(s.symbol) ? 'bg-blue-900/10' : ''} last:[&>td:first-child]:rounded-bl-xl last:[&>td:last-child]:rounded-br-xl`}>
                             <td className="p-4 text-center">
                               <input 
                                 type="checkbox" 
