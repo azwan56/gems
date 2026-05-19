@@ -58,15 +58,17 @@ export default function WatchlistPage() {
     if (!user?.uid) return;
     try {
       const token = await getIdToken();
-      await fetch("/api/watchlist", {
+      const res = await fetch("/api/watchlist", {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
-        body: JSON.stringify({ userId: user.uid, symbol }),
+        body: JSON.stringify({ symbol }),
       });
-      setWatchlist((prev) => prev.filter((w) => w.symbol !== symbol));
+      if (res.ok) {
+        setWatchlist((prev) => prev.filter((w) => w.symbol !== symbol));
+      }
     } catch { /* ignore */ }
   };
 

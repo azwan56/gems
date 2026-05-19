@@ -108,7 +108,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       };
     }
 
-    // New user from Gems — create profile matching DailyStock schema
+    // New user from Gems — create minimal profile
+    // IMPORTANT: Do NOT set `watchlist` or other DailyStock fields here,
+    // as merge:true would still overwrite arrays on existing documents.
     const now = new Date();
     const trialEnd = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000); // 30 days trial
     const planEndDate = trialEnd.toISOString().split("T")[0];
@@ -117,9 +119,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       email: fbUser.email,
       plan_type: "trial",
       plan_end_date: planEndDate,
-      language: "zh-CN",
-      timezone: "Asia/Shanghai",
-      watchlist: [],
+      registered_from: "gems",
       created_at: serverTimestamp(),
     };
     await setDoc(userRef, newProfile, { merge: true });

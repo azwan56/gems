@@ -193,7 +193,7 @@ export default function FunnelScreenerPage() {
       const payload: any = { symbol };
       if (role && role !== "unassigned") payload.role = role;
       
-      await fetch("/api/watchlist", {
+      const res = await fetch("/api/watchlist", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -201,8 +201,14 @@ export default function FunnelScreenerPage() {
         },
         body: JSON.stringify(payload),
       });
-      setWatchlist(prev => new Set(prev).add(symbol));
-    } catch {}
+      if (res.ok) {
+        setWatchlist(prev => new Set(prev).add(symbol));
+      } else {
+        console.error("Failed to add to watchlist:", res.status, await res.text());
+      }
+    } catch (err) {
+      console.error("addToPortfolio error:", err);
+    }
   };
 
   if (!preset) return <div className="p-20 text-center">Strategy Not Found</div>;
