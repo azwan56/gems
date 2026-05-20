@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Gem, ArrowLeft, StarOff, Trash2, Shield, Sword, Rocket, CircleDollarSign, RefreshCcw, AlertTriangle, HelpCircle, ChevronDown, Languages } from "lucide-react";
+import { Gem, ArrowLeft, StarOff, Trash2, Shield, Sword, Rocket, CircleDollarSign, RefreshCcw, AlertTriangle, HelpCircle, ChevronDown, Languages, ArrowUpFromLine, Check, Loader2 } from "lucide-react";
 import type { WatchlistItem } from "@/lib/types";
 import { useLanguage } from "@/lib/language-context";
 import { useAuth } from "@/lib/auth-context";
@@ -29,6 +29,8 @@ export default function WatchlistPage() {
 
   const [watchlist, setWatchlist] = useState<WatchlistItem[]>([]);
   const [loading, setLoading] = useState(true);
+  // Track sync state per symbol: 'syncing' | 'synced' | 'already_exists' | 'error' | 'limit'
+  const [syncState, setSyncState] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (user?.uid) fetchWatchlist();
@@ -91,6 +93,43 @@ export default function WatchlistPage() {
     }
   };
 
+  const syncToDailyStock = async (symbol: string) => {
+    if (!user?.uid) return;
+    setSyncState(prev => ({ ...prev, [symbol]: 'syncing' }));
+    try {
+      const token = await getIdToken();
+      const res = await fetch("/api/sync-dailystock", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ symbol }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setSyncState(prev => ({ ...prev, [symbol]: data.status === 'already_exists' ? 'already_exists' : 'synced' }));
+      } else if (res.status === 403) {
+        setSyncState(prev => ({ ...prev, [symbol]: 'limit' }));
+      } else {
+        setSyncState(prev => ({ ...prev, [symbol]: 'error' }));
+      }
+    } catch {
+      setSyncState(prev => ({ ...prev, [symbol]: 'error' }));
+    }
+    // Reset status after 3 seconds (except 'synced' which stays)
+    setTimeout(() => {
+      setSyncState(prev => {
+        const current = prev[symbol];
+        if (current === 'error' || current === 'limit' || current === 'already_exists') {
+          const { [symbol]: _, ...rest } = prev;
+          return rest;
+        }
+        return prev;
+      });
+    }, 3000);
+  };
+
   // Group items
   const grouped = watchlist.reduce((acc, item) => {
     const role = item.role || "unassigned";
@@ -123,6 +162,47 @@ export default function WatchlistPage() {
           </select>
           <ChevronDown className="w-3 h-3 text-slate-500 absolute right-2 top-2 pointer-events-none" />
         </div>
+        {/* Sync to DailyStock observe_list */}
+        {(() => {
+          const state = syncState[item.symbol];
+          if (state === 'synced') {
+            return (
+              <span className="p-1 rounded-md text-emerald-400" title={t("Synced to DailyStock", "已同步到 DailyStock")}>
+                <Check className="w-3.5 h-3.5" />
+              </span>
+            );
+          }
+          if (state === 'syncing') {
+            return (
+              <span className="p-1 rounded-md text-blue-400">
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              </span>
+            );
+          }
+          if (state === 'already_exists') {
+            return (
+              <span className="p-1 rounded-md text-amber-400" title={t("Already in DailyStock observe list", "已在 DailyStock 观察清单中")}>
+                <Check className="w-3.5 h-3.5" />
+              </span>
+            );
+          }
+          if (state === 'limit') {
+            return (
+              <span className="p-1 rounded-md text-red-400 cursor-help" title={t("Observe list limit reached. Upgrade your plan.", "观察清单已满，请升级计划。")}>
+                <AlertTriangle className="w-3.5 h-3.5" />
+              </span>
+            );
+          }
+          return (
+            <button
+              onClick={() => syncToDailyStock(item.symbol)}
+              className="p-1 rounded-md text-slate-500 hover:text-blue-400 hover:bg-blue-500/10 transition-colors"
+              title={t("Sync to DailyStock observe list", "同步到 DailyStock 观察清单")}
+            >
+              <ArrowUpFromLine className="w-3.5 h-3.5" />
+            </button>
+          );
+        })()}
         <button
           onClick={() => removeItem(item.symbol)}
           className="p-1 rounded-md text-slate-500 hover:text-red-400 hover:bg-red-500/10 transition-colors"
