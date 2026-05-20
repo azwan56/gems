@@ -6,7 +6,7 @@
 // ============================================================
 
 import { NextRequest, NextResponse } from "next/server";
-import { getDb } from "./firebase";
+import { getDb, ensureInitialized } from "./firebase";
 
 // ---- Types ----
 
@@ -49,7 +49,8 @@ export async function verifyAuth(request: NextRequest): Promise<AuthResult> {
   const idToken = authHeader.slice(7); // Remove "Bearer "
 
   try {
-    // Use firebase-admin to verify the token
+    // Ensure Firebase Admin is initialized before using Auth
+    ensureInitialized();
     const { getAuth } = await import("firebase-admin/auth");
     const decodedToken = await getAuth().verifyIdToken(idToken);
     const uid = decodedToken.uid;
