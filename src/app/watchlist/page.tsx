@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-import { Gem, ArrowLeft, StarOff, Trash2, Shield, Sword, Rocket, CircleDollarSign, RefreshCcw, AlertTriangle, HelpCircle, ChevronDown, Languages, ArrowUpFromLine, Check, Loader2, X } from "lucide-react";
+import { Gem, ArrowLeft, StarOff, Trash2, Shield, Sword, Rocket, CircleDollarSign, RefreshCcw, AlertTriangle, HelpCircle, ChevronDown, Languages, ArrowUpFromLine, Check, Loader2, X, FileText, TrendingUp, Activity, Target, Users, Zap, ShieldAlert } from "lucide-react";
 import type { WatchlistItem } from "@/lib/types";
 import { useLanguage } from "@/lib/language-context";
 import { useAuth } from "@/lib/auth-context";
@@ -180,6 +180,44 @@ export default function WatchlistPage() {
     return `$${mc.toLocaleString()}`;
   };
 
+  // Analysis report slide-out panel
+  interface AnalysisReport {
+    overview: string;
+    fundamentals: string;
+    products: string;
+    rationale: string[];
+    risks: string[];
+    analyst: {
+      targetPrice: string;
+      upside: string;
+      consensus: string;
+      breakdown: { buy: number; hold: number; sell: number };
+    };
+  }
+  const [analysisPanel, setAnalysisPanel] = useState<{ symbol: string; loading: boolean; report: AnalysisReport | null } | null>(null);
+
+  const openAnalysis = useCallback(async (symbol: string) => {
+    setAnalysisPanel({ symbol, loading: true, report: null });
+    try {
+      const token = await getIdToken();
+      // Determine strategy based on role
+      const item = watchlist.find(w => w.symbol === symbol);
+      const role = item?.role;
+      const strategy = (role === 'core_dividend' || role === 'turnaround' || role === 'special_situation') ? 'value' : 'large_growth';
+      const res = await fetch(`/api/analysis?symbol=${symbol}&strategy=${strategy}&lang=${lang}`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setAnalysisPanel({ symbol, loading: false, report: data.report });
+      } else {
+        setAnalysisPanel({ symbol, loading: false, report: null });
+      }
+    } catch {
+      setAnalysisPanel({ symbol, loading: false, report: null });
+    }
+  }, [getIdToken, watchlist, lang]);
+
   // Group items
   const grouped = watchlist.reduce((acc, item) => {
     const role = item.role || "unassigned";
@@ -234,6 +272,14 @@ export default function WatchlistPage() {
             <ArrowUpFromLine className="w-3.5 h-3.5" />
           </button>
         )}
+        {/* Stock info / analysis report */}
+        <button
+          onClick={() => openAnalysis(item.symbol)}
+          className="p-1 rounded-md text-slate-500 hover:text-purple-400 hover:bg-purple-500/10 transition-colors"
+          title={t("View stock report", "查看股票报告")}
+        >
+          <FileText className="w-3.5 h-3.5" />
+        </button>
         <button
           onClick={() => removeItem(item.symbol)}
           className="p-1 rounded-md text-slate-500 hover:text-red-400 hover:bg-red-500/10 transition-colors"
@@ -477,6 +523,120 @@ export default function WatchlistPage() {
                 </div>
               </>
             )}
+          </div>
+        </div>
+      )}
+      {/* AI Analysis Slide-out Panel */}
+      {analysisPanel && (
+        <div className="fixed inset-0 z-[100] flex justify-end">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setAnalysisPanel(null)} />
+          <div className="relative w-full max-w-2xl h-full bg-slate-900 border-l border-slate-800 shadow-2xl overflow-y-auto animate-in slide-in-from-right duration-300">
+            {/* Panel Header */}
+            <div className="sticky top-0 z-10 bg-slate-900/80 backdrop-blur-md border-b border-slate-800 px-8 py-6 flex justify-between items-start">
+              <div>
+                <h2 className="text-3xl font-bold text-white mb-1">{analysisPanel.symbol}</h2>
+                <p className="text-sm text-slate-400">{t("AI Investment Analysis", "AI 投资分析报告")}</p>
+              </div>
+              <button onClick={() => setAnalysisPanel(null)} className="p-2 rounded-full hover:bg-slate-800 text-slate-400 hover:text-white transition-colors">
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+
+            {/* Panel Content */}
+            <div className="px-8 py-6 space-y-8 pb-20">
+              {analysisPanel.loading ? (
+                <div className="flex flex-col items-center justify-center py-16">
+                  <Loader2 className="w-8 h-8 text-blue-400 animate-spin mb-4" />
+                  <p className="text-slate-400 text-sm">{t("Generating investment analysis...", "正在生成投资分析报告...")}</p>
+                </div>
+              ) : analysisPanel.report ? (
+                <>
+                  {/* Analyst Pricing & Targets */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="bg-gradient-to-br from-blue-900/30 to-indigo-900/30 border border-blue-500/20 rounded-xl p-5">
+                      <div className="flex items-center gap-2 text-blue-400 mb-1">
+                        <Target className="w-4 h-4" />
+                        <span className="text-xs font-bold uppercase tracking-wider">{t("Price Target", "目标价")}</span>
+                      </div>
+                      <div className="flex items-baseline gap-3">
+                        <span className="text-3xl font-bold text-white">{analysisPanel.report.analyst.targetPrice}</span>
+                        <span className="text-sm font-semibold text-emerald-400">{analysisPanel.report.analyst.upside}</span>
+                      </div>
+                    </div>
+                    <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-5">
+                      <div className="flex items-center gap-2 text-slate-400 mb-1">
+                        <Users className="w-4 h-4" />
+                        <span className="text-xs font-bold uppercase tracking-wider">{t("Consensus", "市场共识")}</span>
+                      </div>
+                      <div className="text-xl font-bold text-emerald-400 mb-1">{t(analysisPanel.report.analyst.consensus, analysisPanel.report.analyst.consensus)}</div>
+                      <div className="text-xs text-slate-500 flex gap-2">
+                        <span>{t("Buy", "买入")}: {analysisPanel.report.analyst.breakdown.buy}</span>
+                        <span>{t("Hold", "持有")}: {analysisPanel.report.analyst.breakdown.hold}</span>
+                        <span>{t("Sell", "卖出")}: {analysisPanel.report.analyst.breakdown.sell}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Overview */}
+                  <section>
+                    <h3 className="text-sm font-bold text-slate-300 uppercase tracking-widest mb-3 flex items-center gap-2">
+                      <FileText className="w-4 h-4 text-blue-400" /> {t("Company Overview", "公司概况")}
+                    </h3>
+                    <p className="text-slate-400 text-sm leading-relaxed">{analysisPanel.report.overview}</p>
+                  </section>
+
+                  {/* Fundamentals */}
+                  <section>
+                    <h3 className="text-sm font-bold text-slate-300 uppercase tracking-widest mb-3 flex items-center gap-2">
+                      <TrendingUp className="w-4 h-4 text-emerald-400" /> {t("Fundamentals", "基本面")}
+                    </h3>
+                    <p className="text-slate-400 text-sm leading-relaxed">{analysisPanel.report.fundamentals}</p>
+                  </section>
+
+                  {/* Products & Services */}
+                  <section>
+                    <h3 className="text-sm font-bold text-slate-300 uppercase tracking-widest mb-3 flex items-center gap-2">
+                      <Activity className="w-4 h-4 text-purple-400" /> {t("Products & Services", "产品与服务")}
+                    </h3>
+                    <p className="text-slate-400 text-sm leading-relaxed">{analysisPanel.report.products}</p>
+                  </section>
+
+                  <div className="grid md:grid-cols-2 gap-6 pt-4">
+                    {/* Rationale */}
+                    <section className="bg-emerald-500/5 border border-emerald-500/10 rounded-xl p-5">
+                      <h3 className="text-sm font-bold text-emerald-400 uppercase tracking-widest mb-3 flex items-center gap-2">
+                        <Zap className="w-4 h-4" /> {t("Why We Like It", "看多理由")}
+                      </h3>
+                      <ul className="space-y-2 text-sm text-slate-400">
+                        {analysisPanel.report.rationale.map((line, i) => (
+                          <li key={i} className="flex gap-2">
+                            <span className="text-emerald-500 mt-0.5">•</span>
+                            <span className="leading-relaxed">{line}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </section>
+
+                    {/* Risks */}
+                    <section className="bg-red-500/5 border border-red-500/10 rounded-xl p-5">
+                      <h3 className="text-sm font-bold text-red-400 uppercase tracking-widest mb-3 flex items-center gap-2">
+                        <ShieldAlert className="w-4 h-4" /> {t("Key Risks", "主要风险")}
+                      </h3>
+                      <ul className="space-y-2 text-sm text-slate-400">
+                        {analysisPanel.report.risks.map((line, i) => (
+                          <li key={i} className="flex gap-2">
+                            <span className="text-red-500 mt-0.5">•</span>
+                            <span className="leading-relaxed">{line}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </section>
+                  </div>
+                </>
+              ) : (
+                <div className="text-center py-16 text-slate-500">{t("Failed to load analysis.", "分析报告加载失败。")}</div>
+              )}
+            </div>
           </div>
         </div>
       )}
