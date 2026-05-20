@@ -17,8 +17,12 @@ import { executeScreener } from "@/lib/screener-engine";
 import { loadStockPool } from "@/lib/stock-pool-store";
 import { generateMockStocks } from "@/lib/mock-data";
 import { loadSAList } from "@/lib/seeking-alpha-store";
+import { requirePremium } from "@/lib/auth-middleware";
 
 export async function POST(request: NextRequest) {
+  const authResult = await requirePremium(request);
+  if (!authResult.success) return authResult.response;
+
   try {
     const body: ScreenerRequest = await request.json();
 

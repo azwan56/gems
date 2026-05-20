@@ -8,6 +8,7 @@ import { generateAnalysis, generateAnalysisBatch } from "@/lib/analysis-engine";
 import { generateGeminiAnalysis } from "@/lib/gemini-client";
 import { resolveStock } from "@/lib/stock-resolver";
 import type { StockMetrics } from "@/lib/types";
+import { requirePremium } from "@/lib/auth-middleware";
 
 const VALID_STRATEGIES = ["value", "large_growth", "small_growth"] as const;
 type Strategy = (typeof VALID_STRATEGIES)[number];
@@ -18,6 +19,9 @@ function isValidStrategy(s: string): s is Strategy {
 }
 
 export async function GET(request: NextRequest) {
+  const authResult = await requirePremium(request);
+  if (!authResult.success) return authResult.response;
+
   const symbol = request.nextUrl.searchParams.get("symbol");
   const strategy = request.nextUrl.searchParams.get("strategy") ?? "large_growth";
   const lang: Lang = request.nextUrl.searchParams.get("lang") === "zh" ? "zh" : "en";
@@ -62,6 +66,9 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  const authResult = await requirePremium(request);
+  if (!authResult.success) return authResult.response;
+
   try {
     const body = await request.json();
     const { symbols, strategy, lang: bodyLang } = body as {

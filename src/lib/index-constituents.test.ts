@@ -6,9 +6,9 @@ import { describe, it, expect } from "vitest";
 import { UNIVERSE, getUniverseSymbols } from "@/lib/index-constituents";
 
 describe("Index Constituents", () => {
-  it("UNIVERSE should have ~80 symbols", () => {
-    expect(UNIVERSE.length).toBeGreaterThanOrEqual(70);
-    expect(UNIVERSE.length).toBeLessThanOrEqual(85);
+  it("UNIVERSE should have ~155 symbols", () => {
+    expect(UNIVERSE.length).toBeGreaterThanOrEqual(140);
+    expect(UNIVERSE.length).toBeLessThanOrEqual(170);
   });
 
   it("all symbols should be uppercase strings", () => {
@@ -49,9 +49,9 @@ describe("Index Constituents", () => {
     expect(universe.length).toBe(uniqueSet.size);
   });
 
-  it("universe should fit within FMP free tier (80×3 = 240 < 250)", () => {
+  it("universe should fit within FMP Starter tier (155×4 = 620 < 10,000)", () => {
     const universe = getUniverseSymbols();
-    const estimatedCalls = universe.length * 3; // quote + ratios + growth
-    expect(estimatedCalls).toBeLessThanOrEqual(250);
+    const estimatedCalls = universe.length * 4; // quote + ratios + growth + key-metrics
+    expect(estimatedCalls).toBeLessThanOrEqual(10000);
   });
 });

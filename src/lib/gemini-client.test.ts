@@ -66,10 +66,13 @@ const testStock: StockMetrics = {
   fiftyTwoWeekLow: 100.0,
 };
 
+import { clearCache } from "@/lib/fmp-cache";
+
 describe("generateGeminiAnalysis", () => {
   beforeEach(() => {
-    process.env.GEMINI_API_KEY = "test-key-12345";
+    process.env.GEMINI_API_KEY = "dummy";
     mockGenerateContent.mockResolvedValue(validResponse);
+    clearCache();
   });
 
   it("should return a valid StockAnalysisReport structure", async () => {

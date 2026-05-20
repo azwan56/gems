@@ -1,11 +1,7 @@
-// ============================================================
-// GET /api/strategies — List all available strategy presets
-// POST /api/strategies — Save a custom strategy (user-specific)
-// ============================================================
-
 import { NextRequest, NextResponse } from "next/server";
 import { getAllStrategyPresets } from "@/lib/strategies";
 import { saveStrategy } from "@/lib/user-store";
+import { requirePremium } from "@/lib/auth-middleware";
 
 export async function GET() {
   const presets = getAllStrategyPresets();
@@ -13,13 +9,18 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
+  const authResult = await requirePremium(request);
+  if (!authResult.success) return authResult.response;
+
+  const userId = authResult.user.uid;
+
   try {
     const body = await request.json();
-    const { userId, name, baseStrategy, filters } = body;
+    const { name, baseStrategy, filters } = body;
 
-    if (!userId || !name || !baseStrategy || !filters) {
+    if (!name || !baseStrategy || !filters) {
       return NextResponse.json(
-        { error: "MISSING_FIELDS", message: "userId, name, baseStrategy, and filters are required" },
+        { error: "MISSING_FIELDS", message: "name, baseStrategy, and filters are required" },
         { status: 400 }
       );
     }

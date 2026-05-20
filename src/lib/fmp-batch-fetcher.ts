@@ -1,14 +1,10 @@
 // ============================================================
 // FMP Universe Fetcher — for Starter tier (10,000 calls/day)
 //
-// With ~155 stocks in the universe:
-//   Phase 1: /stable/quote            × 155 → price, SMA, 52wk
-//   Phase 2: /stable/ratios-ttm       × 155 → PE, PB, FCF, margins
-//   Phase 3: /stable/financial-growth  × 155 → rev/EPS growth
-//   Phase 4: /stable/key-metrics-ttm  × 155 → ROE, ROIC, etc.
-//   Total: ~620 calls (well under 10,000/day)
+// Supports fetching a custom symbol list (for chunked cron jobs)
+// or defaults to the curated universe.
 //
-// Uses 30-way parallelism → ~20s total execution time
+// Rate limit: 300 calls/min → PARALLEL=25, DELAY=5s → 5 calls/s
 // ============================================================
 
 import { StockMetrics } from "./types";
@@ -22,18 +18,12 @@ import {
   FmpKeyMetrics,
   buildStockMetrics,
 } from "./fmp-client";
+import { FMP_STABLE_URL, getApiKey } from "./fmp-config";
 
-const FMP_STABLE_URL = "https://financialmodelingprep.com/stable";
-const PARALLEL = 10;
-const BATCH_DELAY_MS = 2500; // 2.5s between batches to respect 300/min rate limits
+const PARALLEL = 25;
+const BATCH_DELAY_MS = 5000; // 5s between batches → 25/5s = 5/s = 300/min
 
 function sleep(ms: number) { return new Promise(r => setTimeout(r, ms)); }
-
-function getApiKey(): string {
-  const key = process.env.FMP_API_KEY;
-  if (!key) throw new Error("FMP_API_KEY is not set");
-  return key;
-}
 
 async function fmpGet<T>(
   endpoint: string,
@@ -99,13 +89,16 @@ async function parallelFetch<T>(
 }
 
 /**
- * Fetch the full universe of stocks from FMP with all metrics.
+ * Fetch stocks from FMP with all metrics.
+ * @param customSymbols — optional symbol list (used by chunked cron jobs).
+ *   If omitted, falls back to the curated universe.
  */
-export async function fetchFullUniverse(): Promise<FetchResult> {
-  const symbols = getUniverseSymbols();
+export async function fetchFullUniverse(customSymbols?: string[]): Promise<FetchResult> {
+  const symbols = customSymbols ?? getUniverseSymbols();
   const errors: string[] = [];
   let totalCalls = 0;
 
+  // ---- Phase 1: Quote → price, marketCap, SMA, 52-week ----
   // ---- Phase 1: Quote → price, marketCap, SMA, 52-week ----
   console.log(`[FMP] Phase 1: quotes for ${symbols.length} symbols...`);
   const { map: quoteMap, calls: quoteCalls } = await parallelFetch<FmpTechnical>(

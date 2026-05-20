@@ -1,0 +1,28 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/refresh-pool?chunk=1",
+      "schedule": "0 21 * * 1-5"
+    },
+    {
+      "path": "/api/cron/refresh-pool?chunk=2",
+      "schedule": "5 21 * * 1-5"
+    },
+    {
+      "path": "/api/cron/refresh-pool?chunk=3",
+      "schedule": "10 21 * * 1-5"
+    },
+    {
+      "path": "/api/cron/refresh-pool?chunk=4",
+      "schedule": "15 21 * * 1-5"
+    },
+    {
+      "path": "/api/cron/refresh-pool?chunk=5",
+      "schedule": "20 21 * * 1-5"
+    },
+    {
+      "path": "/api/cron/refresh-pool?chunk=6",
+      "schedule": "25 21 * * 1-5"
+    }
+  ]
+}

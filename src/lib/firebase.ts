@@ -7,10 +7,13 @@
 import { initializeApp, getApps, cert, type ServiceAccount } from "firebase-admin/app";
 import { getFirestore, type Firestore } from "firebase-admin/firestore";
 
-let db: Firestore | null = null;
+// Use globalThis to persist across Next.js hot-reloads in dev mode
+const globalForFirebase = globalThis as unknown as {
+  _firestore?: Firestore;
+};
 
 function initFirestore(): Firestore {
-  if (db) return db;
+  if (globalForFirebase._firestore) return globalForFirebase._firestore;
 
   if (getApps().length === 0) {
     const serviceAccountJson = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
@@ -28,8 +31,14 @@ function initFirestore(): Firestore {
     }
   }
 
-  db = getFirestore();
-  db.settings({ ignoreUndefinedProperties: true });
+  const db = getFirestore();
+  // settings() can only be called once before any other Firestore method
+  try {
+    db.settings({ ignoreUndefinedProperties: true });
+  } catch {
+    // Already configured — safe to ignore in hot-reload scenarios
+  }
+  globalForFirebase._firestore = db;
   return db;
 }
 

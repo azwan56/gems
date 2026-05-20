@@ -15,6 +15,7 @@ import { STRATEGY_PRESETS } from "@/lib/strategies";
 import { useLanguage } from "@/lib/language-context";
 import { useAuth } from "@/lib/auth-context";
 import UserMenu from "@/components/UserMenu";
+import PremiumGate from "@/components/PremiumGate";
 
 function formatMarketCap(val: number): string {
   if (val >= 1e12) return `$${(val / 1e12).toFixed(2)}T`;
@@ -64,11 +65,20 @@ export default function FunnelScreenerPage() {
   // Load SA list on mount if strategy is seeking_alpha
   useEffect(() => {
     if (!isSA) return;
-    fetch("/api/seeking-alpha")
-      .then((r) => r.json())
-      .then((d) => setSaSymbols(d.symbols || []))
-      .catch(() => {});
-  }, [isSA]);
+    const loadSA = async () => {
+      try {
+        const token = await getIdToken();
+        const res = await fetch("/api/seeking-alpha", {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setSaSymbols(data.symbols || []);
+        }
+      } catch {}
+    };
+    loadSA();
+  }, [isSA, getIdToken]);
 
   const addSASymbols = async () => {
     const raw = saInput.toUpperCase().trim();
@@ -78,9 +88,13 @@ export default function FunnelScreenerPage() {
     if (newSymbols.length === 0) return;
     setSaLoading(true);
     try {
+      const token = await getIdToken();
       const res = await fetch("/api/seeking-alpha", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify({ symbols: newSymbols }),
       });
       if (res.ok) {
@@ -96,9 +110,13 @@ export default function FunnelScreenerPage() {
 
   const removeSASymbol = async (symbol: string) => {
     try {
+      const token = await getIdToken();
       const res = await fetch("/api/seeking-alpha", {
         method: "DELETE",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify({ symbol }),
       });
       if (res.ok) {
@@ -114,7 +132,10 @@ export default function FunnelScreenerPage() {
     setAnalysisReport(null);
     setAnalysisLoading(true);
     try {
-      const res = await fetch(`/api/analysis?symbol=${stock.symbol}&strategy=${strategyId}&lang=${lang}`);
+      const token = await getIdToken();
+      const res = await fetch(`/api/analysis?symbol=${stock.symbol}&strategy=${strategyId}&lang=${lang}`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
       if (res.ok) {
         const data = await res.json();
         setAnalysisReport(data.report);
@@ -126,10 +147,14 @@ export default function FunnelScreenerPage() {
   const fetchStocks = useCallback(async () => {
     setLoading(true);
     try {
+      const token = await getIdToken();
       const filters = preset?.defaultFilters ?? [];
       const res = await fetch("/api/screener", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify({ strategy: strategyId, filters, limit: 200 }),
       });
       if (!res.ok) throw new Error(`API error: ${res.status}`);
@@ -154,9 +179,13 @@ export default function FunnelScreenerPage() {
   const refreshPool = async () => {
     setRefreshing(true);
     try {
+      const token = await getIdToken();
       const res = await fetch("/api/stock-pool", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify({ force: true }),
       });
       if (res.ok) {
@@ -275,8 +304,9 @@ export default function FunnelScreenerPage() {
         </div>
       </header>
 
-      {/* Funnel Progress Bar */}
-      <div className="bg-slate-900 border-b border-slate-800">
+      <PremiumGate featureName={t("Quantitative Stock Screener", "量化选股系统")}>
+        {/* Funnel Progress Bar */}
+        <div className="bg-slate-900 border-b border-slate-800">
         <div className="max-w-[1400px] mx-auto px-6 py-4 flex items-center justify-between">
           {[
             { step: 1, icon: Activity, title: isSA ? t("Step 1: Skipped", "第一步：已跳过") : t("Step 1: Quantitative", "第一步：定量筛选"), sub: isSA ? t("SA Direct List", "SA 直选") : isValue ? t("Valuation & FCF", "估值与自由现金流") : t("Growth & Scale", "成长与规模") },
@@ -387,11 +417,11 @@ export default function FunnelScreenerPage() {
                     </div>
                   )}
 
-                  {/* Data source indicator */}
+                  {/* Data source indicator — auto-refreshed daily after market close */}
                   <div className="flex items-center gap-3 mb-4 px-4 py-2.5 rounded-lg bg-slate-900/80 border border-slate-800 text-xs">
                     {dataSource === "fmp" ? (
                       <span className="flex items-center gap-1.5 text-emerald-400">
-                        <Cloud className="w-3.5 h-3.5" /> {t("FMP Real-time Data", "FMP 实时数据")}
+                        <Cloud className="w-3.5 h-3.5" /> {t("FMP Market Data", "FMP 市场数据")}
                       </span>
                     ) : (
                       <span className="flex items-center gap-1.5 text-amber-400">
@@ -401,16 +431,21 @@ export default function FunnelScreenerPage() {
                     <span className="text-slate-600">|</span>
                     <span className="text-slate-500">
                       {poolUpdatedAt
-                        ? `${t("Updated at", "更新于")} ${new Date(poolUpdatedAt).toLocaleString(lang === "en" ? "en-US" : "zh-CN", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}`
+                        ? `${t("Updated", "更新于")} ${new Date(poolUpdatedAt).toLocaleString(lang === "en" ? "en-US" : "zh-CN", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}`
                         : t("Not updated", "未刷新")}
+                    </span>
+                    <span className="text-slate-600">|</span>
+                    <span className="text-slate-600 italic">
+                      {t("Auto-refresh: weekdays 5 PM ET", "自动刷新：交易日收盘后1小时")}
                     </span>
                     <button
                       onClick={refreshPool}
                       disabled={refreshing}
+                      title={t("Force refresh data from FMP API", "强制从 FMP API 刷新数据")}
                       className="ml-auto flex items-center gap-1.5 px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition-colors disabled:opacity-50"
                     >
                       <RefreshCw className={`w-3 h-3 ${refreshing ? "animate-spin" : ""}`} />
-                      {refreshing ? t("Refreshing...", "刷新中...") : t("Refresh Data", "刷新数据")}
+                      {refreshing ? t("Refreshing...", "刷新中...") : t("Manual Refresh", "手动刷新")}
                     </button>
                   </div>
 
@@ -864,6 +899,7 @@ export default function FunnelScreenerPage() {
           </div>
         </div>
       )}
+      </PremiumGate>
 
     </div>
   );

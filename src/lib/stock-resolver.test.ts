@@ -4,6 +4,11 @@
 
 import { describe, it, expect, beforeEach, vi } from "vitest";
 
+// Mock Firestore-dependent modules to avoid Firestore init in tests
+vi.mock("@/lib/stock-pool-store", () => ({
+  loadStockPool: vi.fn().mockResolvedValue(null),
+}));
+
 // We test the mock-data path by ensuring FMP_API_KEY is not set
 describe("resolveStock (mock path)", () => {
   beforeEach(() => {
@@ -12,7 +17,6 @@ describe("resolveStock (mock path)", () => {
   });
 
   it("should resolve a known mock symbol", async () => {
-    // Dynamic import to pick up env after beforeEach
     const { resolveStock } = await import("@/lib/stock-resolver");
     const stock = await resolveStock("AAPL");
     expect(stock).toBeDefined();

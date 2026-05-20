@@ -1,12 +1,20 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import type { StockMetrics } from "./types";
 import type { StockAnalysisReport } from "./analysis-engine";
+import { getCached, setCache } from "./fmp-cache";
 
 export async function generateGeminiAnalysis(
   stock: StockMetrics,
   strategyType: "value" | "large_growth" | "small_growth",
   language: "en" | "zh" = "en"
 ): Promise<StockAnalysisReport> {
+  const cacheKey = `gemini:${stock.symbol.toUpperCase()}:${strategyType}:${language}`;
+  const cached = getCached<StockAnalysisReport>(cacheKey);
+  if (cached) {
+    console.log(`[gemini] Serving cached report for ${stock.symbol} (${strategyType}, ${language})`);
+    return cached;
+  }
+
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
     throw new Error("GEMINI_API_KEY is not defined");
@@ -109,6 +117,8 @@ Rules for fields:
   
   // Guarantee symbol matches what we requested, regardless of hallucination
   parsed.symbol = stock.symbol;
+
+  setCache(cacheKey, parsed);
   
   return parsed;
 }

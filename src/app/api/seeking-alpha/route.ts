@@ -12,11 +12,15 @@ import {
   removeFromSAList,
   saveSAList,
 } from "@/lib/seeking-alpha-store";
+import { requirePremium } from "@/lib/auth-middleware";
 
 /**
  * GET: Return the current Seeking Alpha symbol list.
  */
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const authResult = await requirePremium(request);
+  if (!authResult.success) return authResult.response;
+
   try {
     const list = await loadSAList();
     return NextResponse.json(list);
@@ -33,6 +37,9 @@ export async function GET() {
  * Body: { "symbols": ["AAPL", "TSLA", ...] }
  */
 export async function POST(request: NextRequest) {
+  const authResult = await requirePremium(request);
+  if (!authResult.success) return authResult.response;
+
   try {
     const body = await request.json();
     const symbols: string[] = body?.symbols;
@@ -57,6 +64,9 @@ export async function POST(request: NextRequest) {
  * Body: { "symbols": ["SYM1", "SYM2", ...] }
  */
 export async function PUT(request: NextRequest) {
+  const authResult = await requirePremium(request);
+  if (!authResult.success) return authResult.response;
+
   try {
     const body = await request.json();
     const symbols: string[] = body?.symbols;
@@ -81,6 +91,9 @@ export async function PUT(request: NextRequest) {
  * Body: { "symbol": "AAPL" }
  */
 export async function DELETE(request: NextRequest) {
+  const authResult = await requirePremium(request);
+  if (!authResult.success) return authResult.response;
+
   try {
     const body = await request.json();
     const symbol: string = body?.symbol;

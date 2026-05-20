@@ -6,44 +6,11 @@
 import { StockMetrics } from "./types";
 import { getUniverseSymbols } from "./index-constituents";
 import { getSectorInfo } from "./sector-map";
+import { FMP_STABLE_URL, getApiKey } from "./fmp-config";
+import { getCached, setCache, clearCache } from "./fmp-cache";
 
-const FMP_STABLE_URL = "https://financialmodelingprep.com/stable";
-
-function getApiKey(): string {
-  const key = process.env.FMP_API_KEY;
-  if (!key) {
-    throw new Error("FMP_API_KEY environment variable is not set");
-  }
-  return key;
-}
-
-// ---- In-memory cache with TTL ----
-interface CacheEntry<T> {
-  data: T;
-  expiresAt: number;
-}
-
-const cache = new Map<string, CacheEntry<unknown>>();
-const DEFAULT_TTL_MS = 30 * 60 * 1000; // 30 minutes
-
-function getCached<T>(key: string): T | null {
-  const entry = cache.get(key);
-  if (!entry) return null;
-  if (Date.now() > entry.expiresAt) {
-    cache.delete(key);
-    return null;
-  }
-  return entry.data as T;
-}
-
-function setCache<T>(key: string, data: T, ttlMs = DEFAULT_TTL_MS): void {
-  cache.set(key, { data, expiresAt: Date.now() + ttlMs });
-}
-
-/** Clears all cached data */
-export function clearCache(): void {
-  cache.clear();
-}
+// Re-export clearCache for backwards compatibility
+export { clearCache } from "./fmp-cache";
 
 // ---- FMP API types (raw response shapes) ----
 
@@ -278,25 +245,31 @@ export async function fetchQuoteBatch(symbols: string[]): Promise<Map<string, Fm
   const result = new Map<string, FmpTechnical>();
   if (symbols.length === 0) return result;
 
-  const cacheKey = `quote:${symbols.sort().join(",")}`;
-  const cached = getCached<FmpTechnical[]>(cacheKey);
-  if (cached) {
-    for (const q of cached) {
-      if (q.symbol) result.set(q.symbol, q);
+  const batchSize = 10;
+  for (let i = 0; i < symbols.length; i += batchSize) {
+    const batch = symbols.slice(i, i + batchSize);
+    await Promise.all(
+      batch.map(async (symbol) => {
+        const cacheKey = `quote:${symbol}`;
+        const cached = getCached<FmpTechnical>(cacheKey);
+        if (cached) {
+          result.set(symbol, cached);
+          return;
+        }
+        try {
+          const data = await fmpFetch<FmpTechnical[]>("/quote", { symbol });
+          if (data && data.length > 0) {
+            setCache(cacheKey, data[0]);
+            result.set(symbol, data[0]);
+          }
+        } catch {
+          // Skip failed fetches
+        }
+      })
+    );
+    if (i + batchSize < symbols.length) {
+      await new Promise((r) => setTimeout(r, 1000));
     }
-    return result;
-  }
-
-  // The /stable/quote endpoint supports comma-separated symbols
-  const symbolStr = symbols.join(",");
-  try {
-    const data = await fmpFetch<FmpTechnical[]>("/quote", { symbol: symbolStr });
-    setCache(cacheKey, data);
-    for (const q of data) {
-      if (q.symbol) result.set(q.symbol, q);
-    }
-  } catch {
-    // Return empty on failure
   }
   return result;
 }

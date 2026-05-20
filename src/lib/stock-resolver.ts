@@ -7,16 +7,15 @@ import { StockMetrics } from "./types";
 import { generateMockStocks } from "./mock-data";
 import { loadStockPool } from "./stock-pool-store";
 import { getSectorInfo } from "./sector-map";
-import { fetchRatiosBatch, fetchGrowthBatch, buildStockMetrics } from "./fmp-client";
-
-const FMP_STABLE_URL = "https://financialmodelingprep.com/stable";
+import { fetchRatiosBatch, fetchGrowthBatch, fetchOnDemandStocks } from "./fmp-client";
+import { hasApiKey } from "./fmp-config";
 
 /**
  * Resolve a stock symbol to a fully-populated StockMetrics object.
  *
  * Strategy (in priority order):
  *  1. Check Firestore stock pool (no API cost, instant)
- *  2. If FMP_API_KEY is set → fetch live from FMP (costs 3 API calls)
+ *  2. If FMP_API_KEY is set → fetch live from FMP via fetchOnDemandStocks (reuses fmp-client)
  *  3. Fallback → look up from mock data pool
  *
  * This is the single entry point used by the analysis API route.
@@ -45,43 +44,12 @@ export async function resolveStock(symbol: string): Promise<StockMetrics | undef
     // Firestore not available, continue to next strategy
   }
 
-  // 2. Try live FMP API (if key is set)
-  if (process.env.FMP_API_KEY) {
+  // 2. Try live FMP API (if key is set) — reuses fmp-client module
+  if (hasApiKey()) {
     try {
-      const response = await fetch(
-        `${FMP_STABLE_URL}/profile?symbol=${upperSymbol}&apikey=${process.env.FMP_API_KEY}`
-      );
-      if (response.ok) {
-        const profiles = await response.json();
-        if (Array.isArray(profiles) && profiles.length > 0) {
-          const profile = profiles[0];
-
-          const [ratioMap, growthMap] = await Promise.all([
-            fetchRatiosBatch([upperSymbol]),
-            fetchGrowthBatch([upperSymbol]),
-          ]);
-
-          const baseScreener = {
-            symbol: profile.symbol || upperSymbol,
-            companyName: profile.companyName || profile.name || upperSymbol,
-            marketCap: profile.marketCap || 0,
-            sector: profile.sector || "Unknown",
-            industry: profile.industry || "Unknown",
-            price: profile.price || 0,
-            volume: profile.volume || 0,
-            exchangeShortName: profile.exchange || "US",
-            country: profile.country || "US",
-            isEtf: profile.isEtf || false,
-            isActivelyTrading: profile.isActivelyTrading !== false,
-          };
-
-          return buildStockMetrics(
-            baseScreener,
-            ratioMap.get(upperSymbol),
-            growthMap.get(upperSymbol),
-            undefined
-          );
-        }
+      const results = await fetchOnDemandStocks([upperSymbol]);
+      if (results.length > 0) {
+        return results[0];
       }
     } catch {
       // FMP API failed (quota exceeded, etc.), continue to mock

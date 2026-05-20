@@ -6,10 +6,11 @@ import { describe, it, expect } from "vitest";
 import { getStrategyPreset, getAllStrategyPresets, STRATEGY_PRESETS } from "@/lib/strategies";
 
 describe("Strategy Presets", () => {
-  it("should have all 3 presets defined", () => {
+  it("should have all 4 presets defined", () => {
     expect(STRATEGY_PRESETS.value).toBeDefined();
     expect(STRATEGY_PRESETS.large_growth).toBeDefined();
     expect(STRATEGY_PRESETS.small_growth).toBeDefined();
+    expect(STRATEGY_PRESETS.seeking_alpha).toBeDefined();
   });
 
   it("should return a preset by ID", () => {
@@ -27,11 +28,12 @@ describe("Strategy Presets", () => {
   it("should return all presets as an array", () => {
     const all = getAllStrategyPresets();
     expect(Array.isArray(all)).toBe(true);
-    expect(all.length).toBe(3);
+    expect(all.length).toBe(4);
     const ids = all.map((p) => p.id);
     expect(ids).toContain("value");
     expect(ids).toContain("large_growth");
     expect(ids).toContain("small_growth");
+    expect(ids).toContain("seeking_alpha");
   });
 
   it("large_growth preset should have correct default filters", () => {
@@ -40,7 +42,7 @@ describe("Strategy Presets", () => {
     expect(fields).toContain("revenueGrowthYoY");
     expect(fields).toContain("epsGrowthYoY");
     expect(fields).toContain("freeCashFlowYield");
-    expect(fields).toContain("roe");
+    expect(fields).toContain("grossMargin");
     expect(fields).toContain("marketCap");
   });
 
@@ -53,7 +55,16 @@ describe("Strategy Presets", () => {
       expect(preset.descriptionZh).toBeTruthy();
       expect(preset.icon).toBeTruthy();
       expect(preset.color).toBeTruthy();
-      expect(preset.defaultFilters.length).toBeGreaterThan(0);
+      // seeking_alpha has no default filters (bypasses screening)
+      if (preset.id !== "seeking_alpha") {
+        expect(preset.defaultFilters.length).toBeGreaterThan(0);
+      }
     }
+  });
+
+  it("seeking_alpha preset should have empty default filters", () => {
+    const sa = getStrategyPreset("seeking_alpha")!;
+    expect(sa.defaultFilters).toEqual([]);
+    expect(sa.name).toBe("Seeking Alpha Picks");
   });
 });

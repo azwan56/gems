@@ -22,6 +22,10 @@ export interface StockPoolData {
   stocks: StockMetrics[];
 }
 
+let cachedPool: StockPoolData | null = null;
+let cacheExpiry = 0;
+const CACHE_TTL_MS = 60 * 1000;
+
 /**
  * Save the full stock pool to Firestore.
  */
@@ -30,6 +34,10 @@ export async function saveStockPool(
   source: "fmp" | "mock",
   apiCallsUsed: number
 ): Promise<StockPoolMeta> {
+  // Invalidate local cache
+  cachedPool = null;
+  cacheExpiry = 0;
+
   const db = getDb();
   const meta: StockPoolMeta = {
     updatedAt: new Date().toISOString(),
@@ -52,6 +60,11 @@ export async function saveStockPool(
  * Returns null if no pool exists yet.
  */
 export async function loadStockPool(): Promise<StockPoolData | null> {
+  const now = Date.now();
+  if (cachedPool && now < cacheExpiry) {
+    return cachedPool;
+  }
+
   try {
     const db = getDb();
     const doc = await db.collection(COLLECTION).doc(DOC_ID).get();
@@ -60,10 +73,12 @@ export async function loadStockPool(): Promise<StockPoolData | null> {
     const data = doc.data();
     if (!data?.stocks || !data?.meta) return null;
 
-    return {
+    cachedPool = {
       meta: data.meta as StockPoolMeta,
       stocks: data.stocks as StockMetrics[],
     };
+    cacheExpiry = now + CACHE_TTL_MS;
+    return cachedPool;
   } catch (e) {
     console.error("Failed to load stock pool from Firestore:", e);
     return null;
@@ -91,4 +106,36 @@ export function isPoolFresh(meta: StockPoolMeta, maxAgeHours = 12): boolean {
   const updatedAt = new Date(meta.updatedAt).getTime();
   const ageMs = Date.now() - updatedAt;
   return ageMs < maxAgeHours * 60 * 60 * 1000;
+}
+
+/**
+ * Merge new stocks into the existing pool.
+ * If a stock already exists (by symbol), it is replaced with the new data.
+ * Used by chunked cron jobs — each chunk merges its results into the pool.
+ */
+export async function mergeStockPool(
+  newStocks: StockMetrics[],
+  source: "fmp" | "mock",
+  apiCallsUsed: number
+): Promise<StockPoolMeta> {
+  // Load existing pool
+  const existing = await loadStockPool();
+  const stockMap = new Map<string, StockMetrics>();
+
+  // Add existing stocks first
+  if (existing?.stocks) {
+    for (const s of existing.stocks) {
+      stockMap.set(s.symbol.toUpperCase(), s);
+    }
+  }
+
+  // Merge/overwrite with new stocks
+  for (const s of newStocks) {
+    stockMap.set(s.symbol.toUpperCase(), s);
+  }
+
+  const mergedStocks = Array.from(stockMap.values());
+  const totalApiCalls = (existing?.meta.apiCallsUsed ?? 0) + apiCallsUsed;
+
+  return saveStockPool(mergedStocks, source, totalApiCalls);
 }

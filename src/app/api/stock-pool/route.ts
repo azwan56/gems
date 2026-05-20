@@ -7,6 +7,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { loadStockPool, saveStockPool, getPoolStatus, isPoolFresh } from "@/lib/stock-pool-store";
 import { fetchFullUniverse } from "@/lib/fmp-batch-fetcher";
 import { generateMockStocks } from "@/lib/mock-data";
+import { requirePremium } from "@/lib/auth-middleware";
 
 // Allow longer execution for the refresh operation (Vercel Pro: up to 300s)
 export const maxDuration = 120;
@@ -17,6 +18,9 @@ export const maxDuration = 120;
  *   ?include=stocks — also return the full stock array
  */
 export async function GET(request: NextRequest) {
+  const authResult = await requirePremium(request);
+  if (!authResult.success) return authResult.response;
+
   try {
     const includeStocks = request.nextUrl.searchParams.get("include") === "stocks";
 
@@ -60,6 +64,9 @@ export async function GET(request: NextRequest) {
  *   { "force": true }  — refresh even if pool is still fresh
  */
 export async function POST(request: NextRequest) {
+  const authResult = await requirePremium(request);
+  if (!authResult.success) return authResult.response;
+
   try {
     const body = await request.json().catch(() => ({}));
     const force = body?.force === true;

@@ -13,21 +13,34 @@ export interface SeekingAlphaList {
   updatedAt: string;
 }
 
+let cachedSAList: SeekingAlphaList | null = null;
+let saListCacheExpiry = 0;
+const CACHE_TTL_MS = 60 * 1000;
+
 /**
  * Load the Seeking Alpha symbol list from Firestore.
  */
 export async function loadSAList(): Promise<SeekingAlphaList> {
+  const now = Date.now();
+  if (cachedSAList && now < saListCacheExpiry) {
+    return cachedSAList;
+  }
+
   try {
     const db = getDb();
     const doc = await db.collection(COLLECTION).doc(DOC_ID).get();
     if (!doc.exists) {
-      return { symbols: [], updatedAt: new Date().toISOString() };
+      cachedSAList = { symbols: [], updatedAt: new Date().toISOString() };
+      saListCacheExpiry = now + CACHE_TTL_MS;
+      return cachedSAList;
     }
     const data = doc.data();
-    return {
+    cachedSAList = {
       symbols: (data?.symbols as string[]) ?? [],
       updatedAt: (data?.updatedAt as string) ?? new Date().toISOString(),
     };
+    saListCacheExpiry = now + CACHE_TTL_MS;
+    return cachedSAList;
   } catch (e) {
     console.error("Failed to load SA list from Firestore:", e);
     return { symbols: [], updatedAt: new Date().toISOString() };
@@ -38,6 +51,10 @@ export async function loadSAList(): Promise<SeekingAlphaList> {
  * Save the full Seeking Alpha symbol list to Firestore.
  */
 export async function saveSAList(symbols: string[]): Promise<SeekingAlphaList> {
+  // Invalidate local cache
+  cachedSAList = null;
+  saListCacheExpiry = 0;
+
   const db = getDb();
   const deduped = [...new Set(symbols.map((s) => s.toUpperCase().trim()).filter(Boolean))];
   const record: SeekingAlphaList = {
