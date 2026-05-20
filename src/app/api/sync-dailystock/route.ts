@@ -1,4 +1,5 @@
 // ============================================================
+// GET  /api/sync-dailystock?symbol=XXX — Preview stock info before syncing
 // POST /api/sync-dailystock — Sync a single stock to DailyStock observe_list
 // Appends a symbol to the user's observe_list field on the shared
 // Firestore `users/{uid}` document (same DB as DailyStock platform).
@@ -8,6 +9,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyAuth } from "@/lib/auth-middleware";
 import { getDb } from "@/lib/firebase";
+import { resolveStock } from "@/lib/stock-resolver";
 
 // DailyStock observe_list limits per plan type
 const OBSERVE_LIMITS: Record<string, number> = {
@@ -16,6 +18,60 @@ const OBSERVE_LIMITS: Record<string, number> = {
   super: Infinity,
 };
 
+/**
+ * GET /api/sync-dailystock?symbol=GOOGL
+ * Returns stock info + current observe_list status for confirmation UI.
+ */
+export async function GET(request: NextRequest) {
+  const authResult = await verifyAuth(request);
+  if (!authResult.success) return authResult.response;
+
+  const { uid, planType } = authResult.user;
+  const symbol = request.nextUrl.searchParams.get("symbol")?.toUpperCase();
+
+  if (!symbol) {
+    return NextResponse.json(
+      { error: "MISSING_FIELDS", message: "symbol query param is required" },
+      { status: 400 }
+    );
+  }
+
+  try {
+    // Resolve stock info from pool/FMP/mock
+    const stock = await resolveStock(symbol);
+
+    // Get current observe_list status
+    const db = getDb();
+    const userDoc = await db.collection("users").doc(uid).get();
+    const userData = userDoc.data() || {};
+    const observeList: string[] = (userData.observe_list as string[]) || [];
+    const limit = OBSERVE_LIMITS[planType] ?? OBSERVE_LIMITS.trial;
+
+    return NextResponse.json({
+      symbol,
+      companyName: stock?.companyName || symbol,
+      sector: stock?.sector || "—",
+      industry: stock?.industry || "—",
+      price: stock?.price ?? null,
+      marketCap: stock?.marketCap ?? null,
+      alreadyInList: observeList.includes(symbol),
+      observeListCount: observeList.length,
+      observeListLimit: limit === Infinity ? null : limit,
+      planType,
+    });
+  } catch (error) {
+    console.error("Stock lookup failed:", error);
+    return NextResponse.json(
+      { error: "LOOKUP_FAILED", message: "Failed to look up stock info" },
+      { status: 500 }
+    );
+  }
+}
+
+/**
+ * POST /api/sync-dailystock { symbol: "GOOGL" }
+ * Appends a single symbol to the user's DailyStock observe_list.
+ */
 export async function POST(request: NextRequest) {
   // 1. Verify auth
   const authResult = await verifyAuth(request);

@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-import { Gem, ArrowLeft, StarOff, Trash2, Shield, Sword, Rocket, CircleDollarSign, RefreshCcw, AlertTriangle, HelpCircle, ChevronDown, Languages, ArrowUpFromLine, Check, Loader2 } from "lucide-react";
+import { Gem, ArrowLeft, StarOff, Trash2, Shield, Sword, Rocket, CircleDollarSign, RefreshCcw, AlertTriangle, HelpCircle, ChevronDown, Languages, ArrowUpFromLine, Check, Loader2, X } from "lucide-react";
 import type { WatchlistItem } from "@/lib/types";
 import { useLanguage } from "@/lib/language-context";
 import { useAuth } from "@/lib/auth-context";
@@ -31,6 +31,21 @@ export default function WatchlistPage() {
   const [loading, setLoading] = useState(true);
   // Track sync state per symbol: 'syncing' | 'synced' | 'already_exists' | 'error' | 'limit'
   const [syncState, setSyncState] = useState<Record<string, string>>({});
+
+  // Confirmation modal state
+  interface SyncPreview {
+    symbol: string;
+    companyName: string;
+    sector: string;
+    industry: string;
+    price: number | null;
+    marketCap: number | null;
+    alreadyInList: boolean;
+    observeListCount: number;
+    observeListLimit: number | null;
+    planType: string;
+  }
+  const [confirmModal, setConfirmModal] = useState<{ loading: boolean; data: SyncPreview | null; error: string | null }>({ loading: false, data: null, error: null });
 
   useEffect(() => {
     if (user?.uid) fetchWatchlist();
@@ -93,9 +108,31 @@ export default function WatchlistPage() {
     }
   };
 
-  const syncToDailyStock = async (symbol: string) => {
+  // Step 1: Open confirm modal — fetch stock preview info
+  const openSyncConfirm = useCallback(async (symbol: string) => {
     if (!user?.uid) return;
-    setSyncState(prev => ({ ...prev, [symbol]: 'syncing' }));
+    setConfirmModal({ loading: true, data: null, error: null });
+    try {
+      const token = await getIdToken();
+      const res = await fetch(`/api/sync-dailystock?symbol=${encodeURIComponent(symbol)}`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setConfirmModal({ loading: false, data, error: null });
+      } else {
+        setConfirmModal({ loading: false, data: null, error: t("Failed to load stock info", "无法加载股票信息") });
+      }
+    } catch {
+      setConfirmModal({ loading: false, data: null, error: t("Network error", "网络错误") });
+    }
+  }, [user?.uid, getIdToken, t]);
+
+  // Step 2: Confirm sync — actually write to observe_list
+  const confirmSync = useCallback(async () => {
+    const symbol = confirmModal.data?.symbol;
+    if (!symbol || !user?.uid) return;
+    setConfirmModal(prev => ({ ...prev, loading: true }));
     try {
       const token = await getIdToken();
       const res = await fetch("/api/sync-dailystock", {
@@ -117,7 +154,8 @@ export default function WatchlistPage() {
     } catch {
       setSyncState(prev => ({ ...prev, [symbol]: 'error' }));
     }
-    // Reset status after 3 seconds (except 'synced' which stays)
+    setConfirmModal({ loading: false, data: null, error: null });
+    // Reset transient states after 3 seconds
     setTimeout(() => {
       setSyncState(prev => {
         const current = prev[symbol];
@@ -128,6 +166,18 @@ export default function WatchlistPage() {
         return prev;
       });
     }, 3000);
+  }, [confirmModal.data, user?.uid, getIdToken]);
+
+  const closeSyncModal = useCallback(() => {
+    setConfirmModal({ loading: false, data: null, error: null });
+  }, []);
+
+  const formatMarketCap = (mc: number | null) => {
+    if (!mc) return '—';
+    if (mc >= 1e12) return `$${(mc / 1e12).toFixed(2)}T`;
+    if (mc >= 1e9) return `$${(mc / 1e9).toFixed(1)}B`;
+    if (mc >= 1e6) return `$${(mc / 1e6).toFixed(0)}M`;
+    return `$${mc.toLocaleString()}`;
   };
 
   // Group items
@@ -163,46 +213,27 @@ export default function WatchlistPage() {
           <ChevronDown className="w-3 h-3 text-slate-500 absolute right-2 top-2 pointer-events-none" />
         </div>
         {/* Sync to DailyStock observe_list */}
-        {(() => {
-          const state = syncState[item.symbol];
-          if (state === 'synced') {
-            return (
-              <span className="p-1 rounded-md text-emerald-400" title={t("Synced to DailyStock", "已同步到 DailyStock")}>
-                <Check className="w-3.5 h-3.5" />
-              </span>
-            );
-          }
-          if (state === 'syncing') {
-            return (
-              <span className="p-1 rounded-md text-blue-400">
-                <Loader2 className="w-3.5 h-3.5 animate-spin" />
-              </span>
-            );
-          }
-          if (state === 'already_exists') {
-            return (
-              <span className="p-1 rounded-md text-amber-400" title={t("Already in DailyStock observe list", "已在 DailyStock 观察清单中")}>
-                <Check className="w-3.5 h-3.5" />
-              </span>
-            );
-          }
-          if (state === 'limit') {
-            return (
-              <span className="p-1 rounded-md text-red-400 cursor-help" title={t("Observe list limit reached. Upgrade your plan.", "观察清单已满，请升级计划。")}>
-                <AlertTriangle className="w-3.5 h-3.5" />
-              </span>
-            );
-          }
-          return (
-            <button
-              onClick={() => syncToDailyStock(item.symbol)}
-              className="p-1 rounded-md text-slate-500 hover:text-blue-400 hover:bg-blue-500/10 transition-colors"
-              title={t("Sync to DailyStock observe list", "同步到 DailyStock 观察清单")}
-            >
-              <ArrowUpFromLine className="w-3.5 h-3.5" />
-            </button>
-          );
-        })()}
+        {syncState[item.symbol] === 'synced' ? (
+          <span className="p-1 rounded-md text-emerald-400" title={t("Synced to DailyStock", "已同步到 DailyStock")}>
+            <Check className="w-3.5 h-3.5" />
+          </span>
+        ) : syncState[item.symbol] === 'already_exists' ? (
+          <span className="p-1 rounded-md text-amber-400" title={t("Already in DailyStock observe list", "已在 DailyStock 观察清单中")}>
+            <Check className="w-3.5 h-3.5" />
+          </span>
+        ) : syncState[item.symbol] === 'limit' ? (
+          <span className="p-1 rounded-md text-red-400 cursor-help" title={t("Observe list limit reached. Upgrade your plan.", "观察清单已满，请升级计划。")}>
+            <AlertTriangle className="w-3.5 h-3.5" />
+          </span>
+        ) : (
+          <button
+            onClick={() => openSyncConfirm(item.symbol)}
+            className="p-1 rounded-md text-slate-500 hover:text-blue-400 hover:bg-blue-500/10 transition-colors"
+            title={t("Sync to DailyStock observe list", "同步到 DailyStock 观察清单")}
+          >
+            <ArrowUpFromLine className="w-3.5 h-3.5" />
+          </button>
+        )}
         <button
           onClick={() => removeItem(item.symbol)}
           className="p-1 rounded-md text-slate-500 hover:text-red-400 hover:bg-red-500/10 transition-colors"
@@ -338,6 +369,117 @@ export default function WatchlistPage() {
       </div>
       </PremiumGate>
 
+      {/* Sync Confirmation Modal */}
+      {(confirmModal.loading || confirmModal.data || confirmModal.error) && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={closeSyncModal}>
+          <div
+            className="bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl shadow-black/50 w-full max-w-md mx-4 overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Loading state */}
+            {confirmModal.loading && !confirmModal.data && (
+              <div className="flex flex-col items-center justify-center py-16 px-6">
+                <Loader2 className="w-8 h-8 text-blue-400 animate-spin mb-4" />
+                <p className="text-slate-400 text-sm">{t("Loading stock info...", "正在加载股票信息...")}</p>
+              </div>
+            )}
+
+            {/* Error state */}
+            {confirmModal.error && (
+              <div className="flex flex-col items-center justify-center py-16 px-6">
+                <AlertTriangle className="w-8 h-8 text-red-400 mb-4" />
+                <p className="text-red-400 text-sm mb-4">{confirmModal.error}</p>
+                <button onClick={closeSyncModal} className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-sm transition-colors">
+                  {t("Close", "关闭")}
+                </button>
+              </div>
+            )}
+
+            {/* Confirmation with stock info */}
+            {confirmModal.data && (
+              <>
+                {/* Header */}
+                <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800">
+                  <h3 className="text-base font-bold text-white">{t("Sync to DailyStock", "同步到 DailyStock")}</h3>
+                  <button onClick={closeSyncModal} className="p-1 rounded-md text-slate-500 hover:text-white hover:bg-slate-800 transition-colors">
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+
+                {/* Stock Info */}
+                <div className="px-6 py-5">
+                  <div className="flex items-start gap-4 mb-5">
+                    <div className="p-3 rounded-xl bg-blue-500/10 border border-blue-500/20">
+                      <ArrowUpFromLine className="w-6 h-6 text-blue-400" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-baseline gap-2 mb-1">
+                        <span className="text-xl font-bold text-white">{confirmModal.data.symbol}</span>
+                        {confirmModal.data.price && (
+                          <span className="text-sm font-mono text-slate-400">${confirmModal.data.price.toFixed(2)}</span>
+                        )}
+                      </div>
+                      <p className="text-sm text-slate-400 truncate">{confirmModal.data.companyName}</p>
+                      <p className="text-xs text-slate-500 mt-0.5">
+                        {confirmModal.data.sector} · {confirmModal.data.industry}
+                        {confirmModal.data.marketCap && <> · {formatMarketCap(confirmModal.data.marketCap)}</>}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Observe list status */}
+                  <div className="bg-slate-800/60 rounded-xl px-4 py-3 mb-5 border border-slate-700/50">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-slate-400">{t("Observe List", "观察清单")}</span>
+                      <span className="text-white font-mono font-bold">
+                        {confirmModal.data.observeListCount}
+                        {confirmModal.data.observeListLimit && <span className="text-slate-500"> / {confirmModal.data.observeListLimit}</span>}
+                      </span>
+                    </div>
+                    {confirmModal.data.alreadyInList && (
+                      <p className="text-xs text-amber-400 mt-2 flex items-center gap-1">
+                        <Check className="w-3 h-3" />
+                        {t("This stock is already in your observe list", "该股票已在你的观察清单中")}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Action hint */}
+                  <p className="text-xs text-slate-500 mb-5 leading-relaxed">
+                    {t(
+                      `This will add ${confirmModal.data.symbol} to your DailyStock observe list. You will receive daily observation reports for this stock.`,
+                      `此操作将把 ${confirmModal.data.symbol} 添加到你的 DailyStock 观察清单。你将收到该股票的每日观察研报。`
+                    )}
+                  </p>
+
+                  {/* Buttons */}
+                  <div className="flex gap-3">
+                    <button
+                      onClick={closeSyncModal}
+                      className="flex-1 px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-sm font-medium transition-colors border border-slate-700"
+                    >
+                      {t("Cancel", "取消")}
+                    </button>
+                    <button
+                      onClick={confirmSync}
+                      disabled={confirmModal.loading || confirmModal.data.alreadyInList}
+                      className="flex-1 px-4 py-2.5 bg-blue-600 hover:bg-blue-500 disabled:bg-slate-700 disabled:text-slate-500 text-white rounded-xl text-sm font-bold transition-all shadow-lg shadow-blue-600/20 hover:shadow-blue-500/30 disabled:shadow-none flex items-center justify-center gap-2"
+                    >
+                      {confirmModal.loading ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : confirmModal.data.alreadyInList ? (
+                        t("Already Synced", "已同步")
+                      ) : (
+                        <>{t("Confirm Sync", "确认同步")}</>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
 
     </div>
   );
