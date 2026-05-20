@@ -33,7 +33,7 @@ export default function FunnelScreenerPage() {
   const preset = STRATEGY_PRESETS[strategyId];
 
   const { lang, setLang, t } = useLanguage();
-  const { user, getIdToken } = useAuth();
+  const { user, firebaseUser, getIdToken, loading: authLoading } = useAuth();
 
   const [stocks, setStocks] = useState<StockMetrics[]>([]);
   const [loading, setLoading] = useState(true);
@@ -64,7 +64,7 @@ export default function FunnelScreenerPage() {
 
   // Load SA list on mount if strategy is seeking_alpha
   useEffect(() => {
-    if (!isSA) return;
+    if (!isSA || authLoading || !user) return;
     const loadSA = async () => {
       try {
         const token = await getIdToken();
@@ -78,7 +78,7 @@ export default function FunnelScreenerPage() {
       } catch {}
     };
     loadSA();
-  }, [isSA, getIdToken]);
+  }, [isSA, getIdToken, authLoading, user]);
 
   const addSASymbols = async () => {
     const raw = saInput.toUpperCase().trim();
@@ -146,18 +146,45 @@ export default function FunnelScreenerPage() {
 
   const fetchStocks = useCallback(async () => {
     setLoading(true);
+    setError(null);
     try {
-      const token = await getIdToken();
       const filters = preset?.defaultFilters ?? [];
-      const res = await fetch("/api/screener", {
-        method: "POST",
-        headers: { 
-          "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-        body: JSON.stringify({ strategy: strategyId, filters, limit: 200 }),
-      });
-      if (!res.ok) throw new Error(`API error: ${res.status}`);
+      const body = JSON.stringify({ strategy: strategyId, filters, limit: 200 });
+
+      const doFetch = async (token: string | null) => {
+        return fetch("/api/screener", {
+          method: "POST",
+          headers: { 
+            "Content-Type": "application/json",
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+          body,
+        });
+      };
+
+      let token = await getIdToken();
+      let res = await doFetch(token);
+
+      // On 401, force-refresh the token and retry once
+      if (res.status === 401 && firebaseUser) {
+        console.warn("[screener] 401 received, force-refreshing token and retrying...");
+        try {
+          token = await firebaseUser.getIdToken(true);
+          res = await doFetch(token);
+        } catch (refreshErr) {
+          console.error("[screener] Token refresh failed:", refreshErr);
+        }
+      }
+
+      if (!res.ok) {
+        let msg = `API error: ${res.status}`;
+        try {
+          const errBody = await res.json();
+          if (errBody.message) msg = errBody.message;
+        } catch { /* ignore parse error */ }
+        throw new Error(msg);
+      }
+
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const data: ScreenerResponse & { dataSource?: string; poolUpdatedAt?: string } = await res.json();
       setStocks(data.stocks);
@@ -174,7 +201,7 @@ export default function FunnelScreenerPage() {
     } finally {
       setLoading(false);
     }
-  }, [strategyId, preset, isSA]);
+  }, [strategyId, preset, isSA, getIdToken, firebaseUser]);
 
   const refreshPool = async () => {
     setRefreshing(true);
@@ -196,20 +223,19 @@ export default function FunnelScreenerPage() {
     setRefreshing(false);
   };
 
-  useEffect(() => { fetchStocks(); }, [fetchStocks]);
+  useEffect(() => { if (!authLoading && user) fetchStocks(); }, [fetchStocks, authLoading, user]);
 
   useEffect(() => {
-    if (user?.uid) {
-      getIdToken().then(token => {
-        fetch(`/api/watchlist?userId=${user.uid}`, {
-          headers: token ? { Authorization: `Bearer ${token}` } : {},
-        })
-          .then(r => r.json())
-          .then(d => setWatchlist(new Set(d.watchlist.map((w: any) => w.symbol))))
-          .catch(() => {});
-      });
-    }
-  }, [user?.uid]);
+    if (authLoading || !user?.uid) return;
+    getIdToken().then(token => {
+      fetch(`/api/watchlist?userId=${user.uid}`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      })
+        .then(r => r.json())
+        .then(d => setWatchlist(new Set(d.watchlist.map((w: any) => w.symbol))))
+        .catch(() => {});
+    });
+  }, [user?.uid, authLoading, getIdToken]);
 
   const toggleSelection = (step: 1 | 2, symbol: string) => {
     const setter = step === 1 ? setSelectedInStep1 : setSelectedInStep2;

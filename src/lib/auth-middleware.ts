@@ -77,11 +77,13 @@ export async function verifyAuth(request: NextRequest): Promise<AuthResult> {
       user: { uid, email: decodedToken.email, planType, isPremium, isExpired },
     };
   } catch (error) {
-    console.error("Token verification failed:", error);
+    const errCode = (error as { code?: string })?.code || "UNKNOWN";
+    const errMsg = error instanceof Error ? error.message : String(error);
+    console.error(`Token verification failed [${errCode}]:`, errMsg);
     return {
       success: false,
       response: NextResponse.json(
-        { error: "INVALID_TOKEN", message: "Firebase ID token is invalid or expired" },
+        { error: "INVALID_TOKEN", code: errCode, message: `Firebase ID token is invalid or expired (${errCode})` },
         { status: 401 }
       ),
     };
