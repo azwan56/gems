@@ -5,6 +5,8 @@
 // or defaults to the curated universe.
 //
 // Rate limit: 300 calls/min → PARALLEL=25, DELAY=5s → 5 calls/s
+//
+// Refactored to use shared fmp-fetch module
 // ============================================================
 
 import { StockMetrics } from "./types";
@@ -18,74 +20,15 @@ import {
   FmpKeyMetrics,
   buildStockMetrics,
 } from "./fmp-client";
-import { FMP_STABLE_URL, getApiKey } from "./fmp-config";
+import { fmpFetch, parallelBatchFetch, sleep } from "./fmp-fetch";
 
 const PARALLEL = 25;
 const BATCH_DELAY_MS = 5000; // 5s between batches → 25/5s = 5/s = 300/min
-
-function sleep(ms: number) { return new Promise(r => setTimeout(r, ms)); }
-
-async function fmpGet<T>(
-  endpoint: string,
-  params: Record<string, string> = {},
-  retries = 3
-): Promise<T> {
-  const url = new URL(`${FMP_STABLE_URL}${endpoint}`);
-  url.searchParams.set("apikey", getApiKey());
-  for (const [k, v] of Object.entries(params)) url.searchParams.set(k, v);
-
-  for (let attempt = 0; attempt < retries; attempt++) {
-    const res = await fetch(url.toString());
-    if (res.ok) return res.json() as Promise<T>;
-    if (res.status === 429) {
-      const wait = (attempt + 1) * 3000;
-      console.log(`[FMP] Rate limited on ${endpoint}, retrying in ${wait/1000}s...`);
-      await sleep(wait);
-      continue;
-    }
-    throw new Error(`FMP ${res.status}: ${res.statusText}`);
-  }
-  throw new Error(`FMP 429: Rate Limited (after ${retries} retries)`);
-}
 
 export interface FetchResult {
   stocks: StockMetrics[];
   apiCallsUsed: number;
   errors: string[];
-}
-
-/**
- * Run fetches in parallel batches, returning results as a Map.
- */
-async function parallelFetch<T>(
-  symbols: string[],
-  fetcher: (symbol: string) => Promise<{ key: string; value: T } | null>,
-  errors: string[]
-): Promise<{ map: Map<string, T>; calls: number }> {
-  const result = new Map<string, T>();
-  let calls = 0;
-
-  for (let i = 0; i < symbols.length; i += PARALLEL) {
-    const batch = symbols.slice(i, Math.min(i + PARALLEL, symbols.length));
-    const settled = await Promise.allSettled(
-      batch.map(async (symbol) => {
-        calls++;
-        return fetcher(symbol);
-      })
-    );
-    for (const r of settled) {
-      if (r.status === "fulfilled" && r.value) {
-        result.set(r.value.key, r.value.value);
-      } else if (r.status === "rejected") {
-        errors.push(String(r.reason).slice(0, 120));
-      }
-    }
-    // Throttle between batches to respect per-minute rate limits
-    if (i + PARALLEL < symbols.length) {
-      await sleep(BATCH_DELAY_MS);
-    }
-  }
-  return { map: result, calls };
 }
 
 /**
@@ -99,16 +42,15 @@ export async function fetchFullUniverse(customSymbols?: string[]): Promise<Fetch
   let totalCalls = 0;
 
   // ---- Phase 1: Quote → price, marketCap, SMA, 52-week ----
-  // ---- Phase 1: Quote → price, marketCap, SMA, 52-week ----
   console.log(`[FMP] Phase 1: quotes for ${symbols.length} symbols...`);
-  const { map: quoteMap, calls: quoteCalls } = await parallelFetch<FmpTechnical>(
+  const { map: quoteMap, calls: quoteCalls } = await parallelBatchFetch<FmpTechnical>(
     symbols,
     async (symbol) => {
-      const data = await fmpGet<FmpTechnical[]>("/quote", { symbol });
+      const data = await fmpFetch<FmpTechnical[]>("/quote", { symbol });
       if (!data?.[0]?.symbol) return null;
       return { key: data[0].symbol.toUpperCase(), value: data[0] };
     },
-    errors
+    { batchSize: PARALLEL, delayMs: BATCH_DELAY_MS, errors }
   );
   totalCalls += quoteCalls;
   console.log(`[FMP] Phase 1 done: ${quoteMap.size} quotes (${quoteCalls} calls)`);
@@ -118,48 +60,48 @@ export async function fetchFullUniverse(customSymbols?: string[]): Promise<Fetch
 
   // ---- Phase 2: Ratios → PE, PB, FCF yield, margins ----
   console.log(`[FMP] Phase 2: ratios for ${validSymbols.length} symbols...`);
-  const { map: ratioMap, calls: ratioCalls } = await parallelFetch<FmpRatios>(
+  const { map: ratioMap, calls: ratioCalls } = await parallelBatchFetch<FmpRatios>(
     validSymbols,
     async (symbol) => {
-      const data = await fmpGet<FmpRatios[]>("/ratios-ttm", { symbol });
+      const data = await fmpFetch<FmpRatios[]>("/ratios-ttm", { symbol });
       if (!data?.[0]) return null;
       return { key: symbol.toUpperCase(), value: data[0] };
     },
-    errors
+    { batchSize: PARALLEL, delayMs: BATCH_DELAY_MS, errors }
   );
   totalCalls += ratioCalls;
   console.log(`[FMP] Phase 2 done: ${ratioMap.size} ratios (${ratioCalls} calls)`);
 
   // ---- Phase 3: Growth → revenue & EPS growth ----
   console.log(`[FMP] Phase 3: growth for ${validSymbols.length} symbols...`);
-  const { map: growthMap, calls: growthCalls } = await parallelFetch<FmpGrowth>(
+  const { map: growthMap, calls: growthCalls } = await parallelBatchFetch<FmpGrowth>(
     validSymbols,
     async (symbol) => {
-      const data = await fmpGet<FmpGrowth[]>("/financial-growth", {
+      const data = await fmpFetch<FmpGrowth[]>("/financial-growth", {
         symbol,
         limit: "1",
       });
       if (!data?.[0]) return null;
       return { key: symbol.toUpperCase(), value: data[0] };
     },
-    errors
+    { batchSize: PARALLEL, delayMs: BATCH_DELAY_MS, errors }
   );
   totalCalls += growthCalls;
   console.log(`[FMP] Phase 3 done: ${growthMap.size} growth (${growthCalls} calls)`);
 
   // ---- Phase 4: Key Metrics → ROE, ROIC ----
   console.log(`[FMP] Phase 4: key metrics for ${validSymbols.length} symbols...`);
-  const { map: keyMetricsMap, calls: keyMetricsCalls } = await parallelFetch<FmpKeyMetrics>(
+  const { map: keyMetricsMap, calls: keyMetricsCalls } = await parallelBatchFetch<FmpKeyMetrics>(
     validSymbols,
     async (symbol) => {
-      const data = await fmpGet<FmpKeyMetrics[]>("/key-metrics-ttm", {
+      const data = await fmpFetch<FmpKeyMetrics[]>("/key-metrics-ttm", {
         symbol,
         limit: "1",
       });
       if (!data?.[0]) return null;
       return { key: symbol.toUpperCase(), value: data[0] };
     },
-    errors
+    { batchSize: PARALLEL, delayMs: BATCH_DELAY_MS, errors }
   );
   totalCalls += keyMetricsCalls;
   console.log(`[FMP] Phase 4 done: ${keyMetricsMap.size} key metrics (${keyMetricsCalls} calls)`);

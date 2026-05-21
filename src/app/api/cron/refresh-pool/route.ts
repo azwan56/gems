@@ -23,6 +23,7 @@ import { mergeStockPool, saveStockPool } from "@/lib/stock-pool-store";
 import { generateMockStocks } from "@/lib/mock-data";
 import { isTradingDay } from "@/lib/market-calendar";
 import { buildFullUniverse, chunkUniverse } from "@/lib/universe-provider";
+import { hasRateLimitErrors } from "@/lib/api-utils";
 
 // Allow up to 300s for larger chunks
 export const maxDuration = 300;
@@ -106,12 +107,7 @@ export async function GET(request: NextRequest) {
     // ---- Fetch from FMP ----
     const result = await fetchFullUniverse(symbols);
 
-    const hasRateLimit = result.errors.some(
-      (e) =>
-        e.includes("429") ||
-        e.includes("402") ||
-        e.toLowerCase().includes("limit reach")
-    );
+    const hasRateLimit = hasRateLimitErrors(result.errors);
 
     if (result.stocks.length === 0 || hasRateLimit) {
       console.warn(`[cron] FMP API limited for ${chunkLabel}, skipping merge.`);

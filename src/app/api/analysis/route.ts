@@ -11,11 +11,21 @@ import type { StockMetrics } from "@/lib/types";
 import { requirePremium } from "@/lib/auth-middleware";
 
 const VALID_STRATEGIES = ["value", "large_growth", "small_growth"] as const;
+const ACCEPTED_STRATEGIES = ["value", "large_growth", "small_growth", "seeking_alpha"] as const;
 type Strategy = (typeof VALID_STRATEGIES)[number];
 type Lang = "en" | "zh";
 
-function isValidStrategy(s: string): s is Strategy {
-  return (VALID_STRATEGIES as readonly string[]).includes(s);
+function isAcceptedStrategy(s: string): boolean {
+  return (ACCEPTED_STRATEGIES as readonly string[]).includes(s);
+}
+
+/**
+ * Map incoming strategy to an analysis-compatible strategy.
+ * seeking_alpha → large_growth (SA picks bypass screening but use growth-style analysis)
+ */
+function toAnalysisStrategy(s: string): Strategy {
+  if (s === "seeking_alpha") return "large_growth";
+  return s as Strategy;
 }
 
 export async function GET(request: NextRequest) {
@@ -23,7 +33,7 @@ export async function GET(request: NextRequest) {
   if (!authResult.success) return authResult.response;
 
   const symbol = request.nextUrl.searchParams.get("symbol");
-  const strategy = request.nextUrl.searchParams.get("strategy") ?? "large_growth";
+  const rawStrategy = request.nextUrl.searchParams.get("strategy") ?? "large_growth";
   const lang: Lang = request.nextUrl.searchParams.get("lang") === "zh" ? "zh" : "en";
 
   if (!symbol) {
@@ -33,12 +43,14 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  if (!isValidStrategy(strategy)) {
+  if (!isAcceptedStrategy(rawStrategy)) {
     return NextResponse.json(
-      { error: "INVALID_STRATEGY", message: `strategy must be one of: ${VALID_STRATEGIES.join(", ")}` },
+      { error: "INVALID_STRATEGY", message: `strategy must be one of: ${ACCEPTED_STRATEGIES.join(", ")}` },
       { status: 400 }
     );
   }
+
+  const strategy = toAnalysisStrategy(rawStrategy);
 
   const stock = await resolveStock(symbol);
   if (!stock) {
@@ -84,18 +96,22 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const strat: Strategy = strategy && isValidStrategy(strategy) ? strategy : "large_growth";
+    const strat: Strategy = strategy && isAcceptedStrategy(strategy) ? toAnalysisStrategy(strategy) : "large_growth";
     const lang: Lang = bodyLang === "zh" ? "zh" : "en";
 
     const resolved: StockMetrics[] = [];
     const notFound: string[] = [];
 
-    for (const sym of symbols) {
-      const stock = await resolveStock(sym);
-      if (stock) {
-        resolved.push(stock);
+    // Resolve all symbols in parallel (was sequential before)
+    const settled = await Promise.allSettled(
+      symbols.map((sym: string) => resolveStock(sym))
+    );
+    for (let i = 0; i < symbols.length; i++) {
+      const result = settled[i];
+      if (result.status === "fulfilled" && result.value) {
+        resolved.push(result.value);
       } else {
-        notFound.push(sym);
+        notFound.push(symbols[i]);
       }
     }
 

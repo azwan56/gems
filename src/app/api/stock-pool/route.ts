@@ -8,6 +8,7 @@ import { loadStockPool, saveStockPool, getPoolStatus, isPoolFresh } from "@/lib/
 import { fetchFullUniverse } from "@/lib/fmp-batch-fetcher";
 import { generateMockStocks } from "@/lib/mock-data";
 import { requirePremium } from "@/lib/auth-middleware";
+import { hasRateLimitErrors, createErrorResponse } from "@/lib/api-utils";
 
 // Allow longer execution for the refresh operation (Vercel Pro: up to 300s)
 export const maxDuration = 120;
@@ -101,7 +102,7 @@ export async function POST(request: NextRequest) {
     console.log("[stock-pool] Starting FMP universe fetch...");
     const result = await fetchFullUniverse();
 
-    const hasRateLimitError = result.errors.some(e => e.includes("429") || e.includes("402") || e.toLowerCase().includes("limit reach"));
+    const hasRateLimitError = hasRateLimitErrors(result.errors);
 
     if (result.stocks.length === 0 || hasRateLimitError) {
       console.log("[stock-pool] FMP API limit reached or fetch failed, falling back to mock data.");

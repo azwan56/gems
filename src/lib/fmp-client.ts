@@ -1,13 +1,14 @@
 // ============================================================
 // Financial Modeling Prep (FMP) API client
 // Uses the new /stable/ endpoints (post-Aug 2025 migration)
+// Refactored to use shared fmp-fetch module
 // ============================================================
 
 import { StockMetrics } from "./types";
 import { getUniverseSymbols } from "./index-constituents";
 import { getSectorInfo } from "./sector-map";
-import { FMP_STABLE_URL, getApiKey } from "./fmp-config";
 import { getCached, setCache, clearCache } from "./fmp-cache";
+import { fmpFetch, parallelBatchFetch, sleep } from "./fmp-fetch";
 
 // Re-export clearCache for backwards compatibility
 export { clearCache } from "./fmp-cache";
@@ -84,27 +85,14 @@ export interface FmpTechnical {
   exchange?: string;
 }
 
-// ---- Fetch helpers ----
-async function fmpFetch<T>(endpoint: string, params: Record<string, string> = {}): Promise<T> {
-  const url = new URL(`${FMP_STABLE_URL}${endpoint}`);
-  url.searchParams.set("apikey", getApiKey());
-  for (const [k, v] of Object.entries(params)) {
-    url.searchParams.set(k, v);
-  }
-
-  const res = await fetch(url.toString(), { next: { revalidate: 1800 } });
-  if (!res.ok) {
-    throw new Error(`FMP API error: ${res.status} ${res.statusText}`);
-  }
-  return res.json() as Promise<T>;
-}
-
 // ---- Public API ----
 
 /**
  * Fetch the stock screener results from FMP.
- * Uses the /stable/profile endpoint with batch symbols, or /stable/stock-screener if available.
+ * Uses the /stable/profile endpoint with batch symbols.
  * For the free tier, we use NASDAQ-100 and S&P-500 constituent lists instead.
+ * 
+ * Optimized: fetches profiles in parallel batches instead of sequentially.
  */
 export async function fetchScreenerStocks(
   params: {
@@ -123,59 +111,66 @@ export async function fetchScreenerStocks(
   const limit = params.limit ?? 200;
   const symbols = allSymbols.slice(0, limit);
 
-  // Fetch profiles one symbol at a time (free tier only supports single-symbol profile)
+  // Fetch profiles in parallel batches (was sequential before)
   const profiles: FmpScreenerResult[] = [];
-  for (const symbol of symbols) {
-    const profileCacheKey = `profile:${symbol}`;
-    const cachedProfile = getCached<FmpScreenerResult>(profileCacheKey);
-    if (cachedProfile) {
-      // Apply market cap filters
-      if (params.marketCapMoreThan && cachedProfile.marketCap < params.marketCapMoreThan) continue;
-      if (params.marketCapLessThan && cachedProfile.marketCap > params.marketCapLessThan) continue;
-      if (params.sector && cachedProfile.sector !== params.sector) continue;
-      profiles.push(cachedProfile);
-      continue;
-    }
-    try {
-      const data = await fmpFetch<Array<{
-        symbol: string;
-        companyName: string;
-        marketCap: number;
-        sector: string;
-        industry: string;
-        price: number;
-        volume: number;
-        exchange: string;
-        country: string;
-        isEtf: boolean;
-        isActivelyTrading: boolean;
-      }>>("/profile", { symbol });
+  const BATCH_SIZE = 10;
 
-      if (!data || data.length === 0) continue;
-      const p = data[0];
+  for (let i = 0; i < symbols.length; i += BATCH_SIZE) {
+    const batch = symbols.slice(i, Math.min(i + BATCH_SIZE, symbols.length));
+    const settled = await Promise.allSettled(
+      batch.map(async (symbol) => {
+        const profileCacheKey = `profile:${symbol}`;
+        const cachedProfile = getCached<FmpScreenerResult>(profileCacheKey);
+        if (cachedProfile) return cachedProfile;
 
-      const entry: FmpScreenerResult = {
-        symbol: p.symbol,
-        companyName: p.companyName,
-        marketCap: p.marketCap,
-        sector: p.sector || "Unknown",
-        industry: p.industry || "Unknown",
-        price: p.price,
-        volume: p.volume || 0,
-        exchangeShortName: p.exchange || "US",
-        country: p.country || "US",
-        isEtf: p.isEtf ?? false,
-        isActivelyTrading: p.isActivelyTrading ?? true,
-      };
-      setCache(profileCacheKey, entry);
+        const data = await fmpFetch<Array<{
+          symbol: string;
+          companyName: string;
+          marketCap: number;
+          sector: string;
+          industry: string;
+          price: number;
+          volume: number;
+          exchange: string;
+          country: string;
+          isEtf: boolean;
+          isActivelyTrading: boolean;
+        }>>("/profile", { symbol }, { revalidate: 1800 });
 
+        if (!data || data.length === 0) return null;
+        const p = data[0];
+
+        const entry: FmpScreenerResult = {
+          symbol: p.symbol,
+          companyName: p.companyName,
+          marketCap: p.marketCap,
+          sector: p.sector || "Unknown",
+          industry: p.industry || "Unknown",
+          price: p.price,
+          volume: p.volume || 0,
+          exchangeShortName: p.exchange || "US",
+          country: p.country || "US",
+          isEtf: p.isEtf ?? false,
+          isActivelyTrading: p.isActivelyTrading ?? true,
+        };
+        setCache(profileCacheKey, entry);
+        return entry;
+      })
+    );
+
+    for (const r of settled) {
+      if (r.status !== "fulfilled" || !r.value) continue;
+      const entry = r.value;
       // Apply market cap filters
       if (params.marketCapMoreThan && entry.marketCap < params.marketCapMoreThan) continue;
       if (params.marketCapLessThan && entry.marketCap > params.marketCapLessThan) continue;
       if (params.sector && entry.sector !== params.sector) continue;
       profiles.push(entry);
-    } catch {
-      // Skip failed fetches
+    }
+
+    // Throttle between batches
+    if (i + BATCH_SIZE < symbols.length) {
+      await sleep(500);
     }
   }
 
@@ -185,93 +180,76 @@ export async function fetchScreenerStocks(
 
 /**
  * Fetch TTM financial ratios for a list of symbols.
+ * Optimized: uses parallelBatchFetch instead of sequential loop.
  */
 export async function fetchRatiosBatch(symbols: string[]): Promise<Map<string, FmpRatios>> {
-  const result = new Map<string, FmpRatios>();
-  // FMP stable supports single symbol per ratios-ttm call
-  const batchSize = 5;
-  for (let i = 0; i < symbols.length; i += batchSize) {
-    const batch = symbols.slice(i, i + batchSize);
-    for (const symbol of batch) {
+  const { map } = await parallelBatchFetch<FmpRatios>(
+    symbols,
+    async (symbol) => {
       const cacheKey = `ratios:${symbol}`;
       const cached = getCached<FmpRatios>(cacheKey);
-      if (cached) {
-        result.set(symbol, cached);
-        continue;
+      if (cached) return { key: symbol, value: cached };
+
+      const data = await fmpFetch<FmpRatios[]>("/ratios-ttm", { symbol });
+      if (data && data.length > 0) {
+        setCache(cacheKey, data[0]);
+        return { key: symbol, value: data[0] };
       }
-      try {
-        const data = await fmpFetch<FmpRatios[]>("/ratios-ttm", { symbol });
-        if (data && data.length > 0) {
-          setCache(cacheKey, data[0]);
-          result.set(symbol, data[0]);
-        }
-      } catch {
-        // Skip failed fetches
-      }
-    }
-  }
-  return result;
+      return null;
+    },
+    { batchSize: 5, delayMs: 1000 }
+  );
+  return map;
 }
 
 /**
  * Fetch financial growth data (revenue, EPS) for a list of symbols.
+ * Optimized: uses parallelBatchFetch instead of sequential loop.
  */
 export async function fetchGrowthBatch(symbols: string[]): Promise<Map<string, FmpGrowth>> {
-  const result = new Map<string, FmpGrowth>();
-  for (const symbol of symbols) {
-    const cacheKey = `growth:${symbol}`;
-    const cached = getCached<FmpGrowth>(cacheKey);
-    if (cached) {
-      result.set(symbol, cached);
-      continue;
-    }
-    try {
+  const { map } = await parallelBatchFetch<FmpGrowth>(
+    symbols,
+    async (symbol) => {
+      const cacheKey = `growth:${symbol}`;
+      const cached = getCached<FmpGrowth>(cacheKey);
+      if (cached) return { key: symbol, value: cached };
+
       const data = await fmpFetch<FmpGrowth[]>("/financial-growth", { symbol, limit: "1" });
       if (data && data.length > 0) {
         setCache(cacheKey, data[0]);
-        result.set(symbol, data[0]);
+        return { key: symbol, value: data[0] };
       }
-    } catch {
-      // Skip failed fetches
-    }
-  }
-  return result;
+      return null;
+    },
+    { batchSize: 5, delayMs: 1000 }
+  );
+  return map;
 }
 
 /**
  * Fetch quote / technical data for symbols.
+ * Optimized: uses parallelBatchFetch instead of manual batching.
  */
 export async function fetchQuoteBatch(symbols: string[]): Promise<Map<string, FmpTechnical>> {
-  const result = new Map<string, FmpTechnical>();
-  if (symbols.length === 0) return result;
+  if (symbols.length === 0) return new Map();
 
-  const batchSize = 10;
-  for (let i = 0; i < symbols.length; i += batchSize) {
-    const batch = symbols.slice(i, i + batchSize);
-    await Promise.all(
-      batch.map(async (symbol) => {
-        const cacheKey = `quote:${symbol}`;
-        const cached = getCached<FmpTechnical>(cacheKey);
-        if (cached) {
-          result.set(symbol, cached);
-          return;
-        }
-        try {
-          const data = await fmpFetch<FmpTechnical[]>("/quote", { symbol });
-          if (data && data.length > 0) {
-            setCache(cacheKey, data[0]);
-            result.set(symbol, data[0]);
-          }
-        } catch {
-          // Skip failed fetches
-        }
-      })
-    );
-    if (i + batchSize < symbols.length) {
-      await new Promise((r) => setTimeout(r, 1000));
-    }
-  }
-  return result;
+  const { map } = await parallelBatchFetch<FmpTechnical>(
+    symbols,
+    async (symbol) => {
+      const cacheKey = `quote:${symbol}`;
+      const cached = getCached<FmpTechnical>(cacheKey);
+      if (cached) return { key: symbol, value: cached };
+
+      const data = await fmpFetch<FmpTechnical[]>("/quote", { symbol });
+      if (data && data.length > 0) {
+        setCache(cacheKey, data[0]);
+        return { key: symbol, value: data[0] };
+      }
+      return null;
+    },
+    { batchSize: 10, delayMs: 1000 }
+  );
+  return map;
 }
 
 /**
@@ -371,7 +349,7 @@ export async function fetchOnDemandStocks(symbols: string[]): Promise<StockMetri
         const cached = getCached<StockMetrics>(cacheKey);
         if (cached) return cached;
 
-        // Fetch all 4 endpoints
+        // Fetch all 4 endpoints in parallel
         const [quoteData, ratiosData, growthData, kmData] = await Promise.allSettled([
           fmpFetch<FmpTechnical[]>("/quote", { symbol }),
           fmpFetch<FmpRatios[]>("/ratios-ttm", { symbol }),
@@ -417,7 +395,7 @@ export async function fetchOnDemandStocks(symbols: string[]): Promise<StockMetri
 
     // Small delay between batches
     if (i + BATCH < symbols.length) {
-      await new Promise((r) => setTimeout(r, 500));
+      await sleep(500);
     }
   }
 

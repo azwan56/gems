@@ -7,7 +7,7 @@ import { StockMetrics } from "./types";
 import { generateMockStocks } from "./mock-data";
 import { loadStockPool } from "./stock-pool-store";
 import { getSectorInfo } from "./sector-map";
-import { fetchRatiosBatch, fetchGrowthBatch, fetchOnDemandStocks } from "./fmp-client";
+import { fetchOnDemandStocks } from "./fmp-client";
 import { hasApiKey } from "./fmp-config";
 
 /**

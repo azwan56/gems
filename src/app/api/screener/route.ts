@@ -60,14 +60,18 @@ export async function POST(request: NextRequest) {
     }
 
     // For seeking_alpha strategy: show all SA list symbols without filtering
+    // Parallelized: load SA list and stock pool concurrently
     let saListSymbols: string[] | null = null;
     if (body.strategy === "seeking_alpha") {
-      const saList = await loadSAList();
+      const [saList, saPool] = await Promise.all([loadSAList(), loadStockPool()]);
       saListSymbols = saList.symbols;
       const saSet = new Set(saListSymbols.map((s) => s.toUpperCase()));
       
+      // Use already-loaded pool if available, otherwise use current stocks
+      const poolStocks = (saPool && saPool.stocks.length > 0) ? saPool.stocks : stocks;
+      
       // Find SA symbols that are already in the pool
-      const inPool = stocks.filter((s) => saSet.has(s.symbol.toUpperCase()));
+      const inPool = poolStocks.filter((s) => saSet.has(s.symbol.toUpperCase()));
       const inPoolSet = new Set(inPool.map((s) => s.symbol.toUpperCase()));
       
       // Find SA symbols NOT in the pool — fetch from FMP on demand
