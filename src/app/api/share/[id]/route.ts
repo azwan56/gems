@@ -89,7 +89,7 @@ export async function GET(
 
         /* Header */
         header {
-            width: 100%; padding: 0.6rem 1rem;
+            width: 100%; padding: 0.75rem 1.2rem;
             background: rgba(17,34,64,0.85);
             backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
             border-bottom: 1px solid var(--slate-800);
@@ -99,57 +99,57 @@ export async function GET(
         .logo { display: flex; align-items: center; gap: 0.4rem; }
         .logo-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--teal-500); box-shadow: 0 0 8px rgba(0,210,182,0.5); animation: pulse 2s ease-in-out infinite; }
         @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.5} }
-        .logo-text { font-size: 0.95rem; font-weight: 800; letter-spacing: 0.05em; color: #fff; }
+        .logo-text { font-size: 1rem; font-weight: 800; letter-spacing: 0.05em; color: #fff; }
         .logo-text span { color: var(--teal-500); }
-        .badge-top { font-size: 0.65rem; font-weight: 600; padding: 0.15rem 0.4rem; border-radius: 0.25rem; border: 1px solid rgba(100,255,218,0.2); background: rgba(100,255,218,0.1); color: var(--teal-400); }
+        .badge-top { font-size: 0.7rem; font-weight: 600; padding: 0.2rem 0.5rem; border-radius: 0.3rem; border: 1px solid rgba(100,255,218,0.2); background: rgba(100,255,218,0.1); color: var(--teal-400); }
 
         /* Main */
-        main { width: 100%; max-width: 520px; margin: 0 auto; padding: 0.8rem 0.8rem 0.5rem; flex: 1; display: flex; flex-direction: column; justify-content: space-between; }
+        main { width: 100%; max-width: 520px; margin: 0 auto; padding: 1rem 1rem 0.75rem; flex: 1; display: flex; flex-direction: column; justify-content: space-between; }
 
         /* Hero */
-        .hero { text-align: center; margin-bottom: 0.5rem; }
-        .hero h1 { font-size: 1.4rem; font-weight: 800; color: #fff; line-height: 1.2; margin-bottom: 0.25rem; }
+        .hero { text-align: center; margin-bottom: 0.2rem; }
+        .hero h1 { font-size: 1.5rem; font-weight: 800; color: #fff; line-height: 1.2; margin-bottom: 0.4rem; }
         .hero h1 span { color: var(--teal-500); }
-        .hero p { color: var(--slate-400); font-size: 0.75rem; line-height: 1.4; padding: 0 0.5rem; }
-        .hero-badge { display: inline-flex; align-items: center; gap: 0.3rem; margin-top: 0.4rem; padding: 0.2rem 0.6rem; border-radius: 2rem; background: rgba(0,210,182,0.1); border: 1px solid rgba(0,210,182,0.2); color: var(--teal-500); font-size: 0.65rem; font-weight: 600; }
+        .hero p { color: var(--slate-300); font-size: 0.8rem; line-height: 1.5; padding: 0 1rem; }
+        .hero-badge { display: inline-flex; align-items: center; gap: 0.3rem; margin-top: 0.6rem; padding: 0.25rem 0.75rem; border-radius: 2rem; background: rgba(0,210,182,0.1); border: 1px solid rgba(0,210,182,0.2); color: var(--teal-500); font-size: 0.7rem; font-weight: 600; }
         .hero-badge .dot { width: 5px; height: 5px; border-radius: 50%; background: var(--teal-500); animation: pulse 2s ease-in-out infinite; }
 
         /* Strategy Cards */
-        .section-label { font-size: 0.7rem; font-weight: 700; color: var(--teal-500); letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 0.4rem; display: flex; align-items: center; gap: 0.3rem; }
-        .strategies { display: grid; grid-template-columns: 1fr 1fr; gap: 0.4rem; margin-bottom: 0.6rem; }
+        .section-label { font-size: 0.75rem; font-weight: 700; color: var(--teal-500); letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 0.6rem; display: flex; align-items: center; gap: 0.4rem; }
+        .strategies { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
         .strategy-card {
-            padding: 0.6rem 0.7rem; border-radius: 0.6rem;
+            padding: 0.75rem 0.85rem; border-radius: 0.75rem;
             background: rgba(17,34,64,0.6); border: 1px solid rgba(51,65,85,0.25);
         }
-        .strategy-icon { font-size: 1.2rem; margin-bottom: 0.3rem; }
-        .strategy-name { font-size: 0.75rem; font-weight: 700; color: #fff; margin-bottom: 0.2rem; line-height: 1.2; }
-        .strategy-desc { font-size: 0.65rem; color: var(--slate-400); line-height: 1.35; }
+        .strategy-icon { font-size: 1.3rem; margin-bottom: 0.4rem; }
+        .strategy-name { font-size: 0.8rem; font-weight: 700; color: #fff; margin-bottom: 0.3rem; line-height: 1.2; }
+        .strategy-desc { font-size: 0.7rem; color: var(--slate-400); line-height: 1.4; }
 
         /* Data source & Features combined */
         .data-card {
-            padding: 0.6rem; border-radius: 0.6rem;
+            padding: 0.8rem 0.9rem; border-radius: 0.75rem;
             background: rgba(17,34,64,0.5); border: 1px solid rgba(51,65,85,0.2);
-            display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.8rem;
+            display: flex; align-items: center; gap: 0.75rem; margin-top: 0.25rem; margin-bottom: 0.5rem;
         }
-        .data-icon { font-size: 1.4rem; flex-shrink: 0; }
-        .data-text-col { display: flex; flex-direction: column; gap: 0.2rem; }
-        .data-title { font-size: 0.75rem; font-weight: 700; color: #fff; }
-        .data-desc { font-size: 0.65rem; color: var(--slate-400); line-height: 1.35; }
-        .feature-chips { display: flex; gap: 0.3rem; margin-top: 0.2rem; }
-        .chip { background: rgba(0,210,182,0.1); color: var(--teal-400); font-size: 0.6rem; padding: 0.15rem 0.4rem; border-radius: 1rem; border: 1px solid rgba(0,210,182,0.15); font-weight: 600; }
+        .data-icon { font-size: 1.6rem; flex-shrink: 0; }
+        .data-text-col { display: flex; flex-direction: column; gap: 0.25rem; }
+        .data-title { font-size: 0.8rem; font-weight: 700; color: #fff; }
+        .data-desc { font-size: 0.7rem; color: var(--slate-400); line-height: 1.4; }
+        .feature-chips { display: flex; gap: 0.35rem; margin-top: 0.25rem; }
+        .chip { background: rgba(0,210,182,0.1); color: var(--teal-400); font-size: 0.65rem; padding: 0.2rem 0.5rem; border-radius: 1rem; border: 1px solid rgba(0,210,182,0.15); font-weight: 600; }
 
         /* CTA */
-        .cta-section { text-align: center; margin-top: auto; }
+        .cta-section { text-align: center; margin-top: 0.5rem; }
         .cta-btn {
-            display: block; width: 100%; padding: 0.75rem 1rem; border-radius: 0.6rem;
+            display: block; width: 100%; padding: 0.85rem 1rem; border-radius: 0.75rem;
             background: linear-gradient(135deg, var(--teal-500), #00b89c); color: var(--navy-950);
-            font-weight: 700; font-size: 0.95rem; text-decoration: none; letter-spacing: 0.025em;
+            font-weight: 700; font-size: 1rem; text-decoration: none; letter-spacing: 0.025em;
             box-shadow: 0 4px 15px rgba(0,210,182,0.25);
         }
-        .cta-sub { color: var(--slate-400); font-size: 0.65rem; margin-top: 0.4rem; }
+        .cta-sub { color: var(--slate-400); font-size: 0.7rem; margin-top: 0.6rem; }
 
         /* Footer */
-        footer { width: 100%; padding: 0.5rem; text-align: center; color: var(--slate-600); font-size: 0.6rem; border-top: 1px solid var(--slate-800); }
+        footer { width: 100%; padding: 0.75rem; text-align: center; color: var(--slate-600); font-size: 0.65rem; border-top: 1px solid var(--slate-800); }
     </style>
 </head>
 <body>
@@ -176,12 +176,12 @@ export async function GET(
                 <div class="strategy-card">
                     <div class="strategy-icon">💎</div>
                     <div class="strategy-name">价值股 Value</div>
-                    <div class="strategy-desc">低估值、高分红，寻找被低估优质蓝筹</div>
+                    <div class="strategy-desc">低估值、高分红，发掘被低估优质蓝筹</div>
                 </div>
                 <div class="strategy-card">
                     <div class="strategy-icon">🚀</div>
                     <div class="strategy-name">大盘成长 Large Growth</div>
-                    <div class="strategy-desc">高营收、高 ROE 大市值龙头，把握确定性</div>
+                    <div class="strategy-desc">高营收、高 ROE 龙头，把握确定性趋势</div>
                 </div>
                 <div class="strategy-card">
                     <div class="strategy-icon">⚡</div>
