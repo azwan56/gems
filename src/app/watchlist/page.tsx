@@ -231,10 +231,6 @@ export default function WatchlistPage() {
       setIsGeneratingCard(true);
       try {
         const { generateShareCardDataURL } = await import("@/lib/share-card");
-        // Build a minimal StockMetrics-like object from what we have
-        const item = watchlist.find(w => w.symbol === analysisPanel.symbol);
-        const role = item?.role;
-        const strategy = (role === 'core_dividend' || role === 'turnaround' || role === 'special_situation') ? 'value' : 'large_growth';
         // Extract price from analyst.targetPrice if possible
         let extractedPrice = 0;
         const targetPriceStr = analysisPanel.report?.analyst?.targetPrice;

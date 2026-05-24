@@ -182,32 +182,39 @@ export async function generateShareCardDataURL(
   txt(g, isEn ? "Daily Stock Deep Dive" : "每日个股深度研报", 50, curY + 30, 20, "#8b949e");
 
   // Analyst Target & Upside Pill
-  const targetPrice = report.analyst?.targetPrice || `$${formatNum(stock.price)}`;
+  const targetPrice = report.analyst?.targetPrice || (stock.price > 0 ? `$${stock.price.toFixed(2)}` : "");
   const upside = report.analyst?.upside || "";
-  const consensus = report.analyst?.consensus || "Hold";
+  const consensus = report.analyst?.consensus || "";
   
-  const isUp = upside.includes("+");
-  const changeColor = isUp ? "#00d2b6" : "#f87171";
-  const changeBg = isUp ? "rgba(0, 210, 182, 0.15)" : "rgba(248, 113, 113, 0.15)";
-  
-  g.font = "bold 22px Inter,sans-serif";
-  const changeW = g.measureText(upside).width + 30;
   const rightEdge = W - 50;
-  
-  if (upside) {
-    rr(g, rightEdge - changeW, curY - 45, changeW, 40, 8, changeBg, "rgba(255,255,255,0.05)");
-    bold(g, upside, rightEdge - changeW / 2, curY - 18, 22, changeColor, "center");
+
+  if (targetPrice) {
+    const isUp = upside.includes("+");
+    const changeColor = isUp ? "#00d2b6" : "#f87171";
+    const changeBg = isUp ? "rgba(0, 210, 182, 0.15)" : "rgba(248, 113, 113, 0.15)";
+    
+    g.font = "bold 22px Inter,sans-serif";
+    const changeW = upside ? g.measureText(upside).width + 30 : 0;
+    
+    // Draw upside pill if available
+    if (upside) {
+      rr(g, rightEdge - changeW, curY - 45, changeW, 40, 8, changeBg, "rgba(255,255,255,0.05)");
+      bold(g, upside, rightEdge - changeW / 2, curY - 18, 22, changeColor, "center");
+    }
+
+    // Draw target price label & value
+    const priceX = rightEdge - changeW - (upside ? 20 : 0);
+    txt(g, isEn ? "Target Price" : "目标价", priceX, curY - 35, 16, "#8b949e", "right");
+    bold(g, targetPrice, priceX, curY - 5, 40, "#ffffff", "right");
+
+    // Consensus badge (e.g. "Buy")
+    if (consensus) {
+      g.font = "bold 16px Inter,sans-serif";
+      const consW = g.measureText(consensus).width + 30;
+      rr(g, rightEdge - consW, curY + 10, consW, 30, 15, "rgba(56, 189, 248, 0.15)", "rgba(56, 189, 248, 0.3)");
+      bold(g, consensus, rightEdge - consW / 2, curY + 32, 16, "#38bdf8", "center");
+    }
   }
-
-  // Draw Price
-  const targetLabelWidth = isEn ? 120 : 60;
-  txt(g, isEn ? "Target Price" : "目标价", rightEdge - changeW - 20, curY - 35, 16, "#8b949e", "right");
-  bold(g, targetPrice, rightEdge - changeW - 20, curY - 5, 40, "#ffffff", "right");
-
-  // Consensus badge (e.g. "Buy")
-  const consW = g.measureText(consensus).width + 30;
-  rr(g, rightEdge - consW, curY + 10, consW, 30, 15, "rgba(56, 189, 248, 0.15)", "rgba(56, 189, 248, 0.3)");
-  bold(g, consensus, rightEdge - consW / 2, curY + 32, 16, "#38bdf8", "center");
 
   curY += 100;
 
