@@ -7,7 +7,7 @@ import {
   Gem, ArrowLeft, Star, Activity, BrainCircuit, LineChart, 
   ChevronRight, CheckCircle2, AlertCircle, Loader2, Play,
   FileText, X, Target, ShieldAlert, Zap, TrendingUp, Users, Languages,
-  RefreshCw, Database, Cloud, BookOpen, Plus, Trash2, HelpCircle
+  RefreshCw, Database, Cloud, BookOpen, Plus, Trash2, HelpCircle, Download
 } from "lucide-react";
 import type { StockMetrics, FilterCriterion, ScreenerResponse, StrategyType } from "@/lib/types";
 import type { StockAnalysisReport } from "@/lib/analysis-engine";
@@ -55,6 +55,8 @@ export default function FunnelScreenerPage() {
   const [analyzingStock, setAnalyzingStock] = useState<StockMetrics | null>(null);
   const [analysisReport, setAnalysisReport] = useState<StockAnalysisReport | null>(null);
   const [analysisLoading, setAnalysisLoading] = useState(false);
+  const [shareCardUrl, setShareCardUrl] = useState<string | null>(null);
+  const [isGeneratingCard, setIsGeneratingCard] = useState(false);
 
   // Seeking Alpha custom list management
   const [saSymbols, setSaSymbols] = useState<string[]>([]);
@@ -143,6 +145,28 @@ export default function FunnelScreenerPage() {
     } catch { /* ignore */ }
     setAnalysisLoading(false);
   };
+
+  useEffect(() => {
+    if (!analyzingStock || !analysisReport) {
+      setShareCardUrl(null);
+      return;
+    }
+    let cancelled = false;
+    const generateCard = async () => {
+      setIsGeneratingCard(true);
+      try {
+        const { generateShareCardDataURL } = await import("@/lib/share-card");
+        const url = await generateShareCardDataURL(analyzingStock, analysisReport, lang, strategyId);
+        if (!cancelled) setShareCardUrl(url);
+      } catch (e) {
+        console.error("Failed to generate share card", e);
+      } finally {
+        if (!cancelled) setIsGeneratingCard(false);
+      }
+    };
+    generateCard();
+    return () => { cancelled = true; };
+  }, [analyzingStock, analysisReport, lang]);
 
   const fetchStocks = useCallback(async () => {
     setLoading(true);
@@ -916,6 +940,41 @@ export default function FunnelScreenerPage() {
                         ))}
                       </ul>
                     </section>
+                  </div>
+
+                  {/* Share Card Section */}
+                  <div className="mt-8 pt-6 border-t border-slate-800">
+                    <div className="flex justify-between items-end mb-4">
+                      <div>
+                        <h3 className="text-lg font-bold text-white mb-1">{t("Share Report", "分享报告")}</h3>
+                        <p className="text-sm text-slate-400">{t("Download this deep dive as a shareable image.", "将此深度研报下载为图片分享。")}</p>
+                      </div>
+                      <button
+                        onClick={async () => {
+                          if (shareCardUrl && analyzingStock) {
+                            const { downloadShareCard } = await import("@/lib/share-card");
+                            downloadShareCard(shareCardUrl, analyzingStock.symbol);
+                          }
+                        }}
+                        disabled={!shareCardUrl || isGeneratingCard}
+                        className="px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:bg-slate-800 disabled:text-slate-500 text-white rounded-lg font-semibold flex items-center gap-2 transition-colors"
+                      >
+                        {isGeneratingCard ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+                        {t("Download Card", "下载分享卡片")}
+                      </button>
+                    </div>
+                    <div className="bg-slate-950 border border-slate-800 rounded-xl p-4 flex justify-center overflow-hidden relative">
+                      {isGeneratingCard ? (
+                         <div className="flex flex-col items-center justify-center py-12">
+                           <Loader2 className="w-6 h-6 text-blue-400 animate-spin mb-3" />
+                           <p className="text-sm text-slate-500">{t("Generating high-res card...", "正在生成高清分享卡片...")}</p>
+                         </div>
+                      ) : shareCardUrl ? (
+                         <img src={shareCardUrl} alt="Share Card Preview" className="max-w-full h-auto rounded-lg border border-slate-800 shadow-2xl" style={{ maxHeight: "400px" }} />
+                      ) : (
+                         <div className="py-12 text-slate-600 text-sm">{t("Card preview unavailable", "暂无预览")}</div>
+                      )}
+                    </div>
                   </div>
                 </>
               ) : (
