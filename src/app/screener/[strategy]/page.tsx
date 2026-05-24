@@ -846,9 +846,27 @@ export default function FunnelScreenerPage() {
                 </div>
                 <p className="text-slate-400">{analyzingStock.companyName}</p>
               </div>
-              <button onClick={() => setAnalyzingStock(null)} className="p-2 rounded-full hover:bg-slate-800 text-slate-400 hover:text-white transition-colors">
-                <X className="w-6 h-6" />
-              </button>
+              <div className="flex items-center gap-2">
+                {analysisReport && (
+                  <button
+                    onClick={async () => {
+                      if (shareCardUrl && analyzingStock) {
+                        const { downloadShareCard } = await import("@/lib/share-card");
+                        downloadShareCard(shareCardUrl, analyzingStock.symbol);
+                      }
+                    }}
+                    disabled={!shareCardUrl || isGeneratingCard}
+                    className="px-3 py-2 bg-emerald-600 hover:bg-emerald-500 disabled:bg-slate-800 disabled:text-slate-500 text-white rounded-lg text-sm font-semibold flex items-center gap-1.5 transition-colors"
+                    title={t("Download Share Card", "下载分享卡片")}
+                  >
+                    {isGeneratingCard ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+                    {t("Share", "分享")}
+                  </button>
+                )}
+                <button onClick={() => setAnalyzingStock(null)} className="p-2 rounded-full hover:bg-slate-800 text-slate-400 hover:text-white transition-colors">
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
             </div>
 
             {/* Panel Content */}
