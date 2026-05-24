@@ -155,8 +155,33 @@ export default function FunnelScreenerPage() {
     const generateCard = async () => {
       setIsGeneratingCard(true);
       try {
+        const strategyName = lang === "en" ? preset.name : preset.nameZh;
+        let shareId = "";
+        
+        // 1. Create share link in Firestore
+        try {
+          const res = await fetch("/api/share", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              symbol: analyzingStock.symbol,
+              strategy: strategyId,
+              strategyName,
+              report: analysisReport,
+              metrics: analyzingStock,
+            }),
+          });
+          if (res.ok) {
+            const data = await res.json();
+            shareId = data.shareId;
+          }
+        } catch (err) {
+          console.error("Failed to create share link", err);
+        }
+
+        // 2. Generate Canvas Card
         const { generateShareCardDataURL } = await import("@/lib/share-card");
-        const url = await generateShareCardDataURL(analyzingStock, analysisReport, lang, strategyId);
+        const url = await generateShareCardDataURL(analyzingStock, analysisReport, lang, strategyName, shareId);
         if (!cancelled) setShareCardUrl(url);
       } catch (e) {
         console.error("Failed to generate share card", e);

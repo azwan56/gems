@@ -235,13 +235,21 @@ export default function WatchlistPage() {
         const item = watchlist.find(w => w.symbol === analysisPanel.symbol);
         const role = item?.role;
         const strategy = (role === 'core_dividend' || role === 'turnaround' || role === 'special_situation') ? 'value' : 'large_growth';
+        // Extract price from analyst.targetPrice if possible
+        let extractedPrice = 0;
+        const targetPriceStr = analysisPanel.report?.analyst?.targetPrice;
+        if (targetPriceStr) {
+          const match = targetPriceStr.match(/[\d.]+/);
+          if (match) extractedPrice = parseFloat(match[0]);
+        }
+
         const mockStock = {
           symbol: analysisPanel.symbol,
           companyName: analysisPanel.symbol,
           sector: "",
           industry: "",
           marketCap: 0,
-          price: 0,
+          price: extractedPrice,
           peRatio: null,
           pbRatio: null,
           freeCashFlowYield: null,
@@ -260,8 +268,34 @@ export default function WatchlistPage() {
           fiftyTwoWeekLow: null,
         };
         const report = { ...analysisPanel.report!, symbol: analysisPanel.symbol, positionSuggestion: "" };
+        
+        let shareId = "";
+        const strategyName = lang === "en" ? "Watchlist Deep Dive" : "自选股深度分析";
+
+        // 1. Create share link in Firestore
+        try {
+          const res = await fetch("/api/share", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              symbol: analysisPanel.symbol,
+              strategy: "watchlist",
+              strategyName,
+              report,
+              metrics: mockStock,
+            }),
+          });
+          if (res.ok) {
+            const data = await res.json();
+            shareId = data.shareId;
+          }
+        } catch (err) {
+          console.error("Failed to create share link", err);
+        }
+
+        // 2. Generate Canvas Card
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const url = await generateShareCardDataURL(mockStock, report as any, lang, strategy);
+        const url = await generateShareCardDataURL(mockStock, report as any, lang, strategyName, shareId);
         if (!cancelled) setShareCardUrl(url);
       } catch (e) {
         console.error("Failed to generate share card", e);

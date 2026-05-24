@@ -138,107 +138,18 @@ const drawImageUrl = async (g: CanvasRenderingContext2D, url: string, x: number,
   });
 };
 
-// Seeded pseudo-random number generator for deterministic charts per symbol
-function createSeededRng(seed: string): () => number {
-  let h = 0;
-  for (let i = 0; i < seed.length; i++) {
-    h = (h * 31 + seed.charCodeAt(i)) & 0xffffffff;
-  }
-  return () => {
-    h = (h * 1103515245 + 12345) & 0x7fffffff;
-    return h / 0x7fffffff;
-  };
+function formatNum(val: number | null | undefined, suffix = ""): string {
+  if (val === null || val === undefined) return "--";
+  return `${val.toFixed(2)}${suffix}`;
 }
-
-// Placeholder chart drawer — uses seeded PRNG so same symbol always looks the same
-function drawMockChart(g: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, symbol: string) {
-  const rand = createSeededRng(symbol);
-
-  // Chart background
-  g.fillStyle = "#0c1322";
-  g.fillRect(x, y, w, h);
-
-  // Grid
-  g.strokeStyle = "rgba(255,255,255,0.05)";
-  g.lineWidth = 1;
-  for (let i = 1; i < 10; i++) {
-    g.beginPath(); g.moveTo(x, y + (h / 10) * i); g.lineTo(x + w, y + (h / 10) * i); g.stroke();
-    g.beginPath(); g.moveTo(x + (w / 10) * i, y); g.lineTo(x + (w / 10) * i, y + h); g.stroke();
-  }
-
-  // Chart Title
-  bold(g, `${symbol} Technical Analysis (120 Days)`, x + w / 2, y + 30, 14, "#00d2b6", "center");
-
-  // Draw candlesticks
-  g.save();
-  g.translate(x, y + 20); // give space for title
-  const chartW = w - 40;
-  const chartH = h - 60;
-  const candles = 60;
-  const cW = chartW / candles * 0.7;
-  const gap = chartW / candles * 0.3;
-  let px = 20;
-  let val = chartH * 0.5;
-
-  for (let i = 0; i < candles; i++) {
-    const isUp = rand() > 0.45;
-    const size = rand() * (chartH * 0.15) + 5;
-    const startY = val;
-    val = isUp ? val - rand() * size * 0.8 : val + rand() * size * 0.8;
-    val = Math.max(20, Math.min(chartH - 20, val));
-    
-    const high = Math.min(startY, val) - rand() * 20;
-    const low = Math.max(startY, val) + rand() * 20;
-
-    const col = isUp ? "#00d2b6" : "#f87171";
-    g.strokeStyle = col;
-    g.fillStyle = col;
-    g.lineWidth = 1;
-    
-    // Wick
-    g.beginPath();
-    g.moveTo(px + cW / 2, high);
-    g.lineTo(px + cW / 2, low);
-    g.stroke();
-
-    // Body
-    const top = Math.min(startY, val);
-    const bottom = Math.max(startY, val);
-    const bodyH = Math.max(bottom - top, 2);
-    g.fillRect(px, top, cW, bodyH);
-
-    // Volume bar
-    const volH = rand() * (chartH * 0.25) + 5;
-    g.fillRect(px, chartH - volH + 20, cW, volH);
-
-    px += cW + gap;
-  }
-  g.restore();
-
-  // Draw moving average line
-  const rand2 = createSeededRng(symbol + "_ma");
-  g.strokeStyle = "#38bdf8";
-  g.lineWidth = 2;
-  g.beginPath();
-  px = 20 + cW / 2;
-  val = chartH * 0.6;
-  g.moveTo(x + px, y + 20 + val);
-  for (let i = 1; i < candles; i++) {
-    px += cW + gap;
-    val += (rand2() - 0.5) * 20;
-    val = Math.max(20, Math.min(chartH - 20, val));
-    g.lineTo(x + px, y + 20 + val);
-  }
-  g.stroke();
-}
-
 
 // ── Main Generator ───────────────────────────────────────────────
 export async function generateShareCardDataURL(
   stock: StockMetrics,
   report: StockAnalysisReport,
   lang: "en" | "zh" = "zh",
-  strategy: string = "value"
+  strategyName: string = "Value Investing",
+  shareId?: string
 ): Promise<string> {
   const cv = document.createElement("canvas");
   cv.width = W * 2;
@@ -260,66 +171,119 @@ export async function generateShareCardDataURL(
   bold(g, "VANPOWER ", 65, 66, 22, "#ffffff");
   bold(g, "AI", 65 + g.measureText("VANPOWER ").width, 66, 22, "#00d2b6");
 
-  // Top right Date & Title
+  // Top right Date & Strategy Tag
   const dateStr = new Date().toISOString().slice(0, 10);
   txt(g, dateStr, W - 50, 55, 18, "#8b949e", "right");
-  bold(g, "STOCK DEEP DIVE", W - 50, 75, 16, "#00d2b6", "right");
+  bold(g, strategyName.toUpperCase(), W - 50, 75, 16, "#00d2b6", "right");
 
   // ── Symbol Info ──
   let curY = 160;
   bold(g, stock.symbol, 45, curY, 72, "#ffffff");
   txt(g, isEn ? "Daily Stock Deep Dive" : "每日个股深度研报", 50, curY + 30, 20, "#8b949e");
 
-  // Price & Change Pill
-  // Use mock change logic (or real if available)
-  const isUp = (stock.priceVs50SMA || 0) >= 0;
+  // Analyst Target & Upside Pill
+  const targetPrice = report.analyst?.targetPrice || `$${formatNum(stock.price)}`;
+  const upside = report.analyst?.upside || "";
+  const consensus = report.analyst?.consensus || "Hold";
+  
+  const isUp = upside.includes("+");
   const changeColor = isUp ? "#00d2b6" : "#f87171";
   const changeBg = isUp ? "rgba(0, 210, 182, 0.15)" : "rgba(248, 113, 113, 0.15)";
-  const changeStr = (isUp ? "+" : "") + formatNum(stock.priceVs50SMA || 0, "%");
   
   g.font = "bold 22px Inter,sans-serif";
-  const changeW = g.measureText(changeStr).width + 30;
-
+  const changeW = g.measureText(upside).width + 30;
   const rightEdge = W - 50;
-  // Draw pill
-  rr(g, rightEdge - changeW, curY - 45, changeW, 40, 8, changeBg, "rgba(255,255,255,0.05)");
-  bold(g, changeStr, rightEdge - changeW / 2, curY - 18, 22, changeColor, "center");
+  
+  if (upside) {
+    rr(g, rightEdge - changeW, curY - 45, changeW, 40, 8, changeBg, "rgba(255,255,255,0.05)");
+    bold(g, upside, rightEdge - changeW / 2, curY - 18, 22, changeColor, "center");
+  }
 
   // Draw Price
-  bold(g, `$${stock.price.toFixed(2)}`, rightEdge - changeW - 20, curY - 10, 48, "#ffffff", "right");
+  const targetLabelWidth = isEn ? 120 : 60;
+  txt(g, isEn ? "Target Price" : "目标价", rightEdge - changeW - 20, curY - 35, 16, "#8b949e", "right");
+  bold(g, targetPrice, rightEdge - changeW - 20, curY - 5, 40, "#ffffff", "right");
 
-  curY += 80;
+  // Consensus badge (e.g. "Buy")
+  const consW = g.measureText(consensus).width + 30;
+  rr(g, rightEdge - consW, curY + 10, consW, 30, 15, "rgba(56, 189, 248, 0.15)", "rgba(56, 189, 248, 0.3)");
+  bold(g, consensus, rightEdge - consW / 2, curY + 32, 16, "#38bdf8", "center");
 
-  // ── AI Core Views (Section 1) ──
-  glassPanel(g, 45, curY, W - 90, 200, 16, "rgba(255,255,255,0.08)");
+  curY += 100;
+
+  // ── Metrics Grid (Section 1) ──
+  glassPanel(g, 45, curY, W - 90, 150, 16, "rgba(255,255,255,0.08)");
+  
+  const gridItems = [
+    { label: isEn ? "P/E Ratio" : "市盈率 P/E", val: formatNum(stock.peRatio) },
+    { label: isEn ? "P/B Ratio" : "市净率 P/B", val: formatNum(stock.pbRatio) },
+    { label: isEn ? "ROE" : "净资产收益率", val: formatNum(stock.roe, "%") },
+    { label: isEn ? "FCF Yield" : "自由现金流收益率", val: formatNum(stock.freeCashFlowYield, "%") },
+    { label: isEn ? "Rev Growth (YoY)" : "营收同比增长", val: formatNum(stock.revenueGrowthYoY, "%") },
+    { label: isEn ? "Gross Margin" : "毛利率", val: formatNum(stock.grossMargin, "%") },
+  ];
+
+  const cols = 3;
+  const colW = (W - 90) / cols;
+  const rowH = 70;
+  
+  for (let i = 0; i < gridItems.length; i++) {
+    const col = i % cols;
+    const row = Math.floor(i / cols);
+    const x = 45 + col * colW + 20;
+    const y = curY + 20 + row * rowH;
+    
+    txt(g, gridItems[i].label, x, y + 15, 16, "#8b949e");
+    bold(g, gridItems[i].val, x, y + 45, 24, "#ffffff");
+    
+    // Grid dividers
+    if (col < cols - 1) {
+      rr(g, 45 + (col + 1) * colW, y, 1, rowH - 20, 0, "rgba(255,255,255,0.1)", null);
+    }
+  }
+
+  curY += 180;
+
+  // ── AI Core Views (Section 2) ──
+  glassPanel(g, 45, curY, W - 90, 480, 16, "rgba(255,255,255,0.08)");
   
   // Title with Teal Pipe
   rr(g, 75, curY + 40, 6, 24, 3, "#00d2b6", null);
-  bold(g, isEn ? "AI Core Views & Anomaly Analysis" : "AI 核心观点与异动分析", 95, curY + 60, 24, "#ffffff");
+  bold(g, isEn ? "AI Analysis & Rationale" : "AI 核心观点与逻辑", 95, curY + 60, 24, "#ffffff");
 
   let bulletY = curY + 110;
   const rationaleBullets = report.rationale.length > 0 ? report.rationale : [report.overview];
-  const maxBullets = Math.min(rationaleBullets.length, 2);
+  const maxBullets = Math.min(rationaleBullets.length, 3);
 
   for (let i = 0; i < maxBullets; i++) {
     // Chevron bullet "»"
     bold(g, "»", 75, bulletY + 2, 22, "#00d2b6");
     const bulletFont = "400 18px Inter,-apple-system,sans-serif";
-    const lines = wrapText(g, rationaleBullets[i], W - 160, bulletFont, 2);
+    const lines = wrapText(g, rationaleBullets[i], W - 160, bulletFont, 4);
     lines.forEach((line) => {
       txt(g, line, 105, bulletY, 18, "#c9d1d9");
       bulletY += 30;
     });
     bulletY += 15;
   }
+  
+  // Risks if space allows
+  if (report.risks && report.risks.length > 0 && bulletY < curY + 400) {
+      bulletY += 10;
+      rr(g, 75, bulletY, 6, 24, 3, "#f87171", null);
+      bold(g, isEn ? "Key Risks" : "主要风险提示", 95, bulletY + 20, 20, "#ffffff");
+      bulletY += 50;
+      
+      bold(g, "!»", 70, bulletY + 2, 22, "#f87171");
+      const bulletFont = "400 18px Inter,-apple-system,sans-serif";
+      const lines = wrapText(g, report.risks[0], W - 160, bulletFont, 3);
+      lines.forEach((line) => {
+        txt(g, line, 105, bulletY, 18, "#c9d1d9");
+        bulletY += 30;
+      });
+  }
 
-  curY += 230;
-
-  // ── Chart Section ──
-  glassPanel(g, 45, curY, W - 90, 420, 16, "rgba(255,255,255,0.08)");
-  drawMockChart(g, 65, curY + 20, W - 130, 380, stock.symbol);
-
-  curY += 450;
+  curY += 510;
 
   // ── Footer / QR Code Section ──
   glassPanel(g, 45, curY, W - 90, 200, 16, "rgba(255,255,255,0.08)");
@@ -340,7 +304,7 @@ export async function generateShareCardDataURL(
   bold(g, "VANPOWER MARKET INTELLIGENCE", 75, curY + 175, 16, "#00d2b6");
 
   // QR Code Generation
-  const qrUrl = `https://${SITE}/screener/${strategy}`;
+  const qrUrl = shareId ? `https://${SITE}/api/share/${shareId}` : `https://${SITE}/screener/value`;
   try {
     const qrDataUrl = await QRCode.toDataURL(qrUrl, {
       margin: 1,
@@ -359,10 +323,6 @@ export async function generateShareCardDataURL(
   }
 
   return cv.toDataURL("image/png");
-}
-
-function formatNum(val: number | null, suffix = ""): string {
-  return val === null || val === undefined ? "0.0" : `${val.toFixed(2)}${suffix}`;
 }
 
 export function downloadShareCard(dataUrl: string, symbol: string) {
