@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-import { Gem, ArrowLeft, StarOff, Trash2, Shield, Sword, Rocket, CircleDollarSign, RefreshCcw, AlertTriangle, HelpCircle, ChevronDown, Languages, ArrowUpFromLine, Check, Loader2, X, FileText, TrendingUp, Activity, Target, Users, Zap, ShieldAlert } from "lucide-react";
+import { Gem, ArrowLeft, StarOff, Trash2, Shield, Sword, Rocket, CircleDollarSign, RefreshCcw, AlertTriangle, HelpCircle, ChevronDown, Languages, ArrowUpFromLine, Check, Loader2, X, FileText, TrendingUp, Activity, Target, Users, Zap, ShieldAlert, Download } from "lucide-react";
 import type { WatchlistItem } from "@/lib/types";
 import { useLanguage } from "@/lib/language-context";
 import { useAuth } from "@/lib/auth-context";
@@ -195,6 +195,8 @@ export default function WatchlistPage() {
     };
   }
   const [analysisPanel, setAnalysisPanel] = useState<{ symbol: string; loading: boolean; report: AnalysisReport | null } | null>(null);
+  const [shareCardUrl, setShareCardUrl] = useState<string | null>(null);
+  const [isGeneratingCard, setIsGeneratingCard] = useState(false);
 
   const openAnalysis = useCallback(async (symbol: string) => {
     setAnalysisPanel({ symbol, loading: true, report: null });
@@ -217,6 +219,59 @@ export default function WatchlistPage() {
       setAnalysisPanel({ symbol, loading: false, report: null });
     }
   }, [getIdToken, watchlist, lang]);
+
+  // Share card generation effect
+  useEffect(() => {
+    if (!analysisPanel?.report || !analysisPanel.symbol) {
+      setShareCardUrl(null);
+      return;
+    }
+    let cancelled = false;
+    const generateCard = async () => {
+      setIsGeneratingCard(true);
+      try {
+        const { generateShareCardDataURL } = await import("@/lib/share-card");
+        // Build a minimal StockMetrics-like object from what we have
+        const item = watchlist.find(w => w.symbol === analysisPanel.symbol);
+        const role = item?.role;
+        const strategy = (role === 'core_dividend' || role === 'turnaround' || role === 'special_situation') ? 'value' : 'large_growth';
+        const mockStock = {
+          symbol: analysisPanel.symbol,
+          companyName: analysisPanel.symbol,
+          sector: "",
+          industry: "",
+          marketCap: 0,
+          price: 0,
+          peRatio: null,
+          pbRatio: null,
+          freeCashFlowYield: null,
+          dividendYield: null,
+          currentRatio: null,
+          debtToEquity: null,
+          revenueGrowthYoY: null,
+          epsGrowthYoY: null,
+          pegRatio: null,
+          roe: null,
+          grossMargin: null,
+          netMargin: null,
+          priceVs50SMA: null,
+          priceVs200SMA: null,
+          fiftyTwoWeekHigh: null,
+          fiftyTwoWeekLow: null,
+        };
+        const report = { ...analysisPanel.report!, symbol: analysisPanel.symbol, positionSuggestion: "" };
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const url = await generateShareCardDataURL(mockStock, report as any, lang, strategy);
+        if (!cancelled) setShareCardUrl(url);
+      } catch (e) {
+        console.error("Failed to generate share card", e);
+      } finally {
+        if (!cancelled) setIsGeneratingCard(false);
+      }
+    };
+    generateCard();
+    return () => { cancelled = true; };
+  }, [analysisPanel?.symbol, analysisPanel?.report, lang, watchlist]);
 
   // Group items
   const grouped = watchlist.reduce((acc, item) => {
@@ -531,15 +586,32 @@ export default function WatchlistPage() {
         <div className="fixed inset-0 z-[100] flex justify-end">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setAnalysisPanel(null)} />
           <div className="relative w-full max-w-2xl h-full bg-slate-900 border-l border-slate-800 shadow-2xl overflow-y-auto animate-in slide-in-from-right duration-300">
-            {/* Panel Header */}
             <div className="sticky top-0 z-10 bg-slate-900/80 backdrop-blur-md border-b border-slate-800 px-8 py-6 flex justify-between items-start">
               <div>
                 <h2 className="text-3xl font-bold text-white mb-1">{analysisPanel.symbol}</h2>
                 <p className="text-sm text-slate-400">{t("AI Investment Analysis", "AI 投资分析报告")}</p>
               </div>
-              <button onClick={() => setAnalysisPanel(null)} className="p-2 rounded-full hover:bg-slate-800 text-slate-400 hover:text-white transition-colors">
-                <X className="w-6 h-6" />
-              </button>
+              <div className="flex items-center gap-2">
+                {analysisPanel.report && (
+                  <button
+                    onClick={async () => {
+                      if (shareCardUrl && analysisPanel) {
+                        const { downloadShareCard } = await import("@/lib/share-card");
+                        downloadShareCard(shareCardUrl, analysisPanel.symbol);
+                      }
+                    }}
+                    disabled={!shareCardUrl || isGeneratingCard}
+                    className="px-3 py-2 bg-emerald-600 hover:bg-emerald-500 disabled:bg-slate-800 disabled:text-slate-500 text-white rounded-lg text-sm font-semibold flex items-center gap-1.5 transition-colors"
+                    title={t("Download Share Card", "下载分享卡片")}
+                  >
+                    {isGeneratingCard ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+                    {t("Share", "分享")}
+                  </button>
+                )}
+                <button onClick={() => setAnalysisPanel(null)} className="p-2 rounded-full hover:bg-slate-800 text-slate-400 hover:text-white transition-colors">
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
             </div>
 
             {/* Panel Content */}
@@ -631,6 +703,41 @@ export default function WatchlistPage() {
                         ))}
                       </ul>
                     </section>
+                  </div>
+
+                  {/* Share Card Section */}
+                  <div className="mt-8 pt-6 border-t border-slate-800">
+                    <div className="flex justify-between items-end mb-4">
+                      <div>
+                        <h3 className="text-lg font-bold text-white mb-1">{t("Share Report", "分享报告")}</h3>
+                        <p className="text-sm text-slate-400">{t("Download this deep dive as a shareable image.", "将此深度研报下载为图片分享。")}</p>
+                      </div>
+                      <button
+                        onClick={async () => {
+                          if (shareCardUrl && analysisPanel) {
+                            const { downloadShareCard } = await import("@/lib/share-card");
+                            downloadShareCard(shareCardUrl, analysisPanel.symbol);
+                          }
+                        }}
+                        disabled={!shareCardUrl || isGeneratingCard}
+                        className="px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:bg-slate-800 disabled:text-slate-500 text-white rounded-lg font-semibold flex items-center gap-2 transition-colors"
+                      >
+                        {isGeneratingCard ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+                        {t("Download Card", "下载分享卡片")}
+                      </button>
+                    </div>
+                    <div className="bg-slate-950 border border-slate-800 rounded-xl p-4 flex justify-center overflow-hidden relative">
+                      {isGeneratingCard ? (
+                         <div className="flex flex-col items-center justify-center py-12">
+                           <Loader2 className="w-6 h-6 text-blue-400 animate-spin mb-3" />
+                           <p className="text-sm text-slate-500">{t("Generating high-res card...", "正在生成高清分享卡片...")}</p>
+                         </div>
+                      ) : shareCardUrl ? (
+                         <img src={shareCardUrl} alt="Share Card Preview" className="max-w-full h-auto rounded-lg border border-slate-800 shadow-2xl" style={{ maxHeight: "400px" }} />
+                      ) : (
+                         <div className="py-12 text-slate-600 text-sm">{t("Card preview unavailable", "暂无预览")}</div>
+                      )}
+                    </div>
                   </div>
                 </>
               ) : (
