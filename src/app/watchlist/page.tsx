@@ -231,44 +231,59 @@ export default function WatchlistPage() {
       setIsGeneratingCard(true);
       try {
         const { generateShareCardDataURL } = await import("@/lib/share-card");
-        // Extract price from analyst.targetPrice if possible
-        let extractedPrice = 0;
-        const targetPriceStr = analysisPanel.report?.analyst?.targetPrice;
-        if (targetPriceStr) {
-          const match = targetPriceStr.match(/[\d.]+/);
-          if (match) extractedPrice = parseFloat(match[0]);
+
+        // 1. Fetch real metrics from stock pool
+        let stockData: import("@/lib/types").StockMetrics | null = null;
+        try {
+          const metricsRes = await fetch(`/api/stock-metrics?symbol=${encodeURIComponent(analysisPanel.symbol)}`);
+          if (metricsRes.ok) {
+            const metricsJson = await metricsRes.json();
+            stockData = metricsJson.metrics;
+          }
+        } catch (err) {
+          console.error("Failed to fetch stock metrics, using fallback:", err);
         }
 
-        const mockStock = {
-          symbol: analysisPanel.symbol,
-          companyName: analysisPanel.symbol,
-          sector: "",
-          industry: "",
-          marketCap: 0,
-          price: extractedPrice,
-          peRatio: null,
-          pbRatio: null,
-          freeCashFlowYield: null,
-          dividendYield: null,
-          currentRatio: null,
-          debtToEquity: null,
-          revenueGrowthYoY: null,
-          epsGrowthYoY: null,
-          pegRatio: null,
-          roe: null,
-          grossMargin: null,
-          netMargin: null,
-          priceVs50SMA: null,
-          priceVs200SMA: null,
-          fiftyTwoWeekHigh: null,
-          fiftyTwoWeekLow: null,
-        };
+        // Fallback: extract price from analyst target if pool lookup failed
+        if (!stockData) {
+          let extractedPrice = 0;
+          const targetPriceStr = analysisPanel.report?.analyst?.targetPrice;
+          if (targetPriceStr) {
+            const match = targetPriceStr.match(/[\d.]+/);
+            if (match) extractedPrice = parseFloat(match[0]);
+          }
+          stockData = {
+            symbol: analysisPanel.symbol,
+            companyName: analysisPanel.symbol,
+            sector: "",
+            industry: "",
+            marketCap: 0,
+            price: extractedPrice,
+            peRatio: null,
+            pbRatio: null,
+            freeCashFlowYield: null,
+            dividendYield: null,
+            currentRatio: null,
+            debtToEquity: null,
+            revenueGrowthYoY: null,
+            epsGrowthYoY: null,
+            pegRatio: null,
+            roe: null,
+            grossMargin: null,
+            netMargin: null,
+            priceVs50SMA: null,
+            priceVs200SMA: null,
+            fiftyTwoWeekHigh: null,
+            fiftyTwoWeekLow: null,
+          };
+        }
+
         const report = { ...analysisPanel.report!, symbol: analysisPanel.symbol, positionSuggestion: "" };
         
         let shareId = "";
         const strategyName = lang === "en" ? "Watchlist Deep Dive" : "自选股深度分析";
 
-        // 1. Create share link in Firestore
+        // 2. Create share link in Firestore
         try {
           const res = await fetch("/api/share", {
             method: "POST",
@@ -278,7 +293,7 @@ export default function WatchlistPage() {
               strategy: "watchlist",
               strategyName,
               report,
-              metrics: mockStock,
+              metrics: stockData,
             }),
           });
           if (res.ok) {
@@ -289,9 +304,9 @@ export default function WatchlistPage() {
           console.error("Failed to create share link", err);
         }
 
-        // 2. Generate Canvas Card
+        // 3. Generate Canvas Card
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const url = await generateShareCardDataURL(mockStock, report as any, lang, strategyName, shareId);
+        const url = await generateShareCardDataURL(stockData, report as any, lang, strategyName, shareId);
         if (!cancelled) setShareCardUrl(url);
       } catch (e) {
         console.error("Failed to generate share card", e);
