@@ -350,29 +350,30 @@ export default function FunnelScreenerPage() {
   return (
     <div className="min-h-screen flex flex-col bg-slate-950 text-slate-200">
       {/* Header */}
-      <header className="border-b border-slate-800 bg-slate-900 px-6 py-4">
-        <div className="max-w-[1400px] mx-auto flex items-center gap-4">
-          <Link href="/" className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors">
+      <header className="border-b border-slate-800 bg-slate-900 px-4 sm:px-6 py-3 sm:py-4">
+        <div className="max-w-[1400px] mx-auto flex items-center gap-2 sm:gap-4">
+          <Link href="/" className="flex items-center gap-1.5 sm:gap-2 text-slate-400 hover:text-white transition-colors flex-shrink-0">
             <ArrowLeft className="w-4 h-4" />
             <Gem className="w-5 h-5 text-blue-400" />
-            <span className="font-bold">Gems</span>
+            <span className="font-bold hidden sm:inline">Gems</span>
           </Link>
-          <div className="h-5 w-px bg-slate-700" />
-          <div className="flex flex-col">
-            <h1 className="text-sm font-bold text-white">
+          <div className="h-5 w-px bg-slate-700 hidden sm:block" />
+          <div className="flex flex-col min-w-0">
+            <h1 className="text-xs sm:text-sm font-bold text-white truncate">
               {lang === "en" ? `${preset.name} Funnel` : `${preset.nameZh} 选股漏斗`}
             </h1>
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-slate-500 hidden sm:block">
               {lang === "en" ? preset.nameZh : preset.name}
             </p>
           </div>
-          <div className="ml-auto flex items-center gap-3">
+          <div className="ml-auto flex items-center gap-2 sm:gap-3 flex-shrink-0">
             <button 
               onClick={() => setLang(lang === "en" ? "zh" : "en")}
-              className="flex items-center gap-2 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-sm transition-colors border border-slate-700"
+              className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs sm:text-sm transition-colors border border-slate-700"
             >
               <Languages className="w-4 h-4 text-blue-400" />
-              {lang === "en" ? "中文" : "English"}
+              <span className="hidden sm:inline">{lang === "en" ? "中文" : "English"}</span>
+              <span className="sm:hidden">{lang === "en" ? "中" : "EN"}</span>
             </button>
             <UserMenu />
           </div>
@@ -382,34 +383,37 @@ export default function FunnelScreenerPage() {
       <PremiumGate featureName={t("Quantitative Stock Screener", "量化选股系统")}>
         {/* Funnel Progress Bar */}
         <div className="bg-slate-900 border-b border-slate-800">
-        <div className="max-w-[1400px] mx-auto px-6 py-4 flex items-center justify-between">
+        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between gap-1 sm:gap-0">
           {[
-            { step: 1, icon: Activity, title: isSA ? t("Step 1: Skipped", "第一步：已跳过") : t("Step 1: Quantitative", "第一步：定量筛选"), sub: isSA ? t("SA Direct List", "SA 直选") : isValue ? t("Valuation & FCF", "估值与自由现金流") : t("Growth & Scale", "成长与规模") },
-            { step: 2, icon: BrainCircuit, title: t("Step 2: Qualitative", "第二步：定性深研"), sub: isValue ? t("Moat & Catalyst", "护城河与催化剂") : t("TAM & Dominance", "潜在市场与统治力") },
-            { step: 3, icon: LineChart, title: t("Step 3: Technical & Final", "第三步：技术与最终决策"), sub: t("Timing & Analysis", "择时与分析") },
+            { step: 1, icon: Activity, title: isSA ? t("Step 1: Skipped", "第一步：已跳过") : t("Step 1: Quantitative", "第一步：定量筛选"), sub: isSA ? t("SA Direct List", "SA 直选") : isValue ? t("Valuation & FCF", "估值与自由现金流") : t("Growth & Scale", "成长与规模"), shortTitle: isSA ? t("Skipped", "已跳过") : t("Quant", "定量") },
+            { step: 2, icon: BrainCircuit, title: t("Step 2: Qualitative", "第二步：定性深研"), sub: isValue ? t("Moat & Catalyst", "护城河与催化剂") : t("TAM & Dominance", "潜在市场与统治力"), shortTitle: t("Qual", "定性") },
+            { step: 3, icon: LineChart, title: t("Step 3: Technical & Final", "第三步：技术与最终决策"), sub: t("Timing & Analysis", "择时与分析"), shortTitle: t("Final", "最终") },
           ].map((s, i) => (
-            <div key={s.step} className="flex items-center flex-1">
-              <div className={`flex items-center gap-3 ${currentStep === s.step ? "opacity-100" : currentStep > s.step || (isSA && s.step === 1) ? "opacity-60" : "opacity-30 grayscale"}`}>
-                <div className={`p-2.5 rounded-lg border ${
+            <div key={s.step} className="flex items-center flex-1 min-w-0">
+              <div className={`flex items-center gap-2 sm:gap-3 min-w-0 ${currentStep === s.step ? "opacity-100" : currentStep > s.step || (isSA && s.step === 1) ? "opacity-60" : "opacity-30 grayscale"}`}>
+                <div className={`p-1.5 sm:p-2.5 rounded-lg border flex-shrink-0 ${
                   currentStep === s.step 
                     ? `bg-${preset.color}-500/20 border-${preset.color}-500/50 text-${preset.color}-400`
                     : "bg-slate-800 border-slate-700 text-slate-400"
                 }`}>
-                  <s.icon className="w-5 h-5" />
+                  <s.icon className="w-4 h-4 sm:w-5 sm:h-5" />
                 </div>
-                <div>
-                  <p className={`text-sm font-bold ${currentStep === s.step ? "text-white" : ""}`}>{s.title}</p>
-                  <p className="text-xs text-slate-500">{s.sub}</p>
+                <div className="min-w-0">
+                  <p className={`text-xs sm:text-sm font-bold truncate ${currentStep === s.step ? "text-white" : ""}`}>
+                    <span className="hidden sm:inline">{s.title}</span>
+                    <span className="sm:hidden">{s.shortTitle}</span>
+                  </p>
+                  <p className="text-[10px] sm:text-xs text-slate-500 hidden sm:block">{s.sub}</p>
                 </div>
               </div>
-              {i < 2 && <ChevronRight className="w-5 h-5 mx-auto text-slate-700" />}
+              {i < 2 && <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 mx-1 sm:mx-auto text-slate-700 flex-shrink-0" />}
             </div>
           ))}
         </div>
       </div>
 
       {/* Main Content Area */}
-      <div className="flex-1 px-6 py-8">
+      <div className="flex-1 px-4 sm:px-6 py-5 sm:py-8">
         <div className="max-w-[1400px] mx-auto">
           {loading ? (
             <div className="flex justify-center py-20"><Loader2 className="w-8 h-8 animate-spin text-blue-400" /></div>
@@ -493,7 +497,7 @@ export default function FunnelScreenerPage() {
                   )}
 
                   {/* Data source indicator — auto-refreshed daily after market close */}
-                  <div className="flex items-center gap-3 mb-4 px-4 py-2.5 rounded-lg bg-slate-900/80 border border-slate-800 text-xs">
+                  <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-4 px-3 sm:px-4 py-2.5 rounded-lg bg-slate-900/80 border border-slate-800 text-xs">
                     {dataSource === "fmp" ? (
                       <span className="flex items-center gap-1.5 text-emerald-400">
                         <Cloud className="w-3.5 h-3.5" /> {t("FMP Market Data", "FMP 市场数据")}
@@ -503,41 +507,42 @@ export default function FunnelScreenerPage() {
                         <Database className="w-3.5 h-3.5" /> {t("Mock Data", "模拟数据")}
                       </span>
                     )}
-                    <span className="text-slate-600">|</span>
+                    <span className="text-slate-600 hidden sm:inline">|</span>
                     <span className="text-slate-500">
                       {poolUpdatedAt
                         ? `${t("Updated", "更新于")} ${new Date(poolUpdatedAt).toLocaleString(lang === "en" ? "en-US" : "zh-CN", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}`
                         : t("Not updated", "未刷新")}
                     </span>
-                    <span className="text-slate-600">|</span>
-                    <span className="text-slate-600 italic">
+                    <span className="text-slate-600 hidden sm:inline">|</span>
+                    <span className="text-slate-600 italic hidden sm:inline">
                       {t("Auto-refresh: weekdays 5 PM ET", "自动刷新：交易日收盘后1小时")}
                     </span>
                     <button
                       onClick={refreshPool}
                       disabled={refreshing}
                       title={t("Force refresh data from FMP API", "强制从 FMP API 刷新数据")}
-                      className="ml-auto flex items-center gap-1.5 px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition-colors disabled:opacity-50"
+                      className="w-full sm:w-auto mt-2 sm:mt-0 sm:ml-auto flex items-center justify-center gap-1.5 px-2.5 py-1.5 sm:py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition-colors disabled:opacity-50"
                     >
                       <RefreshCw className={`w-3 h-3 ${refreshing ? "animate-spin" : ""}`} />
                       {refreshing ? t("Refreshing...", "刷新中...") : t("Manual Refresh", "手动刷新")}
                     </button>
                   </div>
 
-                  <div className="flex justify-between items-center mb-6">
+                  <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 md:gap-0 mb-6">
                     <div>
-                      <h2 className="text-xl font-bold text-white mb-1">{t("Quantitative Pool", "定量股票池")} ({stocks.length} {t("matches", "只符合条件")})</h2>
-                      <p className="text-sm text-slate-400">{t("Select candidates that pass the hard financial metrics to advance to deep dive.", "选择通过硬性财务指标筛选的候选股票进入定性深研环节。")}</p>
+                      <h2 className="text-lg sm:text-xl font-bold text-white mb-1">{t("Quantitative Pool", "定量股票池")} ({stocks.length} {t("matches", "只符合条件")})</h2>
+                      <p className="text-xs sm:text-sm text-slate-400">{t("Select candidates that pass the hard financial metrics to advance to deep dive.", "选择通过硬性财务指标筛选的候选股票进入定性深研环节。")}</p>
                     </div>
                     <button
                       disabled={selectedInStep1.size === 0}
                       onClick={() => setCurrentStep(2)}
-                      className="px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:bg-slate-800 disabled:text-slate-500 text-white rounded-lg font-semibold flex items-center gap-2 transition-colors"
+                      className="w-full md:w-auto px-4 py-2.5 md:py-2 bg-blue-600 hover:bg-blue-500 disabled:bg-slate-800 disabled:text-slate-500 text-white rounded-lg font-semibold flex items-center justify-center gap-2 transition-colors"
                     >
                       {t("Run Deep Dive", "进行定性深研")} ({selectedInStep1.size}) <ChevronRight className="w-4 h-4" />
                     </button>
                   </div>
-                  <div className="border border-slate-800 rounded-xl bg-slate-900/50">
+                  {/* Desktop Table View */}
+                  <div className="hidden md:block border border-slate-800 rounded-xl bg-slate-900/50 overflow-x-auto">
                     <table className="w-full text-sm text-left">
                       <thead className="bg-slate-800/80 text-slate-400">
                         <tr>
@@ -586,31 +591,79 @@ export default function FunnelScreenerPage() {
                       </tbody>
                     </table>
                   </div>
+
+                  {/* Mobile Card View */}
+                  <div className="md:hidden space-y-3">
+                    {stocks.map(s => {
+                      const isSelected = selectedInStep1.has(s.symbol);
+                      return (
+                        <div 
+                          key={s.symbol} 
+                          onClick={() => toggleSelection(1, s.symbol)}
+                          className={`rounded-xl border p-4 transition-all cursor-pointer ${
+                            isSelected ? 'border-blue-500 bg-blue-900/10 ring-1 ring-blue-500/50' : 'border-slate-800 bg-slate-900/50 hover:border-slate-700'
+                          }`}
+                        >
+                          <div className="flex items-start justify-between mb-3 border-b border-slate-800/60 pb-3">
+                            <div className="flex items-center gap-3">
+                              <div className="pt-0.5">
+                                <div className={`w-5 h-5 rounded-md flex items-center justify-center border ${isSelected ? 'bg-blue-500 border-blue-500' : 'bg-slate-800 border-slate-600'}`}>
+                                  {isSelected && <CheckCircle2 className="w-3.5 h-3.5 text-white" />}
+                                </div>
+                              </div>
+                              <div>
+                                <h3 className="text-base font-bold text-white flex items-center gap-2">
+                                  {s.symbol}
+                                </h3>
+                                <p className="text-xs text-slate-400 line-clamp-1">{s.companyName}</p>
+                              </div>
+                            </div>
+                            <span className="text-xs font-mono text-slate-400 bg-slate-800 px-2 py-1 rounded">
+                              {formatMarketCap(s.marketCap)}
+                            </span>
+                          </div>
+                          
+                          <div className="grid grid-cols-2 gap-2">
+                            {step1Columns.map(c => (
+                              <div key={c.key} className="bg-slate-800/40 rounded-lg px-2.5 py-1.5 flex flex-col">
+                                <span className="text-[10px] text-slate-500 uppercase tracking-wider mb-0.5 flex items-center gap-1">
+                                  {c.label}
+                                </span>
+                                <span className="text-sm font-mono text-slate-300 font-semibold">
+                                  {formatNum(s[c.key as keyof StockMetrics] as number, c.suffix)}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
               )}
 
               {/* STEP 2: QUALITATIVE DEEP DIVE (with SA data reference table) */}
               {currentStep === 2 && (
                 <div className="animate-in fade-in slide-in-from-right-8 duration-500">
-                  <div className="flex justify-between items-center mb-6">
+                  <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 md:gap-0 mb-6">
                     <div>
-                      <h2 className="text-xl font-bold text-white mb-1">
+                      <h2 className="text-lg sm:text-xl font-bold text-white mb-1">
                         {isSA ? t("Seeking Alpha Watchlist", "Seeking Alpha 自选股") : t("Qualitative Deep Dive", "定性深度研究")} ({selectedInStep1.size} {t("stocks", "只股票")})
                       </h2>
-                      <p className="text-sm text-slate-400">
+                      <p className="text-xs sm:text-sm text-slate-400">
                         {isSA 
                           ? t("All SA stocks shown with raw metrics. Select candidates for deep analysis.", "所有 SA 自选股的原始指标一览。选择候选标的进入深度分析。") 
                           : t("Evaluating Moat, TAM, and Pricing Power via AI constraints.", "通过 AI 约束条件评估护城河、潜在市场规模（TAM）和定价权。")}
                       </p>
                     </div>
-                    <div className="flex gap-3">
+                    <div className="flex flex-col sm:flex-row w-full md:w-auto gap-3">
                       {!isSA && (
-                        <button onClick={() => setCurrentStep(1)} className="px-4 py-2 border border-slate-700 text-slate-300 hover:bg-slate-800 rounded-lg font-semibold">{t("Back", "上一步")}</button>
+                        <button onClick={() => setCurrentStep(1)} className="w-full sm:w-auto px-4 py-2 border border-slate-700 text-slate-300 hover:bg-slate-800 rounded-lg font-semibold">{t("Back", "上一步")}</button>
                       )}
                       <button
                         disabled={selectedInStep2.size === 0}
                         onClick={() => setCurrentStep(3)}
-                        className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-800 disabled:text-slate-500 text-white rounded-lg font-semibold flex items-center gap-2 transition-colors"
+                        className="w-full sm:w-auto px-4 py-2 bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-800 disabled:text-slate-500 text-white rounded-lg font-semibold flex items-center justify-center gap-2 transition-colors"
                       >
                         {t("Technical Check", "技术面校验")} ({selectedInStep2.size}) <ChevronRight className="w-4 h-4" />
                       </button>
@@ -712,14 +765,14 @@ export default function FunnelScreenerPage() {
                     </div>
                   )}
 
-                  <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                     {stocks.filter(s => selectedInStep1.has(s.symbol)).map(s => {
                       const isSelected = selectedInStep2.has(s.symbol);
                       const moatScore = (s.symbol.length * 2) % 10 + 6;
                       const tamScore = (s.companyName.length) % 10 + 5;
                       
                       return (
-                        <div key={s.symbol} className={`rounded-xl border p-5 transition-all cursor-pointer ${isSelected ? 'border-indigo-500 bg-indigo-500/10' : 'border-slate-800 bg-slate-900/50 hover:border-slate-700'}`} onClick={() => toggleSelection(2, s.symbol)}>
+                        <div key={s.symbol} className={`rounded-xl border p-4 sm:p-5 transition-all cursor-pointer ${isSelected ? 'border-indigo-500 bg-indigo-500/10' : 'border-slate-800 bg-slate-900/50 hover:border-slate-700'}`} onClick={() => toggleSelection(2, s.symbol)}>
                           <div className="flex justify-between items-start mb-4">
                             <div>
                               <h3 className="text-lg font-bold text-white flex items-center gap-2">
@@ -767,12 +820,12 @@ export default function FunnelScreenerPage() {
               {/* STEP 3: TECHNICAL & FINAL ANALYSIS */}
               {currentStep === 3 && (
                 <div className="animate-in fade-in slide-in-from-right-8 duration-500">
-                  <div className="flex justify-between items-center mb-6">
+                  <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 md:gap-0 mb-6">
                     <div>
-                      <h2 className="text-xl font-bold text-white mb-1">{t("Final Selection & Deep Analysis", "最终选择与深度分析")}</h2>
-                      <p className="text-sm text-slate-400">{t("Review comprehensive AI analysis and assign structural roles to your portfolio.", "审阅全面的 AI 分析报告，并为其分配投资组合中的结构性角色。")}</p>
+                      <h2 className="text-lg sm:text-xl font-bold text-white mb-1">{t("Final Selection & Deep Analysis", "最终选择与深度分析")}</h2>
+                      <p className="text-xs sm:text-sm text-slate-400">{t("Review comprehensive AI analysis and assign structural roles to your portfolio.", "审阅全面的 AI 分析报告，并为其分配投资组合中的结构性角色。")}</p>
                     </div>
-                    <button onClick={() => setCurrentStep(2)} className="px-4 py-2 border border-slate-700 text-slate-300 hover:bg-slate-800 rounded-lg font-semibold">{t("Back to Qual", "返回定性研究")}</button>
+                    <button onClick={() => setCurrentStep(2)} className="w-full sm:w-auto px-4 py-2 border border-slate-700 text-slate-300 hover:bg-slate-800 rounded-lg font-semibold">{t("Back to Qual", "返回定性研究")}</button>
                   </div>
 
                   <div className="space-y-4">
@@ -782,20 +835,20 @@ export default function FunnelScreenerPage() {
                       const saved = watchlist.has(s.symbol);
 
                       return (
-                        <div key={s.symbol} className="flex items-center justify-between p-5 rounded-xl border border-slate-800 bg-slate-900/50 hover:bg-slate-800/80 transition-colors">
-                          <div className="flex items-center gap-6 w-1/3">
+                        <div key={s.symbol} className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 sm:p-5 gap-4 sm:gap-6 rounded-xl border border-slate-800 bg-slate-900/50 hover:bg-slate-800/80 transition-colors">
+                          <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6 w-full sm:w-1/3">
                             <div>
-                              <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                              <h3 className="text-lg font-bold text-white flex flex-wrap items-center gap-2">
                                 {s.symbol}
                                 <span className={`text-[10px] px-2 py-0.5 rounded-full border ${isUp ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : 'bg-red-500/10 border-red-500/20 text-red-400'}`}>
                                   {isUp ? t('Bull Trend', '多头趋势') : t('Bear Trend', '空头趋势')}
                                 </span>
                               </h3>
-                              <p className="text-xs text-slate-400">{s.companyName}</p>
+                              <p className="text-xs text-slate-400 mt-1">{s.companyName}</p>
                             </div>
                           </div>
 
-                          <div className="flex gap-3 w-1/4">
+                          <div className="flex gap-3 w-full sm:w-1/4">
                             <button
                               onClick={() => openAnalysis(s)}
                               className="px-3 py-1.5 rounded bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 border border-blue-500/20 text-xs font-semibold flex items-center gap-1.5 transition-colors"
@@ -804,7 +857,7 @@ export default function FunnelScreenerPage() {
                             </button>
                           </div>
 
-                          <div className="flex items-center gap-4 w-[40%] justify-end">
+                          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4 w-full sm:w-[40%] sm:justify-end border-t border-slate-800/60 pt-3 sm:border-0 sm:pt-0">
                             <select 
                               className="bg-slate-950 border border-slate-700 text-sm text-slate-300 rounded-lg px-3 py-2 outline-none focus:border-purple-500"
                               value={selectedRoles[s.symbol] || "unassigned"}
@@ -845,7 +898,7 @@ export default function FunnelScreenerPage() {
                   
                   {watchlist.size > 0 && (
                     <div className="mt-8 flex justify-center">
-                      <Link href="/watchlist" className="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white rounded-xl font-bold shadow-lg shadow-purple-500/20 transition-all hover:scale-105 flex items-center gap-2">
+                      <Link href="/watchlist" className="w-full sm:w-auto px-6 py-3 justify-center bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white rounded-xl font-bold shadow-lg shadow-purple-500/20 transition-all hover:scale-105 flex items-center gap-2">
                         {t("View Portfolio Dashboard", "查看投资组合面板")} <ChevronRight className="w-5 h-5" />
                       </Link>
                     </div>
@@ -861,15 +914,15 @@ export default function FunnelScreenerPage() {
       {analyzingStock && (
         <div className="fixed inset-0 z-[100] flex justify-end">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setAnalyzingStock(null)} />
-          <div className="relative w-full max-w-2xl h-full bg-slate-900 border-l border-slate-800 shadow-2xl overflow-y-auto animate-in slide-in-from-right duration-300">
+          <div className="relative w-full sm:max-w-2xl h-full bg-slate-900 border-l border-slate-800 shadow-2xl overflow-y-auto animate-in slide-in-from-right duration-300">
             {/* Panel Header */}
-            <div className="sticky top-0 z-10 bg-slate-900/80 backdrop-blur-md border-b border-slate-800 px-8 py-6 flex justify-between items-start">
+            <div className="sticky top-0 z-10 bg-slate-900/80 backdrop-blur-md border-b border-slate-800 px-4 sm:px-8 py-4 sm:py-6 flex justify-between items-start">
               <div>
-                <div className="flex items-center gap-3 mb-2">
-                  <h2 className="text-3xl font-bold text-white">{analyzingStock.symbol}</h2>
-                  <span className="px-2.5 py-1 rounded bg-slate-800 text-slate-300 text-xs font-mono border border-slate-700">{analyzingStock.sector}</span>
+                <div className="flex items-center gap-2 sm:gap-3 mb-1 sm:mb-2">
+                  <h2 className="text-2xl sm:text-3xl font-bold text-white">{analyzingStock.symbol}</h2>
+                  <span className="px-2 sm:px-2.5 py-0.5 sm:py-1 rounded bg-slate-800 text-slate-300 text-[10px] sm:text-xs font-mono border border-slate-700">{analyzingStock.sector}</span>
                 </div>
-                <p className="text-slate-400">{analyzingStock.companyName}</p>
+                <p className="text-xs sm:text-sm text-slate-400 line-clamp-1">{analyzingStock.companyName}</p>
               </div>
               <div className="flex items-center gap-2">
                 {analysisReport && (
@@ -888,14 +941,14 @@ export default function FunnelScreenerPage() {
                     {t("Share", "分享")}
                   </button>
                 )}
-                <button onClick={() => setAnalyzingStock(null)} className="p-2 rounded-full hover:bg-slate-800 text-slate-400 hover:text-white transition-colors">
-                  <X className="w-6 h-6" />
+                <button onClick={() => setAnalyzingStock(null)} className="p-1.5 sm:p-2 rounded-full hover:bg-slate-800 text-slate-400 hover:text-white transition-colors">
+                  <X className="w-5 h-5 sm:w-6 sm:h-6" />
                 </button>
               </div>
             </div>
 
             {/* Panel Content */}
-            <div className="px-8 py-6 space-y-8 pb-20">
+            <div className="px-4 sm:px-8 py-4 sm:py-6 space-y-6 sm:space-y-8 pb-20">
               {analysisLoading ? (
                 <div className="flex flex-col items-center justify-center py-16">
                   <Loader2 className="w-8 h-8 text-blue-400 animate-spin mb-4" />
@@ -904,7 +957,7 @@ export default function FunnelScreenerPage() {
               ) : analysisReport ? (
                 <>
                   {/* Analyst Pricing & Targets */}
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="bg-gradient-to-br from-blue-900/30 to-indigo-900/30 border border-blue-500/20 rounded-xl p-5">
                       <div className="flex items-center gap-2 text-blue-400 mb-1">
                         <Target className="w-4 h-4" />
@@ -953,7 +1006,7 @@ export default function FunnelScreenerPage() {
                     <p className="text-slate-400 text-sm leading-relaxed">{analysisReport.products}</p>
                   </section>
 
-                  <div className="grid md:grid-cols-2 gap-6 pt-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 pt-2 sm:pt-4">
                     {/* Rationale */}
                     <section className="bg-emerald-500/5 border border-emerald-500/10 rounded-xl p-5">
                       <h3 className="text-sm font-bold text-emerald-400 uppercase tracking-widest mb-3 flex items-center gap-2">

@@ -77,7 +77,7 @@ export default function AuthModal({ onClose }: AuthModalProps) {
         </button>
 
         {/* Header */}
-        <div className="px-8 pt-10 pb-6 text-center">
+        <div className="px-6 sm:px-8 pt-8 sm:pt-10 pb-6 text-center">
           <div className="inline-flex items-center justify-center p-3 bg-blue-500/10 border border-blue-500/20 rounded-2xl mb-5">
             <Gem className="w-8 h-8 text-blue-400" />
           </div>
@@ -100,7 +100,7 @@ export default function AuthModal({ onClose }: AuthModalProps) {
         </div>
 
         {/* Body */}
-        <div className="px-8 pb-8 space-y-5">
+        <div className="px-6 sm:px-8 pb-6 sm:pb-8 space-y-5">
           {/* Google Sign-In */}
           <button
             onClick={handleGoogleSignIn}

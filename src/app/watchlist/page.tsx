@@ -426,38 +426,50 @@ export default function WatchlistPage() {
   return (
     <div className="min-h-screen flex flex-col">
       {/* Header */}
-      <header className="border-b border-slate-800 px-6 py-4 bg-slate-900/50 backdrop-blur-sm sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Link href="/" className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors">
+      <header className="border-b border-slate-800 px-4 sm:px-6 py-3 sm:py-4 bg-slate-900/50 backdrop-blur-sm sticky top-0 z-10">
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0">
+          <div className="flex items-center gap-2 sm:gap-4 w-full sm:w-auto">
+            <Link href="/" className="flex items-center gap-1.5 sm:gap-2 text-slate-400 hover:text-white transition-colors">
               <ArrowLeft className="w-4 h-4" />
               <Gem className="w-5 h-5 text-blue-400" />
-              <span className="font-bold text-white">Gems</span>
+              <span className="font-bold text-white hidden sm:inline">Gems</span>
             </Link>
-            <div className="h-5 w-px bg-slate-700" />
-            <h1 className="text-sm font-semibold">{t("Portfolio Dashboard", "投资组合面板")}</h1>
-          </div>
-          <div className="flex items-center gap-6">
-            <div className="text-sm text-slate-400">
-              {t("Total Conviction Picks:", "总计高信念优选：")} <span className="text-white font-bold">{watchlist.length}</span> / 10
+            <div className="h-5 w-px bg-slate-700 hidden sm:block" />
+            <h1 className="text-sm font-semibold truncate">{t("Portfolio Dashboard", "投资组合面板")}</h1>
+            <div className="ml-auto sm:hidden flex items-center gap-2">
+              <button 
+                onClick={() => setLang(lang === "en" ? "zh" : "en")}
+                className="flex items-center gap-1.5 px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs transition-colors border border-slate-700"
+              >
+                <Languages className="w-3.5 h-3.5 text-blue-400" />
+                {lang === "en" ? "中" : "EN"}
+              </button>
+              <UserMenu />
             </div>
-            <div className="h-5 w-px bg-slate-700" />
-            <button 
-              onClick={() => setLang(lang === "en" ? "zh" : "en")}
-              className="flex items-center gap-2 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-sm transition-colors border border-slate-700"
-            >
-              <Languages className="w-4 h-4 text-blue-400" />
-              {lang === "en" ? "中文" : "English"}
-            </button>
-            <UserMenu />
+          </div>
+          <div className="flex items-center gap-2 sm:gap-6 text-xs sm:text-sm w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0 scrollbar-hide">
+            <div className="text-slate-400 whitespace-nowrap">
+              <span className="hidden sm:inline">{t("Total Conviction Picks:", "总计高信念优选：")}</span> <span className="text-white font-bold">{watchlist.length}</span> / 10
+            </div>
+            <div className="h-4 sm:h-5 w-px bg-slate-700 hidden sm:block" />
+            <div className="hidden sm:flex items-center gap-3">
+              <button 
+                onClick={() => setLang(lang === "en" ? "zh" : "en")}
+                className="flex items-center gap-2 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-sm transition-colors border border-slate-700"
+              >
+                <Languages className="w-4 h-4 text-blue-400" />
+                {lang === "en" ? "中文" : "English"}
+              </button>
+              <UserMenu />
+            </div>
           </div>
         </div>
       </header>
 
       {/* Content — Premium Only */}
       <PremiumGate featureName={t("Portfolio Dashboard", "投资组合面板")}>
-      <div className="flex-1 px-6 py-8 overflow-x-auto">
-        <div className="max-w-7xl mx-auto min-w-[1000px]">
+      <div className="flex-1 px-4 sm:px-6 py-6 sm:py-8 overflow-x-auto">
+        <div className="max-w-7xl mx-auto w-full">
           {loading ? (
             <div className="flex items-center justify-center py-20">
               <div className="w-8 h-8 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
@@ -485,7 +497,7 @@ export default function WatchlistPage() {
                   <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
                     <HelpCircle className="w-4 h-4" /> {t("Needs Allocation", "待分配")} ({grouped["unassigned"].length})
                   </h3>
-                  <div className="grid grid-cols-4 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     {grouped["unassigned"].map(renderStockCard)}
                   </div>
                 </div>
@@ -494,7 +506,7 @@ export default function WatchlistPage() {
               {/* Growth Formation */}
               <div>
                 <h3 className="text-sm font-bold text-blue-400 uppercase tracking-widest mb-4">{t("Growth & Scale Formation", "成长与扩张阵型")}</h3>
-                <div className="grid grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                   {growthRoles.map(renderColumn)}
                 </div>
               </div>
@@ -504,7 +516,7 @@ export default function WatchlistPage() {
               {/* Value Formation */}
               <div>
                 <h3 className="text-sm font-bold text-amber-400 uppercase tracking-widest mb-4">{t("Value & Income Formation", "价值与收益阵型")}</h3>
-                <div className="grid grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                   {valueRoles.map(renderColumn)}
                 </div>
               </div>
@@ -630,11 +642,11 @@ export default function WatchlistPage() {
       {analysisPanel && (
         <div className="fixed inset-0 z-[100] flex justify-end">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setAnalysisPanel(null)} />
-          <div className="relative w-full max-w-2xl h-full bg-slate-900 border-l border-slate-800 shadow-2xl overflow-y-auto animate-in slide-in-from-right duration-300">
-            <div className="sticky top-0 z-10 bg-slate-900/80 backdrop-blur-md border-b border-slate-800 px-8 py-6 flex justify-between items-start">
+          <div className="relative w-full sm:max-w-2xl h-full bg-slate-900 border-l border-slate-800 shadow-2xl overflow-y-auto animate-in slide-in-from-right duration-300">
+            <div className="sticky top-0 z-10 bg-slate-900/80 backdrop-blur-md border-b border-slate-800 px-4 sm:px-8 py-4 sm:py-6 flex justify-between items-start">
               <div>
-                <h2 className="text-3xl font-bold text-white mb-1">{analysisPanel.symbol}</h2>
-                <p className="text-sm text-slate-400">{t("AI Investment Analysis", "AI 投资分析报告")}</p>
+                <h2 className="text-2xl sm:text-3xl font-bold text-white mb-0.5 sm:mb-1">{analysisPanel.symbol}</h2>
+                <p className="text-xs sm:text-sm text-slate-400">{t("AI Investment Analysis", "AI 投资分析报告")}</p>
               </div>
               <div className="flex items-center gap-2">
                 {analysisPanel.report && (
@@ -653,14 +665,14 @@ export default function WatchlistPage() {
                     {t("Share", "分享")}
                   </button>
                 )}
-                <button onClick={() => setAnalysisPanel(null)} className="p-2 rounded-full hover:bg-slate-800 text-slate-400 hover:text-white transition-colors">
-                  <X className="w-6 h-6" />
+                <button onClick={() => setAnalysisPanel(null)} className="p-1.5 sm:p-2 rounded-full hover:bg-slate-800 text-slate-400 hover:text-white transition-colors">
+                  <X className="w-5 h-5 sm:w-6 sm:h-6" />
                 </button>
               </div>
             </div>
 
             {/* Panel Content */}
-            <div className="px-8 py-6 space-y-8 pb-20">
+            <div className="px-4 sm:px-8 py-4 sm:py-6 space-y-6 sm:space-y-8 pb-20">
               {analysisPanel.loading ? (
                 <div className="flex flex-col items-center justify-center py-16">
                   <Loader2 className="w-8 h-8 text-blue-400 animate-spin mb-4" />
@@ -669,7 +681,7 @@ export default function WatchlistPage() {
               ) : analysisPanel.report ? (
                 <>
                   {/* Analyst Pricing & Targets */}
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="bg-gradient-to-br from-blue-900/30 to-indigo-900/30 border border-blue-500/20 rounded-xl p-5">
                       <div className="flex items-center gap-2 text-blue-400 mb-1">
                         <Target className="w-4 h-4" />
@@ -718,7 +730,7 @@ export default function WatchlistPage() {
                     <p className="text-slate-400 text-sm leading-relaxed">{analysisPanel.report.products}</p>
                   </section>
 
-                  <div className="grid md:grid-cols-2 gap-6 pt-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 pt-2 sm:pt-4">
                     {/* Rationale */}
                     <section className="bg-emerald-500/5 border border-emerald-500/10 rounded-xl p-5">
                       <h3 className="text-sm font-bold text-emerald-400 uppercase tracking-widest mb-3 flex items-center gap-2">

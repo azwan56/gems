@@ -35,17 +35,17 @@ export default function PremiumGate({ children, featureName }: PremiumGateProps)
   const planLabel = PLAN_LABELS[currentPlan];
 
   return (
-    <div className="min-h-[60vh] flex flex-col items-center justify-center px-6 py-16 text-center">
+    <div className="min-h-[60vh] flex flex-col items-center justify-center px-4 sm:px-6 py-10 sm:py-16 text-center">
       {/* Lock icon with glow */}
-      <div className="relative mb-8">
+      <div className="relative mb-6 sm:mb-8">
         <div className="absolute inset-0 bg-blue-500/20 blur-3xl rounded-full scale-150" />
-        <div className="relative p-6 bg-slate-800/80 border border-slate-700/50 rounded-3xl backdrop-blur-sm">
-          <Lock className="w-12 h-12 text-blue-400" />
+        <div className="relative p-5 sm:p-6 bg-slate-800/80 border border-slate-700/50 rounded-3xl backdrop-blur-sm">
+          <Lock className="w-10 h-10 sm:w-12 sm:h-12 text-blue-400" />
         </div>
       </div>
 
       {/* Title */}
-      <h2 className="text-3xl font-bold tracking-tight mb-3">
+      <h2 className="text-2xl sm:text-3xl font-bold tracking-tight mb-3">
         {t("Premium Feature", "高级功能")}
       </h2>
 

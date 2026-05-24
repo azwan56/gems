@@ -73,25 +73,25 @@ export default function Home() {
   return (
     <main className="min-h-screen flex flex-col">
       {/* Header */}
-      <header className="border-b border-slate-800 px-6 py-4">
+      <header className="border-b border-slate-800 px-4 sm:px-6 py-3 sm:py-4">
         <div className="max-w-[1400px] mx-auto flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Gem className="w-6 h-6 text-blue-400" />
-            <span className="text-xl font-bold tracking-tight">Gems</span>
+            <Gem className="w-5 h-5 sm:w-6 sm:h-6 text-blue-400" />
+            <span className="text-lg sm:text-xl font-bold tracking-tight">Gems</span>
             <span className="text-xs text-slate-500 ml-2 hidden sm:inline">
               {t("US Stock Screener", "美股量化筛选器")}
             </span>
           </div>
-          <nav className="flex items-center gap-4">
+          <nav className="flex items-center gap-2 sm:gap-4">
             {user?.isPremium && (
-              <Link href="/watchlist" className="text-sm text-slate-400 hover:text-white transition-colors">
+              <Link href="/watchlist" className="text-sm text-slate-400 hover:text-white transition-colors hidden sm:inline">
                 {t("Watchlist", "自选股")}
               </Link>
             )}
             {/* Language Toggle */}
             <button
               onClick={() => setLang(lang === "en" ? "zh" : "en")}
-              className="flex items-center gap-2 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-sm transition-all border border-slate-700 hover:border-slate-600"
+              className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-sm transition-all border border-slate-700 hover:border-slate-600"
             >
               <Languages className="w-4 h-4 text-blue-400" />
               <span className="font-medium">{lang === "en" ? "中文" : "EN"}</span>
@@ -102,16 +102,16 @@ export default function Home() {
       </header>
 
       {/* Hero */}
-      <section className="flex-1 flex flex-col items-center justify-center px-6 py-16">
-        <div className="max-w-[1400px] w-full flex flex-col items-center text-center mb-16">
-          <div className="inline-flex items-center justify-center px-4 py-1.5 mb-8 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400">
+      <section className="flex-1 flex flex-col items-center justify-center px-4 sm:px-6 py-8 sm:py-16">
+        <div className="max-w-[1400px] w-full flex flex-col items-center text-center mb-8 sm:mb-16">
+          <div className="inline-flex items-center justify-center px-3 sm:px-4 py-1.5 mb-5 sm:mb-8 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400">
             <Activity className="w-3.5 h-3.5 mr-2" />
-            <span className="text-xs font-semibold tracking-widest uppercase">
+            <span className="text-[10px] sm:text-xs font-semibold tracking-widest uppercase">
               {t("Quantitative Screener", "量化选股系统")}
             </span>
           </div>
 
-          <h1 className="text-5xl md:text-7xl font-bold tracking-tight mb-6 leading-[1.1]">
+          <h1 className="text-3xl sm:text-5xl md:text-7xl font-bold tracking-tight mb-4 sm:mb-6 leading-[1.1]">
             {lang === "en" ? (
               <>
                 Find your next{" "}
@@ -131,7 +131,7 @@ export default function Home() {
             )}
           </h1>
 
-          <p className="text-lg text-slate-400 max-w-2xl mb-12 leading-relaxed">
+          <p className="text-sm sm:text-lg text-slate-400 max-w-2xl mb-8 sm:mb-12 leading-relaxed px-2">
             {t(
               "Professional-grade stock screening powered by quantitative analysis. Choose a strategy below to start filtering US equities.",
               "专业级量化分析驱动的股票筛选平台。选择以下策略，开始筛选美股标的。"
@@ -141,7 +141,7 @@ export default function Home() {
 
         {/* Strategy Cards — Premium Only */}
         <PremiumGate featureName={t("Quantitative Stock Screener", "量化选股系统")}>
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 w-full max-w-[1400px]">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 w-full max-w-[1400px] px-1">
           {strategies.map((strategy) => {
             const Icon = strategy.icon;
             const colorClass =
@@ -154,7 +154,7 @@ export default function Home() {
               <Link
                 key={strategy.id}
                 href={`/screener/${strategy.id}`}
-                className="group relative overflow-hidden rounded-xl border border-slate-700/50 bg-slate-800/40 backdrop-blur-sm p-8 transition-all duration-300 hover:bg-slate-800/70 hover:border-slate-600/60 hover:shadow-2xl hover:-translate-y-1 cursor-pointer flex flex-col"
+                className="group relative overflow-hidden rounded-xl border border-slate-700/50 bg-slate-800/40 backdrop-blur-sm p-5 sm:p-8 transition-all duration-300 hover:bg-slate-800/70 hover:border-slate-600/60 hover:shadow-2xl hover:-translate-y-1 cursor-pointer flex flex-col"
               >
                 {/* Background icon */}
                 <div className="absolute -top-4 -right-4 opacity-[0.06] group-hover:opacity-[0.12] transition-opacity duration-500">
@@ -162,12 +162,12 @@ export default function Home() {
                 </div>
 
                 {/* Header */}
-                <div className="flex items-center gap-4 mb-4 relative z-10">
+                <div className="flex items-center gap-3 sm:gap-4 mb-3 sm:mb-4 relative z-10">
                   <div className={`p-3 rounded-lg border ${colorClass.replace("text-", "text-").replace("border-", "border-").replace("bg-", "bg-").split(" ").map(c => c.startsWith("bg-") ? c + "/15" : c.startsWith("border-") ? c + "/25" : c).join(" ")}`}>
                     <Icon className="w-6 h-6" />
                   </div>
                   <div>
-                    <h2 className="text-xl font-bold">
+                    <h2 className="text-lg sm:text-xl font-bold">
                       {lang === "en" ? strategy.name : strategy.nameZh}
                     </h2>
                     <p className="text-sm text-slate-500">
@@ -177,16 +177,16 @@ export default function Home() {
                 </div>
 
                 {/* Description */}
-                <p className="text-sm text-slate-400 mb-6 leading-relaxed relative z-10 flex-1">
+                <p className="text-xs sm:text-sm text-slate-400 mb-4 sm:mb-6 leading-relaxed relative z-10 flex-1">
                   {lang === "en" ? strategy.description : strategy.descriptionZh}
                 </p>
 
                 {/* Metrics */}
-                <div className="space-y-2 relative z-10 mb-6">
+                <div className="space-y-1.5 sm:space-y-2 relative z-10 mb-4 sm:mb-6">
                   {strategy.metrics.map((metric) => (
                     <div
                       key={metric.label}
-                      className="flex items-center justify-between px-3 py-2.5 rounded-lg bg-slate-900/60 border border-slate-700/40"
+                      className="flex items-center justify-between px-2.5 sm:px-3 py-2 sm:py-2.5 rounded-lg bg-slate-900/60 border border-slate-700/40"
                     >
                       <span className="text-xs font-medium text-slate-300">{metric.label}</span>
                       <span className={`text-xs font-mono font-semibold ${colorClass.split(" ")[0]}`}>
