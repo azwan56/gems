@@ -83,81 +83,73 @@ export async function GET(
             min-height: 100dvh;
             display: flex;
             flex-direction: column;
+            overflow: hidden; /* Prevent scrolling if possible */
         }
         ::selection { background-color: rgba(0,210,182,0.3); color: #fff; }
 
         /* Header */
         header {
-            width: 100%; padding: 0.875rem 1.25rem;
+            width: 100%; padding: 0.6rem 1rem;
             background: rgba(17,34,64,0.85);
             backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
             border-bottom: 1px solid var(--slate-800);
             position: sticky; top: 0; z-index: 50;
             display: flex; align-items: center; justify-content: space-between;
         }
-        .logo { display: flex; align-items: center; gap: 0.5rem; }
-        .logo-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--teal-500); box-shadow: 0 0 10px rgba(0,210,182,0.5); animation: pulse 2s ease-in-out infinite; }
+        .logo { display: flex; align-items: center; gap: 0.4rem; }
+        .logo-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--teal-500); box-shadow: 0 0 8px rgba(0,210,182,0.5); animation: pulse 2s ease-in-out infinite; }
         @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.5} }
-        .logo-text { font-size: 1.05rem; font-weight: 800; letter-spacing: 0.05em; color: #fff; }
+        .logo-text { font-size: 0.95rem; font-weight: 800; letter-spacing: 0.05em; color: #fff; }
         .logo-text span { color: var(--teal-500); }
-        .badge-top { font-size: 0.7rem; font-weight: 600; padding: 0.2rem 0.5rem; border-radius: 0.25rem; border: 1px solid rgba(100,255,218,0.2); background: rgba(100,255,218,0.1); color: var(--teal-400); }
+        .badge-top { font-size: 0.65rem; font-weight: 600; padding: 0.15rem 0.4rem; border-radius: 0.25rem; border: 1px solid rgba(100,255,218,0.2); background: rgba(100,255,218,0.1); color: var(--teal-400); }
 
         /* Main */
-        main { width: 100%; max-width: 520px; margin: 0 auto; padding: 1.25rem 1rem; flex: 1; display: flex; flex-direction: column; gap: 1.25rem; }
+        main { width: 100%; max-width: 520px; margin: 0 auto; padding: 0.8rem 0.8rem 0.5rem; flex: 1; display: flex; flex-direction: column; justify-content: space-between; }
 
         /* Hero */
-        .hero { text-align: center; }
-        .hero h1 { font-size: 1.75rem; font-weight: 800; color: #fff; line-height: 1.2; margin-bottom: 0.375rem; }
+        .hero { text-align: center; margin-bottom: 0.5rem; }
+        .hero h1 { font-size: 1.4rem; font-weight: 800; color: #fff; line-height: 1.2; margin-bottom: 0.25rem; }
         .hero h1 span { color: var(--teal-500); }
-        .hero p { color: var(--slate-400); font-size: 0.82rem; line-height: 1.5; }
-        .hero-badge { display: inline-flex; align-items: center; gap: 0.35rem; margin-top: 0.75rem; padding: 0.3rem 0.75rem; border-radius: 2rem; background: rgba(0,210,182,0.1); border: 1px solid rgba(0,210,182,0.2); color: var(--teal-500); font-size: 0.75rem; font-weight: 600; }
-        .hero-badge .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--teal-500); animation: pulse 2s ease-in-out infinite; }
+        .hero p { color: var(--slate-400); font-size: 0.75rem; line-height: 1.4; padding: 0 0.5rem; }
+        .hero-badge { display: inline-flex; align-items: center; gap: 0.3rem; margin-top: 0.4rem; padding: 0.2rem 0.6rem; border-radius: 2rem; background: rgba(0,210,182,0.1); border: 1px solid rgba(0,210,182,0.2); color: var(--teal-500); font-size: 0.65rem; font-weight: 600; }
+        .hero-badge .dot { width: 5px; height: 5px; border-radius: 50%; background: var(--teal-500); animation: pulse 2s ease-in-out infinite; }
 
         /* Strategy Cards */
-        .section-label { font-size: 0.8rem; font-weight: 700; color: var(--teal-500); letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.4rem; }
-        .strategies { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+        .section-label { font-size: 0.7rem; font-weight: 700; color: var(--teal-500); letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 0.4rem; display: flex; align-items: center; gap: 0.3rem; }
+        .strategies { display: grid; grid-template-columns: 1fr 1fr; gap: 0.4rem; margin-bottom: 0.6rem; }
         .strategy-card {
-            padding: 1rem 0.875rem; border-radius: 0.875rem;
+            padding: 0.6rem 0.7rem; border-radius: 0.6rem;
             background: rgba(17,34,64,0.6); border: 1px solid rgba(51,65,85,0.25);
-            transition: border-color 0.2s;
         }
-        .strategy-card:hover { border-color: rgba(0,210,182,0.25); }
-        .strategy-icon { font-size: 1.5rem; margin-bottom: 0.5rem; }
-        .strategy-name { font-size: 0.85rem; font-weight: 700; color: #fff; margin-bottom: 0.25rem; line-height: 1.25; }
-        .strategy-desc { font-size: 0.72rem; color: var(--slate-400); line-height: 1.45; }
+        .strategy-icon { font-size: 1.2rem; margin-bottom: 0.3rem; }
+        .strategy-name { font-size: 0.75rem; font-weight: 700; color: #fff; margin-bottom: 0.2rem; line-height: 1.2; }
+        .strategy-desc { font-size: 0.65rem; color: var(--slate-400); line-height: 1.35; }
 
-        /* Features */
-        .features { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; }
-        .feature {
-            padding: 0.875rem 0.625rem; border-radius: 0.75rem; text-align: center;
-            background: rgba(17,34,64,0.5); border: 1px solid rgba(0,210,182,0.06);
-        }
-        .feature-icon { font-size: 1.4rem; margin-bottom: 0.375rem; }
-        .feature-label { font-size: 0.72rem; font-weight: 700; color: #fff; line-height: 1.3; }
-
-        /* Data source */
+        /* Data source & Features combined */
         .data-card {
-            padding: 1rem; border-radius: 0.875rem;
+            padding: 0.6rem; border-radius: 0.6rem;
             background: rgba(17,34,64,0.5); border: 1px solid rgba(51,65,85,0.2);
-            display: flex; align-items: flex-start; gap: 0.75rem;
+            display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.8rem;
         }
-        .data-icon { font-size: 1.75rem; flex-shrink: 0; }
-        .data-title { font-size: 0.85rem; font-weight: 700; color: #fff; margin-bottom: 0.15rem; }
-        .data-desc { font-size: 0.72rem; color: var(--slate-400); line-height: 1.5; }
+        .data-icon { font-size: 1.4rem; flex-shrink: 0; }
+        .data-text-col { display: flex; flex-direction: column; gap: 0.2rem; }
+        .data-title { font-size: 0.75rem; font-weight: 700; color: #fff; }
+        .data-desc { font-size: 0.65rem; color: var(--slate-400); line-height: 1.35; }
+        .feature-chips { display: flex; gap: 0.3rem; margin-top: 0.2rem; }
+        .chip { background: rgba(0,210,182,0.1); color: var(--teal-400); font-size: 0.6rem; padding: 0.15rem 0.4rem; border-radius: 1rem; border: 1px solid rgba(0,210,182,0.15); font-weight: 600; }
 
         /* CTA */
-        .cta-section { text-align: center; padding: 0.25rem 0; }
+        .cta-section { text-align: center; margin-top: auto; }
         .cta-btn {
-            display: block; width: 100%; padding: 0.875rem 1rem; border-radius: 0.75rem;
+            display: block; width: 100%; padding: 0.75rem 1rem; border-radius: 0.6rem;
             background: linear-gradient(135deg, var(--teal-500), #00b89c); color: var(--navy-950);
-            font-weight: 700; font-size: 1rem; text-decoration: none; letter-spacing: 0.025em;
-            box-shadow: 0 4px 20px rgba(0,210,182,0.25); transition: transform 0.15s;
+            font-weight: 700; font-size: 0.95rem; text-decoration: none; letter-spacing: 0.025em;
+            box-shadow: 0 4px 15px rgba(0,210,182,0.25);
         }
-        .cta-btn:active { transform: scale(0.97); }
-        .cta-sub { color: var(--slate-400); font-size: 0.75rem; margin-top: 0.625rem; line-height: 1.5; }
+        .cta-sub { color: var(--slate-400); font-size: 0.65rem; margin-top: 0.4rem; }
 
         /* Footer */
-        footer { width: 100%; padding: 1rem; text-align: center; color: var(--slate-600); font-size: 0.68rem; border-top: 1px solid var(--slate-800); }
+        footer { width: 100%; padding: 0.5rem; text-align: center; color: var(--slate-600); font-size: 0.6rem; border-top: 1px solid var(--slate-800); }
     </style>
 </head>
 <body>
@@ -173,7 +165,7 @@ export async function GET(
         <!-- Hero -->
         <div class="hero">
             <h1>AI 智能<span>选股工具</span></h1>
-            <p>基于 Financial Modeling Prep 官方数据，每日更新 500+ 美股财务指标，AI 深度分析寻找最具潜力标的</p>
+            <p>每日更新 500+ 美股官方财务指标，AI 深度分析寻找最具潜力标的</p>
             <div class="hero-badge"><span class="dot"></span> 数据每日自动更新</div>
         </div>
 
@@ -184,64 +176,49 @@ export async function GET(
                 <div class="strategy-card">
                     <div class="strategy-icon">💎</div>
                     <div class="strategy-name">价值股 Value</div>
-                    <div class="strategy-desc">低估值、高分红、强现金流，寻找被市场低估的优质蓝筹</div>
+                    <div class="strategy-desc">低估值、高分红，寻找被低估优质蓝筹</div>
                 </div>
                 <div class="strategy-card">
                     <div class="strategy-icon">🚀</div>
                     <div class="strategy-name">大盘成长 Large Growth</div>
-                    <div class="strategy-desc">高营收增长、高 ROE 的大市值龙头，把握确定性成长机会</div>
+                    <div class="strategy-desc">高营收、高 ROE 大市值龙头，把握确定性</div>
                 </div>
                 <div class="strategy-card">
                     <div class="strategy-icon">⚡</div>
-                    <div class="strategy-name">中小盘成长 SMID Growth</div>
-                    <div class="strategy-desc">高成长性中小盘股，PEG 合理，发掘下一个十倍股</div>
+                    <div class="strategy-name">中小盘 SMID Growth</div>
+                    <div class="strategy-desc">高成长性，PEG 合理，发掘下一只十倍股</div>
                 </div>
                 <div class="strategy-card">
                     <div class="strategy-icon">📡</div>
                     <div class="strategy-name">Seeking Alpha</div>
-                    <div class="strategy-desc">整合 Seeking Alpha 评级与 Quant 信号，AI 二次筛选验证</div>
+                    <div class="strategy-desc">整合 SA 评级与 Quant，AI 二次筛选验证</div>
                 </div>
             </div>
         </div>
 
-        <!-- Core Features -->
-        <div>
-            <div class="section-label">✨ 核心功能</div>
-            <div class="features">
-                <div class="feature">
-                    <div class="feature-icon">📊</div>
-                    <div class="feature-label">AI 深度研报</div>
-                </div>
-                <div class="feature">
-                    <div class="feature-icon">🔬</div>
-                    <div class="feature-label">多维度筛选</div>
-                </div>
-                <div class="feature">
-                    <div class="feature-icon">📋</div>
-                    <div class="feature-label">自选股追踪</div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Data Source -->
+        <!-- Combined Data & Features -->
         <div class="data-card">
             <div class="data-icon">🏦</div>
-            <div>
-                <div class="data-title">FMP 官方数据源</div>
-                <div class="data-desc">每日自动拉取 Financial Modeling Prep API，覆盖 P/E、P/B、ROE、FCF、营收增长等 20+ 核心指标，确保数据的准确性与时效性</div>
+            <div class="data-text-col">
+                <div class="data-title">FMP 官方数据源直连</div>
+                <div class="data-desc">实时拉取 P/E, ROE, FCF 等 20+ 核心基本面指标</div>
+                <div class="feature-chips">
+                    <span class="chip">AI 深度研报</span>
+                    <span class="chip">多维度筛选</span>
+                    <span class="chip">自选追踪</span>
+                </div>
             </div>
         </div>
 
         <!-- CTA -->
         <div class="cta-section">
             <a href="${frontendUrl}" class="cta-btn">🚀 立即注册 / 登录</a>
-            <p class="cta-sub">解锁完整 AI 选股工具、深度研报、自选股管理与多策略回测</p>
+            <p class="cta-sub">解锁完整选股工具、深度研报与多策略回测</p>
         </div>
     </main>
 
     <footer>
-        <p>Disclaimer: AI-generated analysis for reference only. Not investment advice.</p>
-        <p style="margin-top:0.25rem; font-weight:500; color: var(--slate-400);">© ${currentYear} Vanpower Market Intelligence</p>
+        <p>© ${currentYear} Vanpower Market Intelligence · Not investment advice.</p>
     </footer>
 </body>
 </html>`;
