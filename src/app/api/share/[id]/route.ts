@@ -1,12 +1,11 @@
 // ============================================================
-// GET /api/share/[id] — View a shared analysis report
-// Returns a mobile-optimized H5 landing page with partial content
-// and a registration wall CTA.
+// GET /api/share/[id] — Product landing page for shared links
+// Shows Gems product intro with 4 screening strategies,
+// daily FMP data, and a registration CTA — no individual stock analysis.
 // ============================================================
 
 import { NextRequest, NextResponse } from "next/server";
 
-// We need to escape HTML to prevent XSS
 function escapeHtml(unsafe: string) {
   if (!unsafe) return "";
   return unsafe
@@ -31,287 +30,229 @@ export async function GET(
     });
   }
 
+  // Optionally look up the share doc for OG metadata
+  let symbol = "";
+  let strategyName = "";
   try {
     const { getDb } = await import("@/lib/firebase");
     const db = getDb();
-    
     const doc = await db.collection("gems_share_cards").doc(shareId).get();
-    if (!doc.exists) {
-      return new NextResponse(_renderErrorPage("The report you are looking for does not exist or has been removed."), {
-        status: 404,
-        headers: { "Content-Type": "text/html; charset=utf-8" },
-      });
+    if (doc.exists) {
+      const data = doc.data()!;
+      symbol = escapeHtml(data.symbol || "");
+      strategyName = escapeHtml(data.strategyName || "");
     }
+  } catch { /* ignore — page works without it */ }
 
-    const data = doc.data()!;
-    const symbol = escapeHtml(data.symbol);
-    const strategyName = escapeHtml(data.strategyName || "Stock Deep Dive");
-    const report = data.report || {};
-    const dateStr = new Date(data.createdAt).toISOString().slice(0, 10);
-    
-    // Parse rationale
-    const rationale: string[] = Array.isArray(report.rationale) ? report.rationale : [];
-    const visibleBullets = rationale.slice(0, 2);
-    const lockedBullets = rationale.slice(2);
-    if (lockedBullets.length === 0) {
-      // Always show something as locked to encourage signups
-      lockedBullets.push("Placeholder for locked content");
-    }
+  const frontendUrl = "https://gems.vanpower.live";
+  const currentYear = new Date().getFullYear();
+  const ogTitle = symbol
+    ? `${symbol} AI Analysis — Vanpower Gems`
+    : "Vanpower Gems — AI Stock Screener";
+  const ogDesc = "AI-powered stock screening with 4 strategies. Daily FMP data. Value, Large-cap Growth, Small-cap Growth & Seeking Alpha picks.";
 
-    const title = `${symbol} AI Investment Analysis`;
-    const ogDesc = visibleBullets.length > 0 ? escapeHtml(visibleBullets[0]).substring(0, 190) + "..." : title;
-
-    // Visible content HTML
-    let visibleHtml = "";
-    if (visibleBullets.length > 0) {
-      const bulletsLi = visibleBullets.map(b => `<li class="bullet-item"><span class="bullet-dot">•</span><span>${escapeHtml(b)}</span></li>`).join("");
-      visibleHtml = `
-        <div class="glass-card slide-card">
-            <div class="slide-header">
-                <h3>AI Core Views</h3>
-            </div>
-            <ul class="bullet-list">
-                ${bulletsLi}
-            </ul>
-        </div>
-      `;
-    } else if (report.overview) {
-       visibleHtml = `
-        <div class="glass-card slide-card">
-            <div class="slide-header">
-                <h3>Overview</h3>
-            </div>
-            <p style="font-size: 0.875rem; color: var(--slate-300); line-height: 1.625;">${escapeHtml(report.overview)}</p>
-        </div>
-      `;
-    }
-
-    // Locked content HTML
-    const lockedLi = lockedBullets.map(() => `<li class="bullet-item locked-text"><span class="bullet-dot-muted">•</span><span class="blur-text">Placeholder text for blur</span></li>`).join("");
-    const lockedHtml = `
-        <div class="glass-card slide-card locked-card">
-            <div class="slide-header locked-header">
-                <h3>🔒 More Deep Insights Locked</h3>
-            </div>
-            <ul class="bullet-list">
-                ${lockedLi}
-                <li class="bullet-item locked-text"><span class="bullet-dot-muted">•</span><span class="blur-text">Another line of locked analysis text</span></li>
-            </ul>
-        </div>
-    `;
-
-    // Price indicator
-    let indicatorHtml = "";
-    const targetPrice = report.analyst?.targetPrice;
-    const upside = report.analyst?.upside;
-    const consensus = report.analyst?.consensus;
-    
-    if (targetPrice && upside) {
-        const isUp = upside.includes("+");
-        const badgeClass = isUp ? "badge-emerald" : "badge-rose";
-        indicatorHtml = `
-        <div class="flex-row items-baseline gap-3" style="margin-bottom: 10px;">
-            <div style="display:flex; flex-direction:column; gap:2px;">
-              <span style="font-size:0.75rem; color:var(--slate-400);">Target Price</span>
-              <span class="price-text">${escapeHtml(targetPrice)}</span>
-            </div>
-            <span class="badge ${badgeClass}">
-                ${escapeHtml(upside)}
-            </span>
-            <span class="badge badge-teal" style="margin-left:auto;">
-                ${escapeHtml(consensus || "")}
-            </span>
-        </div>
-        `;
-    }
-
-    const frontendUrl = "https://gems.vanpower.live";
-    const currentYear = new Date().getFullYear();
-
-    const h5Template = `<!DOCTYPE html>
+  const html = `<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>${title} | Vanpower AI</title>
-    <meta property="og:title" content="${title}" />
+    <title>${ogTitle}</title>
+    <meta property="og:title" content="${ogTitle}" />
     <meta property="og:description" content="${ogDesc}" />
-    <meta property="og:type" content="article" />
+    <meta property="og:type" content="website" />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
             --navy-950: #071120;
             --navy-900: #0A192F;
             --navy-800: #112240;
-            --navy-700: #233554;
             --teal-400: #64FFDA;
-            --teal-500: #14b8a6;
+            --teal-500: #00d2b6;
             --slate-200: #e2e8f0;
             --slate-300: #cbd5e1;
             --slate-400: #94a3b8;
-            --slate-500: #64748b;
             --slate-600: #475569;
-            --slate-700: #334155;
             --slate-800: #1e293b;
-            --emerald-400: #34d399;
-            --rose-400: #fb7185;
         }
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            background-color: var(--navy-900);
+            background: var(--navy-900);
             color: var(--slate-200);
             -webkit-font-smoothing: antialiased;
+            min-height: 100dvh;
             display: flex;
             flex-direction: column;
-            min-height: 100vh;
         }
-        ::selection { background-color: rgba(20, 184, 166, 0.3); color: #fff; }
-        
-        /* Layout */
-        .flex-row { display: flex; align-items: center; }
-        .justify-between { justify-content: space-between; }
-        .items-baseline { align-items: baseline; }
-        .gap-3 { gap: 0.75rem; }
-        
+        ::selection { background-color: rgba(0,210,182,0.3); color: #fff; }
+
         /* Header */
         header {
-            width: 100%;
-            background: rgba(17, 34, 64, 0.8);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
+            width: 100%; padding: 0.875rem 1.25rem;
+            background: rgba(17,34,64,0.85);
+            backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
             border-bottom: 1px solid var(--slate-800);
-            padding: 1rem 1.5rem;
-            position: sticky;
-            top: 0;
-            z-index: 50;
+            position: sticky; top: 0; z-index: 50;
+            display: flex; align-items: center; justify-content: space-between;
         }
-        .logo-dot { width: 10px; height: 10px; border-radius: 50%; background-color: var(--teal-400); margin-right: 0.5rem; animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .5; } }
-        .logo-text { font-size: 1rem; font-weight: 800; letter-spacing: 0.05em; color: #fff; }
-        .logo-text span { color: var(--teal-400); }
-        .badge-top { font-size: 0.75rem; font-weight: 600; padding: 0.125rem 0.5rem; border-radius: 0.25rem; border: 1px solid rgba(100,255,218,0.2); background: rgba(100,255,218,0.1); color: var(--teal-400); }
-        
-        /* Main content */
-        main { width: 100%; max-width: 32rem; margin: 0 auto; padding: 1.5rem 1rem; flex: 1; display: flex; flex-direction: column; gap: 1.5rem; }
-        .meta-row { font-size: 0.75rem; color: var(--slate-400); display: flex; justify-content: space-between; margin-bottom: 0.75rem; }
-        .main-title { font-size: 2.5rem; font-weight: 800; color: #fff; letter-spacing: -0.025em; line-height: 1.1; margin-bottom: 0.5rem; }
-        
-        /* Indicators */
-        .badge { display: inline-flex; align-items: center; padding: 0.25rem 0.75rem; border-radius: 0.5rem; font-size: 0.875rem; font-weight: 700; border: 1px solid; }
-        .badge-teal { background: rgba(100,255,218,0.1); border-color: rgba(100,255,218,0.2); color: var(--teal-400); }
-        .badge-emerald { background: rgba(52,211,153,0.1); border-color: rgba(52,211,153,0.2); color: var(--emerald-400); }
-        .badge-rose { background: rgba(251,113,133,0.1); border-color: rgba(251,113,133,0.2); color: var(--rose-400); }
-        .price-text { font-size: 2rem; font-weight: 800; color: #fff; line-height:1;}
-        
-        /* Section Title */
-        .section-title { font-size: 0.875rem; font-weight: 700; color: var(--slate-400); letter-spacing: 0.05em; text-transform: uppercase; display: flex; align-items: center; margin-bottom: 1.25rem; }
-        .section-title::before { content: ''; display: inline-block; width: 6px; height: 16px; background-color: var(--teal-400); border-radius: 9999px; margin-right: 0.5rem; }
-        
-        /* Cards */
-        .glass-card { background: rgba(17, 34, 64, 0.7); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid rgba(51,65,85,0.3); border-radius: 1rem; padding: 1.25rem; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04); margin-bottom: 1rem; }
-        .slide-header { border-left: 4px solid var(--teal-500); padding-left: 0.75rem; margin-bottom: 1rem; }
-        .slide-header h3 { font-size: 1rem; font-weight: 700; color: #fff; }
-        
-        .bullet-list { list-style: none; display: flex; flex-direction: column; gap: 0.625rem; }
-        .bullet-item { display: flex; align-items: flex-start; font-size: 0.875rem; color: var(--slate-300); line-height: 1.625; }
-        .bullet-dot { color: var(--teal-400); font-weight: 700; margin-right: 0.5rem; }
-        
-        /* Locked Content */
-        .teaser-section { position: relative; overflow: hidden; padding-top: 1rem; padding-bottom: 8rem; }
-        .locked-card { opacity: 0.4; user-select: none; border-color: rgba(30,41,59,0.3); }
-        .locked-header { border-color: var(--slate-700); }
-        .locked-header h3 { color: var(--slate-400); filter: blur(2px); }
-        .locked-text { color: var(--slate-400); }
-        .bullet-dot-muted { color: var(--slate-600); margin-right: 0.5rem; }
-        .blur-text { background: var(--slate-800); color: transparent; border-radius: 0.25rem; filter: blur(4px); padding: 0 2rem; }
-        
-        /* CTA Overlay */
-        .cta-overlay { position: absolute; bottom: 0; left: 0; width: 100%; height: 320px; background: linear-gradient(to top, var(--navy-900) 0%, rgba(10,25,47,0.95) 40%, transparent 100%); display: flex; flex-direction: column; justify-content: flex-end; align-items: center; padding: 0 1rem 1rem 1rem; pointer-events: none; }
-        .cta-card { pointer-events: auto; width: 100%; max-width: 24rem; border-color: rgba(20,184,166,0.25); box-shadow: 0 0 30px rgba(100, 255, 218, 0.15); text-align: center; display: flex; flex-direction: column; gap: 1rem; z-index: 10; margin-bottom: 0; }
-        .cta-icon { width: 3rem; height: 3rem; border-radius: 50%; background: rgba(100,255,218,0.1); color: var(--teal-400); display: flex; align-items: center; justify-content: center; margin: 0 auto; }
-        .cta-icon svg { width: 1.5rem; height: 1.5rem; }
-        .cta-title { font-size: 1.125rem; font-weight: 700; color: #fff; margin-bottom: 0.25rem; }
-        .cta-desc { font-size: 0.75rem; color: var(--slate-400); line-height: 1.625; }
-        .cta-btn { display: block; width: 100%; padding: 0.75rem 1rem; border-radius: 0.75rem; background-color: var(--teal-400); color: var(--navy-950); font-weight: 700; font-size: 0.875rem; text-decoration: none; letter-spacing: 0.025em; transition: all 0.3s ease; box-shadow: 0 0 15px rgba(100,255,218,0.2); cursor: pointer; }
-        .cta-btn:active { transform: scale(0.95); }
-        
+        .logo { display: flex; align-items: center; gap: 0.5rem; }
+        .logo-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--teal-500); box-shadow: 0 0 10px rgba(0,210,182,0.5); animation: pulse 2s ease-in-out infinite; }
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.5} }
+        .logo-text { font-size: 1.05rem; font-weight: 800; letter-spacing: 0.05em; color: #fff; }
+        .logo-text span { color: var(--teal-500); }
+        .badge-top { font-size: 0.7rem; font-weight: 600; padding: 0.2rem 0.5rem; border-radius: 0.25rem; border: 1px solid rgba(100,255,218,0.2); background: rgba(100,255,218,0.1); color: var(--teal-400); }
+
+        /* Main */
+        main { width: 100%; max-width: 520px; margin: 0 auto; padding: 1.25rem 1rem; flex: 1; display: flex; flex-direction: column; gap: 1.25rem; }
+
+        /* Hero */
+        .hero { text-align: center; }
+        .hero h1 { font-size: 1.75rem; font-weight: 800; color: #fff; line-height: 1.2; margin-bottom: 0.375rem; }
+        .hero h1 span { color: var(--teal-500); }
+        .hero p { color: var(--slate-400); font-size: 0.82rem; line-height: 1.5; }
+        .hero-badge { display: inline-flex; align-items: center; gap: 0.35rem; margin-top: 0.75rem; padding: 0.3rem 0.75rem; border-radius: 2rem; background: rgba(0,210,182,0.1); border: 1px solid rgba(0,210,182,0.2); color: var(--teal-500); font-size: 0.75rem; font-weight: 600; }
+        .hero-badge .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--teal-500); animation: pulse 2s ease-in-out infinite; }
+
+        /* Strategy Cards */
+        .section-label { font-size: 0.8rem; font-weight: 700; color: var(--teal-500); letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.4rem; }
+        .strategies { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+        .strategy-card {
+            padding: 1rem 0.875rem; border-radius: 0.875rem;
+            background: rgba(17,34,64,0.6); border: 1px solid rgba(51,65,85,0.25);
+            transition: border-color 0.2s;
+        }
+        .strategy-card:hover { border-color: rgba(0,210,182,0.25); }
+        .strategy-icon { font-size: 1.5rem; margin-bottom: 0.5rem; }
+        .strategy-name { font-size: 0.85rem; font-weight: 700; color: #fff; margin-bottom: 0.25rem; line-height: 1.25; }
+        .strategy-desc { font-size: 0.72rem; color: var(--slate-400); line-height: 1.45; }
+
+        /* Features */
+        .features { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; }
+        .feature {
+            padding: 0.875rem 0.625rem; border-radius: 0.75rem; text-align: center;
+            background: rgba(17,34,64,0.5); border: 1px solid rgba(0,210,182,0.06);
+        }
+        .feature-icon { font-size: 1.4rem; margin-bottom: 0.375rem; }
+        .feature-label { font-size: 0.72rem; font-weight: 700; color: #fff; line-height: 1.3; }
+
+        /* Data source */
+        .data-card {
+            padding: 1rem; border-radius: 0.875rem;
+            background: rgba(17,34,64,0.5); border: 1px solid rgba(51,65,85,0.2);
+            display: flex; align-items: flex-start; gap: 0.75rem;
+        }
+        .data-icon { font-size: 1.75rem; flex-shrink: 0; }
+        .data-title { font-size: 0.85rem; font-weight: 700; color: #fff; margin-bottom: 0.15rem; }
+        .data-desc { font-size: 0.72rem; color: var(--slate-400); line-height: 1.5; }
+
+        /* CTA */
+        .cta-section { text-align: center; padding: 0.25rem 0; }
+        .cta-btn {
+            display: block; width: 100%; padding: 0.875rem 1rem; border-radius: 0.75rem;
+            background: linear-gradient(135deg, var(--teal-500), #00b89c); color: var(--navy-950);
+            font-weight: 700; font-size: 1rem; text-decoration: none; letter-spacing: 0.025em;
+            box-shadow: 0 4px 20px rgba(0,210,182,0.25); transition: transform 0.15s;
+        }
+        .cta-btn:active { transform: scale(0.97); }
+        .cta-sub { color: var(--slate-400); font-size: 0.75rem; margin-top: 0.625rem; line-height: 1.5; }
+
         /* Footer */
-        footer { width: 100%; padding: 1.5rem; text-align: center; color: var(--slate-600); font-size: 0.75rem; border-top: 1px solid var(--slate-800); background: rgba(10,25,47,0.4); }
-        footer p { line-height: 1.625; }
-        .copyright { margin-top: 0.5rem; color: var(--slate-500); font-weight: 500; }
+        footer { width: 100%; padding: 1rem; text-align: center; color: var(--slate-600); font-size: 0.68rem; border-top: 1px solid var(--slate-800); }
     </style>
 </head>
 <body>
-    <header class="flex-row justify-between">
-        <div class="flex-row items-baseline">
+    <header>
+        <div class="logo">
             <div class="logo-dot"></div>
             <span class="logo-text">VANPOWER <span>AI</span></span>
         </div>
-        <span class="badge-top">${strategyName}</span>
+        <span class="badge-top">Gems</span>
     </header>
 
     <main>
-        <div>
-            <div class="meta-row">
-                <span>Date: ${dateStr}</span>
-                <span>Source: Vanpower Gems</span>
-            </div>
-            <h1 class="main-title">${symbol}</h1>
-            <div style="margin-top: 0.5rem;">
-                ${indicatorHtml}
-            </div>
+        <!-- Hero -->
+        <div class="hero">
+            <h1>AI 智能<span>选股工具</span></h1>
+            <p>基于 Financial Modeling Prep 官方数据，每日更新 500+ 美股财务指标，AI 深度分析寻找最具潜力标的</p>
+            <div class="hero-badge"><span class="dot"></span> 数据每日自动更新</div>
         </div>
 
+        <!-- 4 Strategies -->
         <div>
-            <h2 class="section-title">Analysis Highlights</h2>
-            ${visibleHtml}
-        </div>
-
-        <div class="teaser-section">
-            <div style="display: flex; flex-direction: column; gap: 1.25rem;">
-                ${lockedHtml}
-            </div>
-
-            <div class="cta-overlay">
-                <div class="glass-card cta-card">
-                    <div class="cta-icon">
-                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
-                        </svg>
-                    </div>
-                    <div>
-                        <h3 class="cta-title">Sign in to unlock full report</h3>
-                        <p class="cta-desc">Unlock full AI rationale, risk analysis, fundamental metrics, and the complete stock screening tools.</p>
-                    </div>
-                    <a href="${frontendUrl}" class="cta-btn">Sign In / Register</a>
+            <div class="section-label">🎯 四大选股策略</div>
+            <div class="strategies">
+                <div class="strategy-card">
+                    <div class="strategy-icon">💎</div>
+                    <div class="strategy-name">价值股 Value</div>
+                    <div class="strategy-desc">低估值、高分红、强现金流，寻找被市场低估的优质蓝筹</div>
+                </div>
+                <div class="strategy-card">
+                    <div class="strategy-icon">🚀</div>
+                    <div class="strategy-name">大盘成长 Large Growth</div>
+                    <div class="strategy-desc">高营收增长、高 ROE 的大市值龙头，把握确定性成长机会</div>
+                </div>
+                <div class="strategy-card">
+                    <div class="strategy-icon">⚡</div>
+                    <div class="strategy-name">中小盘成长 SMID Growth</div>
+                    <div class="strategy-desc">高成长性中小盘股，PEG 合理，发掘下一个十倍股</div>
+                </div>
+                <div class="strategy-card">
+                    <div class="strategy-icon">📡</div>
+                    <div class="strategy-name">Seeking Alpha</div>
+                    <div class="strategy-desc">整合 Seeking Alpha 评级与 Quant 信号，AI 二次筛选验证</div>
                 </div>
             </div>
+        </div>
+
+        <!-- Core Features -->
+        <div>
+            <div class="section-label">✨ 核心功能</div>
+            <div class="features">
+                <div class="feature">
+                    <div class="feature-icon">📊</div>
+                    <div class="feature-label">AI 深度研报</div>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon">🔬</div>
+                    <div class="feature-label">多维度筛选</div>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon">📋</div>
+                    <div class="feature-label">自选股追踪</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Data Source -->
+        <div class="data-card">
+            <div class="data-icon">🏦</div>
+            <div>
+                <div class="data-title">FMP 官方数据源</div>
+                <div class="data-desc">每日自动拉取 Financial Modeling Prep API，覆盖 P/E、P/B、ROE、FCF、营收增长等 20+ 核心指标，确保数据的准确性与时效性</div>
+            </div>
+        </div>
+
+        <!-- CTA -->
+        <div class="cta-section">
+            <a href="${frontendUrl}" class="cta-btn">🚀 立即注册 / 登录</a>
+            <p class="cta-sub">解锁完整 AI 选股工具、深度研报、自选股管理与多策略回测</p>
         </div>
     </main>
 
     <footer>
-        <p>Disclaimer: This report is generated by Vanpower AI engine based on public data. It is for reference only and does not constitute any investment advice.</p>
-        <p class="copyright">© ${currentYear} Vanpower Market Intelligence</p>
+        <p>Disclaimer: AI-generated analysis for reference only. Not investment advice.</p>
+        <p style="margin-top:0.25rem; font-weight:500; color: var(--slate-400);">© ${currentYear} Vanpower Market Intelligence</p>
     </footer>
 </body>
 </html>`;
 
-    return new NextResponse(h5Template, {
-      status: 200,
-      headers: {
-        "Content-Type": "text/html; charset=utf-8",
-        "Cache-Control": "public, max-age=86400",
-      },
-    });
-
-  } catch (e) {
-    console.error("Error serving share landing page:", e);
-    return new NextResponse(_renderErrorPage("Internal server error. Please try again later."), {
-      status: 500,
-      headers: { "Content-Type": "text/html; charset=utf-8" },
-    });
-  }
+  return new NextResponse(html, {
+    status: 200,
+    headers: {
+      "Content-Type": "text/html; charset=utf-8",
+      "Cache-Control": "public, max-age=86400",
+    },
+  });
 }
 
 function _renderErrorPage(errorMsg: string) {
@@ -320,48 +261,21 @@ function _renderErrorPage(errorMsg: string) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Report Error | Vanpower AI</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <title>Error | Vanpower AI</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #0A192F;
-            color: #e2e8f0;
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 1.5rem;
-            margin: 0;
-        }
-        .error-card {
-            width: 100%;
-            max-width: 28rem;
-            background-color: #112240;
-            border-radius: 1rem;
-            padding: 2rem;
-            border: 1px solid rgba(239, 68, 68, 0.2);
-            text-align: center;
-        }
-        .error-title { font-size: 1.25rem; font-weight: 700; color: #fff; margin: 1rem 0 0.5rem; }
-        .error-desc { color: #94a3b8; font-size: 0.875rem; line-height: 1.625; margin-bottom: 1.5rem; }
-        .back-btn {
-            display: inline-block;
-            padding: 0.625rem 1.5rem;
-            border-radius: 0.75rem;
-            background-color: #64FFDA;
-            color: #071120;
-            font-weight: 700;
-            font-size: 0.875rem;
-            text-decoration: none;
-        }
+        body { font-family:'Inter',sans-serif; background:#0A192F; color:#e2e8f0; min-height:100vh; display:flex; align-items:center; justify-content:center; padding:1.5rem; margin:0; }
+        .card { width:100%; max-width:28rem; background:#112240; border-radius:1rem; padding:2rem; border:1px solid rgba(239,68,68,0.2); text-align:center; }
+        h1 { font-size:1.25rem; font-weight:700; color:#fff; margin:1rem 0 0.5rem; }
+        p { color:#94a3b8; font-size:0.875rem; line-height:1.625; margin-bottom:1.5rem; }
+        a { display:inline-block; padding:0.625rem 1.5rem; border-radius:0.75rem; background:#64FFDA; color:#071120; font-weight:700; font-size:0.875rem; text-decoration:none; }
     </style>
 </head>
 <body>
-    <div class="error-card">
-        <h1 class="error-title">Report Error</h1>
-        <p class="error-desc">${escapeHtml(errorMsg)}</p>
-        <a href="https://gems.vanpower.live" class="back-btn">Go to Home</a>
+    <div class="card">
+        <h1>Error</h1>
+        <p>${escapeHtml(errorMsg)}</p>
+        <a href="https://gems.vanpower.live">Go to Home</a>
     </div>
 </body>
 </html>`;
