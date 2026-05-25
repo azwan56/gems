@@ -12,6 +12,7 @@ import {
   signInWithPopup,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
+  signInWithCustomToken,
   signOut as firebaseSignOut,
   GoogleAuthProvider,
   type User,
@@ -136,9 +137,54 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
+  // Handle cross-subdomain auth token from DailyStock
+  // When user clicks the 💎 link on DailyStock, the URL contains ?authToken=xxx
+  const handleCrossSubdomainAuth = useCallback(async () => {
+    if (typeof window === "undefined") return;
+
+    const url = new URL(window.location.href);
+    const incomingToken = url.searchParams.get("authToken");
+    if (!incomingToken) return;
+
+    // Clean the token from URL immediately to prevent leakage
+    url.searchParams.delete("authToken");
+    window.history.replaceState({}, "", url.toString());
+
+    try {
+      // Exchange the ID token for a custom token via our API
+      const res = await fetch("/api/exchange-token", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ idToken: incomingToken }),
+      });
+
+      if (!res.ok) {
+        console.warn("Cross-subdomain token exchange failed:", res.status);
+        return;
+      }
+
+      const { customToken } = await res.json();
+      const auth = getClientAuth();
+
+      // Sign out existing user first if different account is cached
+      if (auth.currentUser) {
+        await firebaseSignOut(auth);
+      }
+
+      await signInWithCustomToken(auth, customToken);
+      // onAuthStateChanged will pick up the new user automatically
+    } catch (err) {
+      console.error("Cross-subdomain auth failed:", err);
+    }
+  }, []);
+
   // Listen to auth state changes
   useEffect(() => {
     const auth = getClientAuth();
+
+    // First try cross-subdomain auth, then listen for state changes
+    handleCrossSubdomainAuth();
+
     const unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
       setFirebaseUser(fbUser);
       if (fbUser) {
@@ -156,7 +202,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
 
     return () => unsubscribe();
-  }, [loadUserProfile]);
+  }, [loadUserProfile, handleCrossSubdomainAuth]);
 
   // ---- Auth methods ----
 
