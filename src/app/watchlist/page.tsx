@@ -32,6 +32,17 @@ export default function WatchlistPage() {
   // Track sync state per symbol: 'syncing' | 'synced' | 'already_exists' | 'error' | 'limit'
   const [syncState, setSyncState] = useState<Record<string, string>>({});
 
+  // Live quotes from DailyStock backend (yfinance)
+  interface QuoteData {
+    symbol: string;
+    price: number;
+    change_percent: number;
+    volume: number;
+    company_name: string;
+  }
+  const [quotes, setQuotes] = useState<Record<string, QuoteData>>({});
+  const [quotesLoading, setQuotesLoading] = useState(false);
+
   // Confirmation modal state
   interface SyncPreview {
     symbol: string;
@@ -50,6 +61,30 @@ export default function WatchlistPage() {
   useEffect(() => {
     if (user?.uid) fetchWatchlist();
   }, [user?.uid]);
+
+  // Fetch live quotes whenever the watchlist changes
+  useEffect(() => {
+    if (watchlist.length === 0) {
+      setQuotes({});
+      return;
+    }
+    const symbols = watchlist.map((w) => w.symbol).join(",");
+    const fetchQuotes = async () => {
+      setQuotesLoading(true);
+      try {
+        const res = await fetch(`/api/quotes?symbols=${encodeURIComponent(symbols)}`);
+        if (res.ok) {
+          const data = await res.json();
+          setQuotes(data.quotes || {});
+        }
+      } catch { /* ignore — quotes are non-critical */ }
+      setQuotesLoading(false);
+    };
+    fetchQuotes();
+    // Refresh quotes every 60 seconds while the page is open
+    const interval = setInterval(fetchQuotes, 60_000);
+    return () => clearInterval(interval);
+  }, [watchlist]);
 
   const fetchWatchlist = async () => {
     if (!user?.uid) return;
@@ -330,9 +365,27 @@ export default function WatchlistPage() {
   const growthRoles: RoleKey[] = ["anchor", "striker", "rocket"];
   const valueRoles: RoleKey[] = ["core_dividend", "turnaround", "special_situation"];
 
-  const renderStockCard = (item: WatchlistItem) => (
+  const renderStockCard = (item: WatchlistItem) => {
+    const q = quotes[item.symbol];
+    const hasQuote = q && q.price > 0;
+    const changeColor = q && q.change_percent > 0 ? "text-emerald-400" : q && q.change_percent < 0 ? "text-red-400" : "text-slate-400";
+    const changePrefix = q && q.change_percent > 0 ? "+" : "";
+
+    return (
     <div key={item.symbol} className="bg-slate-800/40 border border-slate-700/60 rounded-xl px-3 py-2 flex items-center justify-between hover:bg-slate-800 hover:border-slate-600 transition-all group">
-      <span className="font-bold text-white text-base tracking-wide">{item.symbol}</span>
+      <div className="flex items-center gap-2.5 min-w-0">
+        <span className="font-bold text-white text-base tracking-wide">{item.symbol}</span>
+        {hasQuote ? (
+          <div className="flex items-baseline gap-1.5">
+            <span className="text-sm font-mono text-slate-300">${q.price.toFixed(2)}</span>
+            <span className={`text-xs font-semibold font-mono ${changeColor}`}>
+              {changePrefix}{q.change_percent.toFixed(2)}%
+            </span>
+          </div>
+        ) : quotesLoading ? (
+          <div className="w-16 h-3 bg-slate-700/50 rounded animate-pulse" />
+        ) : null}
+      </div>
       <div className="flex items-center gap-1.5">
         <div className="relative">
           <select
@@ -389,7 +442,8 @@ export default function WatchlistPage() {
         </button>
       </div>
     </div>
-  );
+    );
+  };
 
   const renderColumn = (roleKey: RoleKey) => {
     const config = ROLE_CONFIGS[roleKey];

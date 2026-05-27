@@ -150,31 +150,57 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     url.searchParams.delete("authToken");
     window.history.replaceState({}, "", url.toString());
 
-    try {
-      // Exchange the ID token for a custom token via our API
-      const res = await fetch("/api/exchange-token", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ idToken: incomingToken }),
-      });
+    // Attempt exchange with one automatic retry for transient failures
+    const MAX_ATTEMPTS = 2;
+    for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+      try {
+        const res = await fetch("/api/exchange-token", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ idToken: incomingToken }),
+        });
 
-      if (!res.ok) {
-        console.warn("Cross-subdomain token exchange failed:", res.status);
+        if (!res.ok) {
+          const body = await res.json().catch(() => ({}));
+          const errCode = body?.error || "UNKNOWN";
+
+          if (errCode === "TOKEN_EXPIRED") {
+            // Expired token — no point retrying with the same token
+            console.warn("Cross-subdomain token expired. User needs to re-login on DailyStock.");
+            setError("Your DailyStock session has expired. Please log in again on DailyStock and retry, or sign in directly here.");
+            return;
+          }
+
+          // Transient error — retry once
+          if (attempt < MAX_ATTEMPTS) {
+            console.warn(`Cross-subdomain token exchange attempt ${attempt} failed (${errCode}), retrying...`);
+            await new Promise((r) => setTimeout(r, 1000));
+            continue;
+          }
+
+          console.warn(`Cross-subdomain token exchange failed after ${MAX_ATTEMPTS} attempts:`, errCode);
+          return;
+        }
+
+        const { customToken } = await res.json();
+        const auth = getClientAuth();
+
+        // Sign out existing user first if different account is cached
+        if (auth.currentUser) {
+          await firebaseSignOut(auth);
+        }
+
+        await signInWithCustomToken(auth, customToken);
+        // onAuthStateChanged will pick up the new user automatically
         return;
+      } catch (err) {
+        if (attempt < MAX_ATTEMPTS) {
+          console.warn(`Cross-subdomain auth attempt ${attempt} threw, retrying...`, err);
+          await new Promise((r) => setTimeout(r, 1000));
+          continue;
+        }
+        console.error("Cross-subdomain auth failed after retries:", err);
       }
-
-      const { customToken } = await res.json();
-      const auth = getClientAuth();
-
-      // Sign out existing user first if different account is cached
-      if (auth.currentUser) {
-        await firebaseSignOut(auth);
-      }
-
-      await signInWithCustomToken(auth, customToken);
-      // onAuthStateChanged will pick up the new user automatically
-    } catch (err) {
-      console.error("Cross-subdomain auth failed:", err);
     }
   }, []);
 

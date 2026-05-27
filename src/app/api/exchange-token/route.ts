@@ -3,6 +3,10 @@
 // Accepts a Firebase ID Token (from DailyStock), verifies it,
 // and returns a Custom Token that Gems can use to sign in the
 // same user seamlessly across subdomains.
+//
+// Enhanced: distinguishes expired vs invalid tokens and returns
+// structured error codes so the client can decide whether to
+// prompt a manual login or show a transient toast.
 // ============================================================
 
 import { NextRequest, NextResponse } from "next/server";
@@ -33,10 +37,26 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ customToken });
   } catch (error) {
+    const errCode = (error as { code?: string })?.code || "UNKNOWN";
     const errMsg = error instanceof Error ? error.message : String(error);
-    console.error("exchange-token failed:", errMsg);
+    console.error(`exchange-token failed [${errCode}]:`, errMsg);
+
+    // Distinguish between expired and otherwise-invalid tokens so the
+    // client can show an appropriate message (e.g. "please log in again"
+    // vs a generic "authentication failed" toast).
+    const isExpired =
+      errCode === "auth/id-token-expired" ||
+      errMsg.includes("expired") ||
+      errMsg.includes("Firebase ID token has expired");
+
     return NextResponse.json(
-      { error: "TOKEN_EXCHANGE_FAILED", message: errMsg },
+      {
+        error: isExpired ? "TOKEN_EXPIRED" : "TOKEN_EXCHANGE_FAILED",
+        code: errCode,
+        message: isExpired
+          ? "The authentication token has expired. Please log in again on DailyStock and retry."
+          : errMsg,
+      },
       { status: 401 }
     );
   }
