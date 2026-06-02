@@ -84,9 +84,14 @@ export default function Home() {
           </div>
           <nav className="flex items-center gap-2 sm:gap-4">
             {user?.isPremium && (
-              <Link href="/watchlist" className="text-sm text-slate-400 hover:text-white transition-colors hidden sm:inline">
-                {t("Watchlist", "自选股")}
-              </Link>
+              <>
+                <Link href="/rebalance" className="text-sm text-slate-400 hover:text-white transition-colors hidden sm:inline">
+                  {t("Radar", "雷达")}
+                </Link>
+                <Link href="/watchlist" className="text-sm text-slate-400 hover:text-white transition-colors hidden sm:inline">
+                  {t("Watchlist", "自选股")}
+                </Link>
+              </>
             )}
             {/* Language Toggle */}
             <button

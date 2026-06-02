@@ -44,8 +44,13 @@ export async function GET(request: NextRequest) {
     const db = getDb();
     const userDoc = await db.collection("users").doc(uid).get();
     const userData = userDoc.data() || {};
-    const observeList: string[] = (userData.observe_list as string[]) || [];
+    const observeList: unknown[] = (userData.observe_list as unknown[]) || [];
     const limit = OBSERVE_LIMITS[planType] ?? OBSERVE_LIMITS.trial;
+
+    const alreadyInList = observeList.some((item) => {
+      if (typeof item === 'string') return item === symbol;
+      return item && typeof item === 'object' && (item as Record<string, unknown>).symbol === symbol;
+    });
 
     return NextResponse.json({
       symbol,
@@ -54,7 +59,7 @@ export async function GET(request: NextRequest) {
       industry: stock?.industry || "—",
       price: stock?.price ?? null,
       marketCap: stock?.marketCap ?? null,
-      alreadyInList: observeList.includes(symbol),
+      alreadyInList,
       observeListCount: observeList.length,
       observeListLimit: limit === Infinity ? null : limit,
       planType,
@@ -81,9 +86,11 @@ export async function POST(request: NextRequest) {
 
   // 2. Parse request body
   let symbol: string;
+  let role: string | undefined;
   try {
     const body = await request.json();
     symbol = body.symbol?.toUpperCase?.();
+    role = body.role;
     if (!symbol) {
       return NextResponse.json(
         { error: "MISSING_FIELDS", message: "symbol is required" },
@@ -103,10 +110,30 @@ export async function POST(request: NextRequest) {
     const userDoc = await userRef.get();
     const userData = userDoc.data() || {};
 
-    const observeList: string[] = (userData.observe_list as string[]) || [];
+    const observeList: any[] = (userData.observe_list as any[]) || [];
+
+    // Helper to check if symbol exists (handling both string and object formats)
+    const existingIndex = observeList.findIndex((item) => {
+      if (typeof item === 'string') return item === symbol;
+      return item && typeof item === 'object' && item.symbol === symbol;
+    });
 
     // 3. Check if already in observe_list
-    if (observeList.includes(symbol)) {
+    if (existingIndex !== -1) {
+      // If it exists but we are updating the role, let's update it instead of rejecting
+      const existingItem = observeList[existingIndex];
+      const existingRole = typeof existingItem === 'object' ? existingItem.role : undefined;
+      
+      if (role && existingRole !== role) {
+        observeList[existingIndex] = { symbol, role };
+        await userRef.set({ observe_list: observeList }, { merge: true });
+        return NextResponse.json({
+          status: "updated",
+          message: `${symbol} role updated in DailyStock observe list`,
+          observe_list: observeList,
+        });
+      }
+
       return NextResponse.json({
         status: "already_exists",
         message: `${symbol} is already in your DailyStock observe list`,
@@ -129,7 +156,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 5. Append and write back (merge to preserve other fields)
-    const updatedList = [...observeList, symbol];
+    const updatedList = [...observeList, role ? { symbol, role } : symbol];
     await userRef.set({ observe_list: updatedList }, { merge: true });
 
     return NextResponse.json({

@@ -5,11 +5,15 @@
 // ============================================================
 
 import { NextRequest, NextResponse } from "next/server";
+import { verifyAuth } from "@/lib/auth-middleware";
 
 const DAILYSTOCK_API_URL =
   process.env.DAILYSTOCK_API_URL || "https://daily-mkt-rpt.onrender.com/api";
 
 export async function GET(request: NextRequest) {
+  const authResult = await verifyAuth(request);
+  if (!authResult.success) return authResult.response;
+
   const symbols = request.nextUrl.searchParams.get("symbols");
 
   if (!symbols || !symbols.trim()) {

@@ -3,6 +3,9 @@
 // POST /api/seeking-alpha — Add symbols to the list
 // DELETE /api/seeking-alpha — Remove a symbol from the list
 // PUT  /api/seeking-alpha — Replace the entire list
+//
+// POST/DELETE/PUT also trigger real-time Discord + email
+// notifications to inform users about SA list changes.
 // ============================================================
 
 import { NextRequest, NextResponse } from "next/server";
@@ -13,6 +16,7 @@ import {
   saveSAList,
 } from "@/lib/seeking-alpha-store";
 import { requirePremium } from "@/lib/auth-middleware";
+import { sendSAUpdateNotification } from "@/lib/sa-notifier";
 
 /**
  * GET: Return the current Seeking Alpha symbol list.
@@ -50,6 +54,11 @@ export async function POST(request: NextRequest) {
       );
     }
     const result = await addToSAList(symbols);
+
+    // Fire-and-forget notification (don't block the response)
+    sendSAUpdateNotification("added", symbols.map(s => s.toUpperCase()), result.symbols.length)
+      .catch((e) => console.error("[SA] Notification error:", e));
+
     return NextResponse.json(result);
   } catch (err) {
     return NextResponse.json(
@@ -77,6 +86,11 @@ export async function PUT(request: NextRequest) {
       );
     }
     const result = await saveSAList(symbols);
+
+    // Fire-and-forget notification
+    sendSAUpdateNotification("replaced", result.symbols, result.symbols.length)
+      .catch((e) => console.error("[SA] Notification error:", e));
+
     return NextResponse.json(result);
   } catch (err) {
     return NextResponse.json(
@@ -104,6 +118,11 @@ export async function DELETE(request: NextRequest) {
       );
     }
     const result = await removeFromSAList(symbol);
+
+    // Fire-and-forget notification
+    sendSAUpdateNotification("removed", [symbol.toUpperCase()], result.symbols.length)
+      .catch((e) => console.error("[SA] Notification error:", e));
+
     return NextResponse.json(result);
   } catch (err) {
     return NextResponse.json(

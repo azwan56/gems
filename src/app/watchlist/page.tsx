@@ -167,6 +167,10 @@ export default function WatchlistPage() {
   const confirmSync = useCallback(async () => {
     const symbol = confirmModal.data?.symbol;
     if (!symbol || !user?.uid) return;
+    
+    // Find the current role in the watchlist
+    const currentRole = watchlist.find(w => w.symbol === symbol)?.role;
+    
     setConfirmModal(prev => ({ ...prev, loading: true }));
     try {
       const token = await getIdToken();
@@ -176,7 +180,7 @@ export default function WatchlistPage() {
           "Content-Type": "application/json",
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
-        body: JSON.stringify({ symbol }),
+        body: JSON.stringify({ symbol, role: currentRole }),
       });
       const data = await res.json();
       if (res.ok) {

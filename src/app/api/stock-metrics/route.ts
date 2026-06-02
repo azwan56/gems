@@ -6,8 +6,12 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { loadStockPool } from "@/lib/stock-pool-store";
+import { verifyAuth } from "@/lib/auth-middleware";
 
 export async function GET(request: NextRequest) {
+  const authResult = await verifyAuth(request);
+  if (!authResult.success) return authResult.response;
+
   const symbol = request.nextUrl.searchParams.get("symbol");
 
   if (!symbol) {

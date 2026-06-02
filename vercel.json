@@ -23,6 +23,18 @@
     {
       "path": "/api/cron/refresh-pool?chunk=6",
       "schedule": "25 21 * * 1-5"
+    },
+    {
+      "path": "/api/cron/rebalance-alert",
+      "schedule": "30 13 * * 1-5"
+    },
+    {
+      "path": "/api/cron/rebalance-retrospective",
+      "schedule": "30 13 * * 1-5"
+    },
+    {
+      "path": "/api/cron/screener-alert",
+      "schedule": "35 21 * * 1-5"
     }
   ]
 }

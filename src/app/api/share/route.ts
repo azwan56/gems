@@ -5,8 +5,12 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { randomUUID } from "crypto";
+import { verifyAuth } from "@/lib/auth-middleware";
 
 export async function POST(request: NextRequest) {
+  const authResult = await verifyAuth(request);
+  if (!authResult.success) return authResult.response;
+
   try {
     const body = await request.json();
     const { symbol, strategy, strategyName, report, metrics } = body;
@@ -31,6 +35,7 @@ export async function POST(request: NextRequest) {
         strategyName: strategyName || "",
         report,
         metrics: metrics || {},
+        createdBy: authResult.user.uid,
         createdAt: new Date().toISOString(),
       });
     } catch (e) {
