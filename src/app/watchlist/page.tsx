@@ -283,21 +283,17 @@ export default function WatchlistPage() {
           console.error("Failed to fetch stock metrics, using fallback:", err);
         }
 
-        // Fallback: extract price from analyst target if pool lookup failed
+        // Fallback: use live quote price from watchlist quotes (not analyst target!)
         if (!stockData) {
-          let extractedPrice = 0;
-          const targetPriceStr = analysisPanel.report?.analyst?.targetPrice;
-          if (targetPriceStr) {
-            const match = targetPriceStr.match(/[\d.]+/);
-            if (match) extractedPrice = parseFloat(match[0]);
-          }
+          const liveQuote = quotes[analysisPanel.symbol];
+          const livePrice = liveQuote?.price || 0;
           stockData = {
             symbol: analysisPanel.symbol,
-            companyName: analysisPanel.symbol,
+            companyName: liveQuote?.company_name || analysisPanel.symbol,
             sector: "",
             industry: "",
             marketCap: 0,
-            price: extractedPrice,
+            price: livePrice,
             peRatio: null,
             pbRatio: null,
             freeCashFlowYield: null,

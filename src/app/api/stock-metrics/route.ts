@@ -1,11 +1,11 @@
 // ============================================================
 // GET /api/stock-metrics?symbol=AAPL — Fetch metrics for a single stock
-// Reads from the Firestore stock pool (already fetched from FMP).
+// Uses resolveStock: Firestore pool → FMP live API → Mock data.
 // Used by the share card generator to populate the metrics grid.
 // ============================================================
 
 import { NextRequest, NextResponse } from "next/server";
-import { loadStockPool } from "@/lib/stock-pool-store";
+import { resolveStock } from "@/lib/stock-resolver";
 import { verifyAuth } from "@/lib/auth-middleware";
 
 export async function GET(request: NextRequest) {
@@ -22,20 +22,11 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const pool = await loadStockPool();
-    if (!pool || !pool.stocks) {
-      return NextResponse.json(
-        { error: "POOL_EMPTY", message: "Stock pool is not available" },
-        { status: 404 }
-      );
-    }
-
-    const upperSymbol = symbol.toUpperCase();
-    const found = pool.stocks.find((s) => s.symbol.toUpperCase() === upperSymbol);
+    const found = await resolveStock(symbol);
 
     if (!found) {
       return NextResponse.json(
-        { error: "NOT_FOUND", message: `${symbol} not found in stock pool` },
+        { error: "NOT_FOUND", message: `${symbol} could not be resolved` },
         { status: 404 }
       );
     }
@@ -49,3 +40,4 @@ export async function GET(request: NextRequest) {
     );
   }
 }
+
