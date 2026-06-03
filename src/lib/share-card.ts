@@ -179,17 +179,17 @@ export async function generateShareCardDataURL(
   // ── Symbol Info ──
   let curY = 160;
   bold(g, stock.symbol, 45, curY, 72, "#ffffff");
-  txt(g, isEn ? "Daily Stock Deep Dive" : "每日个股深度研报", 50, curY + 30, 20, "#8b949e");
+  txt(g, strategyName, 50, curY + 30, 20, "#8b949e");
 
   // Analyst Target & Upside Pill
-  const targetPrice = report.analyst?.targetPrice || (stock.price > 0 ? `$${stock.price.toFixed(2)}` : "");
+  const targetPrice = report.analyst?.targetPrice || "";
   const upside = report.analyst?.upside || "";
   const consensus = report.analyst?.consensus || "";
   
   const rightEdge = W - 50;
 
   if (targetPrice) {
-    const isUp = upside.includes("+");
+    const isUp = upside.includes("+") || (!upside.includes("-") && parseFloat(upside) > 0);
     const changeColor = isUp ? "#00d2b6" : "#f87171";
     const changeBg = isUp ? "rgba(0, 210, 182, 0.15)" : "rgba(248, 113, 113, 0.15)";
     
