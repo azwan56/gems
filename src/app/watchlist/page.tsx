@@ -271,10 +271,13 @@ export default function WatchlistPage() {
       try {
         const { generateShareCardDataURL } = await import("@/lib/share-card");
 
-        // 1. Fetch real metrics from stock pool
+        // 1. Fetch real metrics from stock pool (needs auth token)
         let stockData: import("@/lib/types").StockMetrics | null = null;
         try {
-          const metricsRes = await fetch(`/api/stock-metrics?symbol=${encodeURIComponent(analysisPanel.symbol)}`);
+          const token = await getIdToken();
+          const metricsRes = await fetch(`/api/stock-metrics?symbol=${encodeURIComponent(analysisPanel.symbol)}`, {
+            headers: token ? { Authorization: `Bearer ${token}` } : {},
+          });
           if (metricsRes.ok) {
             const metricsJson = await metricsRes.json();
             stockData = metricsJson.metrics;
