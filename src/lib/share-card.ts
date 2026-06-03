@@ -228,10 +228,15 @@ export async function generateShareCardDataURL(
       // Label & price
       txt(g, isEn ? "Current Close" : "当日收盘", rightEdge, closeY + 20, 16, "#8b949e", "right");
       bold(g, `$${stock.price.toFixed(2)}`, rightEdge, closeY + 50, 32, "#ffffff", "right");
+      curY = closeY + 70;    // advance past the closing price block
+    } else {
+      curY += (consensus ? 55 : 45);
     }
+  } else {
+    curY += 5;
   }
 
-  curY += 100;
+  curY += 30;
 
   // ── Metrics Grid (Section 1) ──
   glassPanel(g, 45, curY, W - 90, 150, 16, "rgba(255,255,255,0.08)");
@@ -267,7 +272,7 @@ export async function generateShareCardDataURL(
   curY += 180;
 
   // ── AI Core Views (Section 2) ──
-  glassPanel(g, 45, curY, W - 90, 480, 16, "rgba(255,255,255,0.08)");
+  glassPanel(g, 45, curY, W - 90, 430, 16, "rgba(255,255,255,0.08)");
   
   // Title with Teal Pipe
   rr(g, 75, curY + 40, 6, 24, 3, "#00d2b6", null);
@@ -290,7 +295,7 @@ export async function generateShareCardDataURL(
   }
   
   // Risks if space allows
-  if (report.risks && report.risks.length > 0 && bulletY < curY + 400) {
+  if (report.risks && report.risks.length > 0 && bulletY < curY + 350) {
       bulletY += 10;
       rr(g, 75, bulletY, 6, 24, 3, "#f87171", null);
       bold(g, isEn ? "Key Risks" : "主要风险提示", 95, bulletY + 20, 20, "#ffffff");
@@ -305,7 +310,7 @@ export async function generateShareCardDataURL(
       });
   }
 
-  curY += 510;
+  curY += 460;
 
   // ── Footer / QR Code Section ──
   glassPanel(g, 45, curY, W - 90, 200, 16, "rgba(255,255,255,0.08)");
