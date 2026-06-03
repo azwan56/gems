@@ -214,6 +214,21 @@ export async function generateShareCardDataURL(
       rr(g, rightEdge - consW, curY + 10, consW, 30, 15, "rgba(56, 189, 248, 0.15)", "rgba(56, 189, 248, 0.3)");
       bold(g, consensus, rightEdge - consW / 2, curY + 32, 16, "#38bdf8", "center");
     }
+
+    // ── Current Closing Price (below target price for comparison) ──
+    if (stock.price > 0) {
+      const closeY = curY + (consensus ? 55 : 45);
+      // Separator line
+      g.strokeStyle = "rgba(100,116,139,0.3)";
+      g.lineWidth = 1;
+      g.beginPath();
+      g.moveTo(rightEdge - 250, closeY);
+      g.lineTo(rightEdge, closeY);
+      g.stroke();
+      // Label & price
+      txt(g, isEn ? "Current Close" : "当日收盘", rightEdge, closeY + 20, 16, "#8b949e", "right");
+      bold(g, `$${stock.price.toFixed(2)}`, rightEdge, closeY + 50, 32, "#ffffff", "right");
+    }
   }
 
   curY += 100;
