@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { Scale, TrendingUp, TrendingDown, RefreshCw, Save, Trash2, CheckCircle2, ShieldAlert, Trophy, Skull, Activity, Calendar, AlertTriangle } from "lucide-react";
+import Link from "next/link";
+import { Scale, TrendingUp, TrendingDown, RefreshCw, Save, Trash2, CheckCircle2, ShieldAlert, Trophy, Skull, Activity, Calendar, AlertTriangle, ArrowLeft, Gem } from "lucide-react";
 import { useLanguage } from "@/lib/language-context";
 import { useAuth } from "@/lib/auth-context";
 import PremiumGate from "@/components/PremiumGate";
@@ -45,6 +46,15 @@ export default function RebalanceDashboard() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ text: string; type: "success" | "error" } | null>(null);
 
+  // Live liquidity data (fetched independently, always available)
+  interface LiveLiquidity {
+    vix: number | null;
+    vixTrend: "SPIKING" | "SUPPRESSED" | "NORMAL" | "UNKNOWN";
+    tnx: number | null;
+    upcomingEvents: { date: string; name: string; severity: "HIGH" | "MEDIUM" }[];
+  }
+  const [liquidity, setLiquidity] = useState<LiveLiquidity | null>(null);
+
   // Helper to build auth headers
   const authHeaders = useCallback(async (): Promise<Record<string, string>> => {
     const token = await getIdToken();
@@ -76,6 +86,9 @@ export default function RebalanceDashboard() {
         if (dataRes.ok) {
           const data = await dataRes.json();
           setSnapshots(data.snapshots || []);
+          if (data.liquidity) {
+            setLiquidity(data.liquidity);
+          }
         }
       } catch (err) {
         console.error("Failed to load dashboard data:", err);
@@ -144,14 +157,20 @@ export default function RebalanceDashboard() {
     <main className="min-h-screen flex flex-col py-8 px-4 sm:px-6 max-w-[1200px] mx-auto w-full">
       <PremiumGate featureName={t("Rebalancing Dashboard", "再平衡监控仪表盘")}>
         <div className="mb-8 flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight mb-2 flex items-center gap-3">
-              <Scale className="w-8 h-8 text-blue-400" />
-              {t("Rebalancing Radar", "再平衡监控雷达")}
-            </h1>
-            <p className="text-slate-400">
-              {t("Monitor 60/40 macro drift and window dressing anomalies for institutional flows.", "监控 60/40 宏观漂移和季末橱窗粉饰效应，捕捉机构资金流向。")}
-            </p>
+          <div className="flex items-center gap-4">
+            <Link href="/" className="flex items-center gap-1.5 text-slate-400 hover:text-white transition-colors">
+              <ArrowLeft className="w-4 h-4" />
+              <Gem className="w-5 h-5 text-blue-400" />
+            </Link>
+            <div>
+              <h1 className="text-3xl font-bold tracking-tight mb-2 flex items-center gap-3">
+                <Scale className="w-8 h-8 text-blue-400" />
+                {t("Rebalancing Radar", "再平衡监控雷达")}
+              </h1>
+              <p className="text-slate-400">
+                {t("Monitor 60/40 macro drift and window dressing anomalies for institutional flows.", "监控 60/40 宏观漂移和季末橱窗粉饰效应，捕捉机构资金流向。")}
+              </p>
+            </div>
           </div>
         </div>
 
@@ -230,8 +249,8 @@ export default function RebalanceDashboard() {
                 )}
               </div>
 
-              {/* Liquidity & Events Panel */}
-              {latest?.macro.liquidity && (
+              {/* Liquidity & Events Panel — Always shown with live data */}
+              {liquidity && (
                 <div className="glass-panel p-6 border border-amber-500/20">
                   <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
                     <Activity className="w-5 h-5 text-amber-400" />
@@ -248,10 +267,10 @@ export default function RebalanceDashboard() {
                         </div>
                         <div className="text-right">
                           <span className={`text-xl font-mono font-bold ${
-                            latest.macro.liquidity.vixTrend === "SPIKING" ? "text-red-400" :
-                            latest.macro.liquidity.vixTrend === "SUPPRESSED" ? "text-amber-400" : "text-emerald-400"
+                            liquidity.vixTrend === "SPIKING" ? "text-red-400" :
+                            liquidity.vixTrend === "SUPPRESSED" ? "text-amber-400" : "text-emerald-400"
                           }`}>
-                            {latest.macro.liquidity.vix?.toFixed(2) ?? "N/A"}
+                            {liquidity.vix?.toFixed(2) ?? "N/A"}
                           </span>
                         </div>
                       </div>
@@ -263,7 +282,7 @@ export default function RebalanceDashboard() {
                         </div>
                         <div className="text-right">
                           <span className="text-xl font-mono font-bold text-blue-400">
-                            {latest.macro.liquidity.tnx?.toFixed(3) ?? "N/A"}%
+                            {liquidity.tnx != null ? `${liquidity.tnx.toFixed(3)}%` : "N/A"}
                           </span>
                         </div>
                       </div>
@@ -275,11 +294,11 @@ export default function RebalanceDashboard() {
                         <Calendar className="w-4 h-4 text-slate-400" />
                         {t("Upcoming High-Risk Events (14 Days)", "未来14天高危日历")}
                       </h3>
-                      {latest.macro.liquidity.upcomingEvents.length === 0 ? (
+                      {liquidity.upcomingEvents.length === 0 ? (
                         <p className="text-sm text-slate-500">{t("No major events scheduled.", "近期无重大宏观/期权交割事件。")}</p>
                       ) : (
-                        <div className="space-y-2">
-                          {latest.macro.liquidity.upcomingEvents.map((ev, i) => (
+                        <div className="space-y-2 max-h-[220px] overflow-y-auto">
+                          {liquidity.upcomingEvents.map((ev, i) => (
                             <div key={i} className="flex justify-between p-2 text-sm rounded bg-slate-900/40 border border-slate-700/30">
                               <span className="font-mono text-slate-400">{ev.date.substring(5)}</span>
                               <span className={`font-medium ${ev.severity === "HIGH" ? "text-red-400" : "text-amber-400"}`}>
@@ -293,8 +312,8 @@ export default function RebalanceDashboard() {
                   </div>
 
                   {/* Tactical Checklist (Activates on risk) */}
-                  {latest.macro.liquidity.upcomingEvents.some(e => e.severity === "HIGH") && 
-                   latest.macro.liquidity.vixTrend === "SUPPRESSED" && (
+                  {liquidity.upcomingEvents.some(e => e.severity === "HIGH") && 
+                   liquidity.vixTrend === "SUPPRESSED" && (
                     <div className="bg-red-500/10 border border-red-500/30 p-4 rounded-xl">
                       <h3 className="text-red-400 font-bold mb-2 flex items-center gap-2">
                         <AlertTriangle className="w-5 h-5" />
