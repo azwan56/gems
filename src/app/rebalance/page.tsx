@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { Scale, TrendingUp, TrendingDown, RefreshCw, Save, Trash2, CheckCircle2, ShieldAlert, Trophy, Skull } from "lucide-react";
+import { Scale, TrendingUp, TrendingDown, RefreshCw, Save, Trash2, CheckCircle2, ShieldAlert, Trophy, Skull, Activity, Calendar, AlertTriangle } from "lucide-react";
 import { useLanguage } from "@/lib/language-context";
 import { useAuth } from "@/lib/auth-context";
 import PremiumGate from "@/components/PremiumGate";
@@ -18,6 +18,12 @@ interface AlertSnapshot {
     isEquityOutperforming: boolean;
     thresholdExceeded: boolean;
     signal: "SELL_EQUITY" | "BUY_EQUITY" | "NEUTRAL";
+    liquidity?: {
+      vix: number | null;
+      vixTrend: "SPIKING" | "SUPPRESSED" | "NORMAL" | "UNKNOWN";
+      tnx: number | null;
+      upcomingEvents: { date: string; name: string; severity: "HIGH" | "MEDIUM" }[];
+    };
   };
   micro: {
     winners: { symbol: string; return: number }[];
@@ -223,6 +229,89 @@ export default function RebalanceDashboard() {
                   </div>
                 )}
               </div>
+
+              {/* Liquidity & Events Panel */}
+              {latest?.macro.liquidity && (
+                <div className="glass-panel p-6 border border-amber-500/20">
+                  <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+                    <Activity className="w-5 h-5 text-amber-400" />
+                    {t("Liquidity & Macro Events", "流动性与宏观日历")}
+                  </h2>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                    {/* Metrics */}
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between p-3 rounded-lg bg-slate-900/50 border border-slate-700/50">
+                        <div className="flex flex-col">
+                          <span className="text-sm font-bold text-slate-300">VIX (Volatility)</span>
+                          <span className="text-xs text-slate-500">Option market fear gauge</span>
+                        </div>
+                        <div className="text-right">
+                          <span className={`text-xl font-mono font-bold ${
+                            latest.macro.liquidity.vixTrend === "SPIKING" ? "text-red-400" :
+                            latest.macro.liquidity.vixTrend === "SUPPRESSED" ? "text-amber-400" : "text-emerald-400"
+                          }`}>
+                            {latest.macro.liquidity.vix?.toFixed(2) ?? "N/A"}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between p-3 rounded-lg bg-slate-900/50 border border-slate-700/50">
+                        <div className="flex flex-col">
+                          <span className="text-sm font-bold text-slate-300">US 10-Year Yield (TNX)</span>
+                          <span className="text-xs text-slate-500">Risk-free rate anchor</span>
+                        </div>
+                        <div className="text-right">
+                          <span className="text-xl font-mono font-bold text-blue-400">
+                            {latest.macro.liquidity.tnx?.toFixed(3) ?? "N/A"}%
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Upcoming Events */}
+                    <div>
+                      <h3 className="text-sm font-bold text-slate-300 mb-3 flex items-center gap-2">
+                        <Calendar className="w-4 h-4 text-slate-400" />
+                        {t("Upcoming High-Risk Events (14 Days)", "未来14天高危日历")}
+                      </h3>
+                      {latest.macro.liquidity.upcomingEvents.length === 0 ? (
+                        <p className="text-sm text-slate-500">{t("No major events scheduled.", "近期无重大宏观/期权交割事件。")}</p>
+                      ) : (
+                        <div className="space-y-2">
+                          {latest.macro.liquidity.upcomingEvents.map((ev, i) => (
+                            <div key={i} className="flex justify-between p-2 text-sm rounded bg-slate-900/40 border border-slate-700/30">
+                              <span className="font-mono text-slate-400">{ev.date.substring(5)}</span>
+                              <span className={`font-medium ${ev.severity === "HIGH" ? "text-red-400" : "text-amber-400"}`}>
+                                {ev.name}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Tactical Checklist (Activates on risk) */}
+                  {latest.macro.liquidity.upcomingEvents.some(e => e.severity === "HIGH") && 
+                   latest.macro.liquidity.vixTrend === "SUPPRESSED" && (
+                    <div className="bg-red-500/10 border border-red-500/30 p-4 rounded-xl">
+                      <h3 className="text-red-400 font-bold mb-2 flex items-center gap-2">
+                        <AlertTriangle className="w-5 h-5" />
+                        {t("Tactical Warning: Gamma Un-pegging Risk", "战术警告：Gamma 反噬风险极高")}
+                      </h3>
+                      <p className="text-sm text-red-300/80 mb-3 leading-relaxed">
+                        {t("VIX is artificially suppressed heading into a major liquidity event. Pure \"buy and hold\" is dangerous. Consider protective measures.", "当前 VIX 处于异常极低水平，且即将迎来超级流动性节点（如四巫日/FOMC）。一味全仓做多风险极大，请考虑以下防御措施：")}
+                      </p>
+                      <ul className="text-sm text-red-200 space-y-2 list-disc list-inside">
+                        <li>{t("Rolling Profit Taking: Trim 15-20% from high-flying tech/semis.", "利润滚动减仓：对涨幅巨大的半导体/科技股被动减仓 15-20%。")}</li>
+                        <li>{t("Hedging: Buy out-of-the-money SPY protective puts.", "期权对冲：买入虚值大盘看跌期权 (Protective Put)。")}</li>
+                        <li>{t("Income: Sell Covered Calls on concentrated positions.", "备兑增强：对重仓股卖出 Covered Call 增厚收益。")}</li>
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Micro Anomalies Panel */}
               <div className="glass-panel p-6">

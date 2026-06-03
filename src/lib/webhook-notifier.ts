@@ -122,6 +122,32 @@ function buildDiscordPayload(payload: RebalanceAlertPayload): DiscordWebhookPayl
     });
   }
 
+  // Liquidity & Events
+  if (macro.liquidity) {
+    const { vix, vixTrend, tnx, upcomingEvents } = macro.liquidity;
+    let vixStr = vix?.toFixed(2) ?? "N/A";
+    if (vixTrend === "SPIKING") vixStr += " 🔴 (Spiking)";
+    else if (vixTrend === "SUPPRESSED") vixStr += " 🟠 (Suppressed)";
+
+    const tnxStr = tnx != null ? `${tnx.toFixed(3)}%` : "N/A";
+    
+    let eventStr = "No major events in next 14 days.";
+    if (upcomingEvents.length > 0) {
+      eventStr = upcomingEvents.map(e => `• **${e.date.substring(5)}**: ${e.name} ${e.severity === "HIGH" ? "🔴" : "🟠"}`).join("\n");
+    }
+
+    let checklistStr = "";
+    if (upcomingEvents.some(e => e.severity === "HIGH") && vixTrend === "SUPPRESSED") {
+      checklistStr = "\n\n⚠️ **TACTICAL WARNING: Gamma Un-pegging Risk** ⚠️\nVIX is artificially suppressed heading into a major liquidity event. Pure 'buy and hold' is dangerous. Consider protective measures:\n• **Rolling Profit Taking**: Trim 15-20% from high-flying tech.\n• **Hedging**: Buy OTM SPY protective puts.\n• **Income**: Sell Covered Calls on concentrated positions.";
+    }
+
+    fields.push({
+      name: "🌊 Liquidity & Macro Events",
+      value: `**VIX:** ${vixStr}\n**US 10Y Yield:** ${tnxStr}\n\n**Upcoming Events:**\n${eventStr}${checklistStr}`,
+      inline: false,
+    });
+  }
+
   // Window Dressing data
   if (micro && (micro.winners.length > 0 || micro.losers.length > 0)) {
     const formatStocks = (list: { symbol: string; return: number }[], positive: boolean) =>

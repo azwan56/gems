@@ -30,7 +30,8 @@ import {
 } from "@/lib/rebalance-engine";
 import { fanOutAlerts, RebalanceAlertPayload } from "@/lib/webhook-notifier";
 import { saveAlertSnapshot } from "@/lib/rebalance-store";
-import { isTradingDay, tradingDaysUntilMonthEnd } from "@/lib/market-calendar";
+import { isTradingDay, tradingDaysUntilMonthEnd, getUpcomingMacroEvents } from "@/lib/market-calendar";
+import { fetchQuoteBatch } from "@/lib/fmp-client";
 
 /** Alert fires on these exact T-minus trading-day positions */
 const ALERT_TRIGGER_DAYS = [5, 2];
@@ -114,10 +115,11 @@ export async function GET(request: NextRequest) {
 
     console.log(`[rebalance] Running for period: ${period} (${startDate} to ${toDate}), force=${force}`);
 
-    // ---- Fetch Macro Data (2 API calls: SPY + BND) ----
-    const [spyPrices, bndPrices] = await Promise.all([
+    // ---- Fetch Macro Data (2 API calls: SPY + BND) & Liquidity Data ----
+    const [spyPrices, bndPrices, quotes] = await Promise.all([
       fetchHistoricalPrices("SPY", startDate, toDate),
-      fetchHistoricalPrices("BND", startDate, toDate)
+      fetchHistoricalPrices("BND", startDate, toDate),
+      fetchQuoteBatch(["^VIX", "^TNX"])
     ]);
 
     if (!spyPrices.length || !bndPrices.length) {
@@ -127,8 +129,12 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    const vixPrice = quotes.get("^VIX")?.price ?? null;
+    const tnxPrice = quotes.get("^TNX")?.price ?? null;
+    const upcomingEvents = getUpcomingMacroEvents(currentDate, 14);
+
     // ---- Calculate Macro Drift ----
-    const macroResult = calculateMacroDrift(spyPrices, bndPrices, 3.0); // 3% threshold
+    const macroResult = calculateMacroDrift(spyPrices, bndPrices, 3.0, vixPrice, tnxPrice, upcomingEvents); // 3% threshold
 
     // ---- Fetch Micro Data (only when threshold exceeded or forced) ----
     let microResult: WindowDressingResult | undefined = undefined;

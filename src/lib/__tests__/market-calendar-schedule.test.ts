@@ -70,3 +70,33 @@ describe("isFirstTradingDayOfMonth", () => {
     expect(isFirstTradingDayOfMonth(etDate(2026, 6, 6))).toBe(false);
   });
 });
+
+import { getMonthlyOPEX, isQuadWitching, getUpcomingMacroEvents } from "../market-calendar";
+
+describe("OPEX & Macro Calendar", () => {
+  it("getMonthlyOPEX calculates 3rd Friday correctly", () => {
+    // March 2026 -> 3rd Friday is March 20
+    expect(getMonthlyOPEX(2026, 3)).toBe("2026-03-20");
+    // June 2026 -> 3rd Friday is June 19
+    expect(getMonthlyOPEX(2026, 6)).toBe("2026-06-19");
+  });
+
+  it("isQuadWitching detects quarterly OPEX", () => {
+    expect(isQuadWitching("2026-03-20")).toBe(true);
+    expect(isQuadWitching("2026-06-19")).toBe(true);
+    // Not quad witching (monthly OPEX only)
+    expect(isQuadWitching("2026-05-15")).toBe(false); // May 2026 3rd Friday
+  });
+
+  it("getUpcomingMacroEvents finds events in lookahead window", () => {
+    // Jan 10, 2026 -> Should find Jan 14 CPI and Jan 28 FOMC
+    const d = etDate(2026, 1, 10);
+    const events = getUpcomingMacroEvents(d, 20); // 20 days lookahead
+    
+    // Monthly OPEX for Jan 2026 is Jan 16
+    const names = events.map(e => e.name);
+    expect(names).toContain("CPI Print");
+    expect(names).toContain("Monthly OPEX");
+    expect(names).toContain("FOMC Rate Decision");
+  });
+});

@@ -191,3 +191,158 @@ export function isFirstTradingDayOfMonth(date?: Date): boolean {
 
   return false;
 }
+
+// ============================================================
+// Macro & Event-Driven Calendar Logic
+// ============================================================
+
+export interface MacroEvent {
+  date: string;
+  name: string;
+  severity: "HIGH" | "MEDIUM";
+}
+
+/**
+ * Hardcoded macro events for 2025-2026.
+ * FOMC meetings (focus on rate decision day), CPI release days, and Jackson Hole.
+ */
+const MACRO_EVENTS_2025_2026: MacroEvent[] = [
+  // 2025 FOMC
+  { date: "2025-01-29", name: "FOMC Rate Decision", severity: "HIGH" },
+  { date: "2025-03-19", name: "FOMC Rate Decision & SEP", severity: "HIGH" },
+  { date: "2025-05-07", name: "FOMC Rate Decision", severity: "MEDIUM" },
+  { date: "2025-06-18", name: "FOMC Rate Decision & SEP", severity: "HIGH" },
+  { date: "2025-07-30", name: "FOMC Rate Decision", severity: "MEDIUM" },
+  { date: "2025-09-17", name: "FOMC Rate Decision & SEP", severity: "HIGH" },
+  { date: "2025-10-29", name: "FOMC Rate Decision", severity: "MEDIUM" },
+  { date: "2025-12-10", name: "FOMC Rate Decision & SEP", severity: "HIGH" },
+  
+  // 2026 FOMC (Estimated based on 6-week cadence)
+  { date: "2026-01-28", name: "FOMC Rate Decision", severity: "HIGH" },
+  { date: "2026-03-18", name: "FOMC Rate Decision & SEP", severity: "HIGH" },
+  { date: "2026-05-06", name: "FOMC Rate Decision", severity: "MEDIUM" },
+  { date: "2026-06-17", name: "FOMC Rate Decision & SEP", severity: "HIGH" },
+  { date: "2026-07-29", name: "FOMC Rate Decision", severity: "MEDIUM" },
+  { date: "2026-09-16", name: "FOMC Rate Decision & SEP", severity: "HIGH" },
+  { date: "2026-10-28", name: "FOMC Rate Decision", severity: "MEDIUM" },
+  { date: "2026-12-16", name: "FOMC Rate Decision & SEP", severity: "HIGH" },
+
+  // 2025 CPI
+  { date: "2025-01-15", name: "CPI Print", severity: "HIGH" },
+  { date: "2025-02-12", name: "CPI Print", severity: "HIGH" },
+  { date: "2025-03-12", name: "CPI Print", severity: "HIGH" },
+  { date: "2025-04-09", name: "CPI Print", severity: "HIGH" },
+  { date: "2025-05-14", name: "CPI Print", severity: "HIGH" },
+  { date: "2025-06-11", name: "CPI Print", severity: "HIGH" },
+  { date: "2025-07-16", name: "CPI Print", severity: "HIGH" },
+  { date: "2025-08-13", name: "CPI Print", severity: "HIGH" },
+  { date: "2025-09-10", name: "CPI Print", severity: "HIGH" },
+  { date: "2025-10-15", name: "CPI Print", severity: "HIGH" },
+  { date: "2025-11-12", name: "CPI Print", severity: "HIGH" },
+  { date: "2025-12-10", name: "CPI Print", severity: "HIGH" },
+
+  // 2026 CPI (Estimated)
+  { date: "2026-01-14", name: "CPI Print", severity: "HIGH" },
+  { date: "2026-02-11", name: "CPI Print", severity: "HIGH" },
+  { date: "2026-03-11", name: "CPI Print", severity: "HIGH" },
+  { date: "2026-04-08", name: "CPI Print", severity: "HIGH" },
+  { date: "2026-05-13", name: "CPI Print", severity: "HIGH" },
+  { date: "2026-06-10", name: "CPI Print", severity: "HIGH" },
+  { date: "2026-07-15", name: "CPI Print", severity: "HIGH" },
+  { date: "2026-08-12", name: "CPI Print", severity: "HIGH" },
+  { date: "2026-09-09", name: "CPI Print", severity: "HIGH" },
+  { date: "2026-10-14", name: "CPI Print", severity: "HIGH" },
+  { date: "2026-11-11", name: "CPI Print", severity: "HIGH" },
+  { date: "2026-12-09", name: "CPI Print", severity: "HIGH" },
+
+  // Jackson Hole
+  { date: "2025-08-22", name: "Jackson Hole Symposium", severity: "HIGH" },
+  { date: "2026-08-28", name: "Jackson Hole Symposium", severity: "HIGH" },
+];
+
+/**
+ * Get the date of the monthly OPEX (Option Expiration) - the 3rd Friday of the month.
+ * @param year 
+ * @param month 1-indexed (1 = Jan)
+ */
+export function getMonthlyOPEX(year: number, month: number): string {
+  const d = new Date(year, month - 1, 1);
+  // Find first Friday
+  while (d.getDay() !== 5) {
+    d.setDate(d.getDate() + 1);
+  }
+  // Add 14 days for the third Friday
+  d.setDate(d.getDate() + 14);
+  
+  // Format as YYYY-MM-DD
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+/**
+ * Checks if a specific date is a Quadruple Witching day.
+ * (3rd Friday of March, June, September, December)
+ */
+export function isQuadWitching(dateKey: string): boolean {
+  const [year, month, day] = dateKey.split("-").map(Number);
+  if (![3, 6, 9, 12].includes(month)) return false;
+  const opexDate = getMonthlyOPEX(year, month);
+  return dateKey === opexDate;
+}
+
+/**
+ * Returns upcoming macro and micro structure events within the next N days.
+ */
+export function getUpcomingMacroEvents(date?: Date, lookaheadDays: number = 14): MacroEvent[] {
+  const now = new Date(date ?? new Date());
+  // Strip time for clean comparison
+  now.setHours(0, 0, 0, 0);
+  const nowTime = now.getTime();
+  const futureTime = nowTime + lookaheadDays * 24 * 60 * 60 * 1000;
+  
+  const upcoming: MacroEvent[] = [];
+
+  // 1. Check static events
+  for (const event of MACRO_EVENTS_2025_2026) {
+    const [y, m, d] = event.date.split("-").map(Number);
+    const eventDate = new Date(y, m - 1, d).getTime();
+    if (eventDate >= nowTime && eventDate <= futureTime) {
+      upcoming.push(event);
+    }
+  }
+
+  // 2. Dynamically calculate OPEX/Quad Witching for current and next month
+  const currentMonth = now.getMonth() + 1;
+  const currentYear = now.getFullYear();
+  
+  // Current month OPEX
+  const currentOpexStr = getMonthlyOPEX(currentYear, currentMonth);
+  const currentOpexDate = new Date(currentYear, currentMonth - 1, parseInt(currentOpexStr.split("-")[2])).getTime();
+  
+  if (currentOpexDate >= nowTime && currentOpexDate <= futureTime) {
+    const isQuad = [3, 6, 9, 12].includes(currentMonth);
+    upcoming.push({
+      date: currentOpexStr,
+      name: isQuad ? "Quadruple Witching (Quarterly OPEX)" : "Monthly OPEX",
+      severity: isQuad ? "HIGH" : "MEDIUM"
+    });
+  }
+
+  // Next month OPEX (if lookahead window crosses month boundary)
+  const nextMonth = currentMonth === 12 ? 1 : currentMonth + 1;
+  const nextYear = currentMonth === 12 ? currentYear + 1 : currentYear;
+  
+  const nextOpexStr = getMonthlyOPEX(nextYear, nextMonth);
+  const nextOpexDate = new Date(nextYear, nextMonth - 1, parseInt(nextOpexStr.split("-")[2])).getTime();
+  
+  if (nextOpexDate >= nowTime && nextOpexDate <= futureTime) {
+    const isQuad = [3, 6, 9, 12].includes(nextMonth);
+    upcoming.push({
+      date: nextOpexStr,
+      name: isQuad ? "Quadruple Witching (Quarterly OPEX)" : "Monthly OPEX",
+      severity: isQuad ? "HIGH" : "MEDIUM"
+    });
+  }
+
+  // Sort chronologically
+  return upcoming.sort((a, b) => a.date.localeCompare(b.date));
+}

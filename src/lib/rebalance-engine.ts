@@ -4,6 +4,14 @@
 // ============================================================
 
 import { HistoricalPrice } from "./rebalance-fetcher";
+import { MacroEvent } from "./market-calendar";
+
+export interface LiquidityMetrics {
+  vix: number | null;
+  vixTrend: "SPIKING" | "SUPPRESSED" | "NORMAL" | "UNKNOWN";
+  tnx: number | null;
+  upcomingEvents: MacroEvent[];
+}
 
 export interface MacroDriftResult {
   spyReturn: number;
@@ -12,6 +20,7 @@ export interface MacroDriftResult {
   isEquityOutperforming: boolean;
   thresholdExceeded: boolean;
   signal: "SELL_EQUITY" | "BUY_EQUITY" | "NEUTRAL";
+  liquidity?: LiquidityMetrics;
 }
 
 export interface WindowDressingResult {
@@ -68,7 +77,10 @@ export function calculateConstituentReturns(priceMap: Map<string, HistoricalPric
 export function calculateMacroDrift(
   spyPrices: HistoricalPrice[],
   bndPrices: HistoricalPrice[],
-  thresholdPercent: number = 3.0
+  thresholdPercent: number = 3.0,
+  vixPrice?: number | null,
+  tnxPrice?: number | null,
+  upcomingEvents?: MacroEvent[]
 ): MacroDriftResult {
   const spyReturn = calculateCumulativeReturn(spyPrices);
   const bndReturn = calculateCumulativeReturn(bndPrices);
@@ -82,13 +94,31 @@ export function calculateMacroDrift(
     signal = isEquityOutperforming ? "SELL_EQUITY" : "BUY_EQUITY";
   }
 
+  let liquidity: LiquidityMetrics | undefined;
+  if (vixPrice !== undefined || tnxPrice !== undefined || upcomingEvents !== undefined) {
+    let vixTrend: LiquidityMetrics["vixTrend"] = "UNKNOWN";
+    if (vixPrice !== null && vixPrice !== undefined) {
+      if (vixPrice > 20) vixTrend = "SPIKING";
+      else if (vixPrice < 14) vixTrend = "SUPPRESSED";
+      else vixTrend = "NORMAL";
+    }
+
+    liquidity = {
+      vix: vixPrice ?? null,
+      vixTrend,
+      tnx: tnxPrice ?? null,
+      upcomingEvents: upcomingEvents ?? [],
+    };
+  }
+
   return {
     spyReturn,
     bndReturn,
     spread,
     isEquityOutperforming,
     thresholdExceeded,
-    signal
+    signal,
+    liquidity
   };
 }
 
