@@ -50,7 +50,7 @@ async function getPortfolioSymbols(uid: string): Promise<string[]> {
   }
 }
 
-// VIX/TNX via FMP quote (lightweight — no historical data needed)
+// VIX via FMP quote (lightweight — no historical data needed)
 async function fetchLiveQuote(symbol: string): Promise<number | null> {
   const apiKey = process.env.FMP_API_KEY;
   if (!apiKey) return null;
@@ -61,6 +61,28 @@ async function fetchLiveQuote(symbol: string): Promise<number | null> {
     if (!res.ok) return null;
     const data = await res.json();
     return data?.[0]?.price ?? null;
+  } catch {
+    return null;
+  }
+}
+
+// TNX (10-Year Treasury Yield) via FMP dedicated endpoint
+// FMP does NOT support ^TNX as a quote symbol — must use /stable/treasury-rates
+async function fetchTreasuryYield(): Promise<number | null> {
+  const apiKey = process.env.FMP_API_KEY;
+  if (!apiKey) return null;
+
+  try {
+    const today = new Date().toISOString().split("T")[0];
+    // Fetch last 7 days to handle weekends/holidays
+    const from = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
+    const url = `https://financialmodelingprep.com/stable/treasury-rates?from=${from}&to=${today}&apikey=${apiKey}`;
+    const res = await fetch(url, { next: { revalidate: 300 } });
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (!Array.isArray(data) || data.length === 0) return null;
+    // Data is sorted by date descending — first entry is the latest
+    return data[0]?.year10 ?? null;
   } catch {
     return null;
   }
@@ -103,7 +125,7 @@ export const GET = withPremium(async (request: NextRequest, user) => {
   const [snapshots, vix, tnx, vixHistory, portfolioSymbols] = await Promise.all([
     getLatestSnapshots(limit),
     fetchLiveQuote("^VIX"),
-    fetchLiveQuote("^TNX"),
+    fetchTreasuryYield(),
     fetchVixHistory(7),
     getPortfolioSymbols(user.uid),
   ]);
