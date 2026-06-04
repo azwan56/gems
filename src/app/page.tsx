@@ -86,7 +86,7 @@ export default function Home() {
             {user?.isPremium && (
               <>
                 <Link href="/rebalance" className="text-sm text-slate-400 hover:text-white transition-colors hidden sm:inline">
-                  {t("Radar", "雷达")}
+                  {t("Macro Alert", "宏观预警")}
                 </Link>
                 <Link href="/watchlist" className="text-sm text-slate-400 hover:text-white transition-colors hidden sm:inline">
                   {t("Watchlist", "自选股")}
