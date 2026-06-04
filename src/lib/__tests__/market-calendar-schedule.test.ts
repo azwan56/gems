@@ -77,13 +77,18 @@ describe("OPEX & Macro Calendar", () => {
   it("getMonthlyOPEX calculates 3rd Friday correctly", () => {
     // March 2026 -> 3rd Friday is March 20
     expect(getMonthlyOPEX(2026, 3)).toBe("2026-03-20");
-    // June 2026 -> 3rd Friday is June 19
-    expect(getMonthlyOPEX(2026, 6)).toBe("2026-06-19");
+    // June 2026 -> 3rd Friday is June 19, but June 19 is Juneteenth (holiday)
+    // so OPEX shifts to June 18 (Thursday)
+    expect(getMonthlyOPEX(2026, 6)).toBe("2026-06-18");
   });
 
   it("isQuadWitching detects quarterly OPEX", () => {
     expect(isQuadWitching("2026-03-20")).toBe(true);
-    expect(isQuadWitching("2026-06-19")).toBe(true);
+    // June 2026: 3rd Friday is 6/19 but that's Juneteenth.
+    // isQuadWitching uses getMonthlyOPEX which now returns the holiday-adjusted
+    // date (6/18), so quad witching is on the adjusted date.
+    expect(isQuadWitching("2026-06-18")).toBe(true);
+    expect(isQuadWitching("2026-06-19")).toBe(false); // Holiday, not the actual OPEX
     // Not quad witching (monthly OPEX only)
     expect(isQuadWitching("2026-05-15")).toBe(false); // May 2026 3rd Friday
   });

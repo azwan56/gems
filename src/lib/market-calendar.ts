@@ -276,9 +276,15 @@ export function getMonthlyOPEX(year: number, month: number): string {
   }
   // Add 14 days for the third Friday
   d.setDate(d.getDate() + 14);
-  
-  // Format as YYYY-MM-DD
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+
+  // If the OPEX date falls on a market holiday, shift to the prior trading day
+  let dateKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  while (!isDateKeyTradingDay(dateKey)) {
+    d.setDate(d.getDate() - 1);
+    dateKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  }
+
+  return dateKey;
 }
 
 /**
@@ -294,9 +300,10 @@ export function isQuadWitching(dateKey: string): boolean {
 
 /**
  * Returns upcoming macro and micro structure events within the next N days.
- * Now also injects dynamic REBALANCE_WINDOW events when ≤7 calendar days from month/quarter end.
+ * Default lookahead is 21 days to ensure monthly OPEX / Quad Witching are never missed.
+ * Also injects dynamic REBALANCE_WINDOW events when ≤7 calendar days from month/quarter end.
  */
-export function getUpcomingMacroEvents(date?: Date, lookaheadDays: number = 14): MacroEvent[] {
+export function getUpcomingMacroEvents(date?: Date, lookaheadDays: number = 21): MacroEvent[] {
   const now = new Date(date ?? new Date());
   // Strip time for clean comparison
   now.setHours(0, 0, 0, 0);

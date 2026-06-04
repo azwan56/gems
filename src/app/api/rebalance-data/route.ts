@@ -217,8 +217,8 @@ export const GET = withPremium(async (request: NextRequest, user) => {
   // Fetch FMP profiles for the user's portfolio (beta, sector) — cached 1h
   const profiles = await fetchStockProfiles(portfolioSymbols);
 
-  // Upcoming macro events (next 14 days) — pure computation, no API call
-  const rawEvents = getUpcomingMacroEvents(new Date(), 14);
+  // Upcoming macro events (next 21 days) — pure computation, no API call
+  const rawEvents = getUpcomingMacroEvents(new Date(), 21);
   const latestSnapshot = snapshots[0];
 
   // Build winner/loser sets from the latest snapshot
