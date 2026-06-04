@@ -12,24 +12,40 @@ import { getDb } from "@/lib/firebase";
 
 // ---- helpers for portfolio holdings from DailyStock ----
 
-/** Read user's observe_list (portfolio holdings) from DailyStock Firestore */
+/**
+ * Read user's portfolio holdings from DailyStock Firestore.
+ * DailyStock stores two lists on the `users/{uid}` document:
+ *   - `watchlist`     — primary holdings (the actual portfolio)
+ *   - `observe_list`  — secondary observe stocks (synced from Gems)
+ * Each list item can be a plain string ("AAPL") or an object ({ symbol: "AAPL", ... }).
+ * We merge and deduplicate both lists.
+ */
 async function getPortfolioSymbols(uid: string): Promise<string[]> {
   try {
     const db = getDb();
     const snap = await db.collection("users").doc(uid).get();
     if (!snap.exists) return [];
     const data = snap.data();
-    const observeList: unknown[] = (data?.observe_list as unknown[]) || [];
-    // observe_list items can be plain strings ("AAPL") or objects ({ symbol: "AAPL", role: "core" })
-    return observeList
-      .map((item) => {
-        if (typeof item === "string") return item;
-        if (item && typeof item === "object" && "symbol" in item) return (item as { symbol: string }).symbol;
-        return null;
-      })
-      .filter((s): s is string => s != null);
+
+    const extractSymbols = (list: unknown[]): string[] =>
+      list
+        .map((item) => {
+          if (typeof item === "string") return item.toUpperCase();
+          if (item && typeof item === "object" && "symbol" in item) {
+            const sym = (item as { symbol: string }).symbol;
+            return typeof sym === "string" ? sym.toUpperCase() : null;
+          }
+          return null;
+        })
+        .filter((s): s is string => s != null);
+
+    const watchlist = extractSymbols((data?.watchlist as unknown[]) || []);
+    const observeList = extractSymbols((data?.observe_list as unknown[]) || []);
+
+    // Deduplicate: watchlist first (primary), then observe_list extras
+    return [...new Set([...watchlist, ...observeList])];
   } catch (e) {
-    console.error("Failed to read DailyStock observe_list:", e);
+    console.error("Failed to read DailyStock portfolio:", e);
     return [];
   }
 }
