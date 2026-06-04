@@ -35,7 +35,7 @@ interface UpcomingEvent {
   name: string;
   severity: "HIGH" | "MEDIUM";
   category: EventCategory;
-  impactedStocks: string[];
+  impactedStocks: { symbol: string; tag: string; color: string }[];
 }
 
 interface LiveLiquidity {
@@ -355,23 +355,24 @@ export default function MacroEventWarningDashboard() {
                               <div className="ml-2 mt-2 pt-3 border-t border-slate-800/80">
                                 <h4 className="text-[11px] uppercase tracking-wider text-slate-500 font-bold flex items-center gap-1.5 mb-2">
                                   <Zap className="w-3 h-3 text-amber-400" />
-                                  {t("Predicted Impact on Stocks", "受影响标的预判")}
+                                  {t("Your Holdings Risk Assessment", "持仓风险评估")}
                                 </h4>
                                 <div className="flex flex-wrap gap-2">
-                                  {ev.impactedStocks.map(sym => (
-                                    <span key={sym} className="px-2 py-1 bg-slate-800 rounded text-xs font-mono text-slate-300 border border-slate-700">
-                                      {sym}
-                                    </span>
-                                  ))}
-                                  {ev.category === "MACRO_DATA" || ev.category === "FED_POLICY" ? (
-                                    <span className="text-[11px] text-slate-500 self-center ml-1">
-                                      {t("(Your DailyStock holdings)", "(您的 DailyStock 持仓)")}
-                                    </span>
-                                  ) : (
-                                    <span className="text-[11px] text-slate-500 self-center ml-1">
-                                      {t("(High momentum candidates)", "(高动量/高Gamma候选)")}
-                                    </span>
-                                  )}
+                                  {ev.impactedStocks.map((stock) => {
+                                    const colorMap: Record<string, string> = {
+                                      red: "bg-red-500/15 text-red-400 border-red-500/30",
+                                      amber: "bg-amber-500/15 text-amber-400 border-amber-500/30",
+                                      green: "bg-emerald-500/15 text-emerald-400 border-emerald-500/30",
+                                      blue: "bg-blue-500/15 text-blue-400 border-blue-500/30",
+                                    };
+                                    const cls = colorMap[stock.color] || colorMap.blue;
+                                    return (
+                                      <div key={stock.symbol} className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border ${cls}`}>
+                                        <span className="font-mono text-xs font-bold">{stock.symbol}</span>
+                                        <span className="text-[10px] opacity-80">{stock.tag}</span>
+                                      </div>
+                                    );
+                                  })}
                                 </div>
                               </div>
                             )}
