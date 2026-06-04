@@ -956,54 +956,55 @@ export default function FunnelScreenerPage() {
                 </div>
               ) : analysisReport ? (
                 <>
-                  {/* Analyst Pricing & Targets & Scores */}
-                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                    <div className="bg-gradient-to-br from-blue-900/30 to-indigo-900/30 border border-blue-500/20 rounded-xl p-4 sm:p-5">
-                      <div className="flex items-center gap-2 text-blue-400 mb-2">
-                        <Target className="w-4 h-4" />
-                        <span className="text-xs font-bold uppercase tracking-wider">{t("Price Target", "目标价")}</span>
+                  {/* Analyst Pricing & Targets */}
+                  <div className="grid grid-cols-2 gap-3 sm:gap-4">
+                    <div className="bg-gradient-to-br from-blue-900/30 to-indigo-900/30 border border-blue-500/20 rounded-xl p-4">
+                      <div className="flex items-center gap-1.5 text-blue-400 mb-2">
+                        <Target className="w-3.5 h-3.5 shrink-0" />
+                        <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider">{t("Price Target", "目标价")}</span>
                       </div>
-                      <div className="flex items-baseline gap-2">
-                        <span className="text-2xl sm:text-3xl font-bold text-white">{analysisReport.analyst.targetPrice}</span>
-                        <span className="text-xs sm:text-sm font-semibold text-emerald-400">{analysisReport.analyst.upside}</span>
-                      </div>
+                      <div className="text-xl sm:text-2xl font-bold text-white truncate">{analysisReport.analyst.targetPrice}</div>
+                      <div className="text-xs font-semibold text-emerald-400 mt-1">{analysisReport.analyst.upside}</div>
                     </div>
                     
-                    <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-4 sm:p-5">
-                      <div className="flex items-center gap-2 text-slate-400 mb-2">
-                        <Users className="w-4 h-4" />
-                        <span className="text-xs font-bold uppercase tracking-wider">{t("Consensus", "市场共识")}</span>
+                    <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-4">
+                      <div className="flex items-center gap-1.5 text-slate-400 mb-2">
+                        <Users className="w-3.5 h-3.5 shrink-0" />
+                        <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider">{t("Consensus", "市场共识")}</span>
                       </div>
-                      <div className="text-lg sm:text-xl font-bold text-emerald-400 mb-1">{t(analysisReport.analyst.consensus, analysisReport.analyst.consensus)}</div>
-                      <div className="text-[10px] sm:text-xs text-slate-500 flex flex-wrap gap-x-2">
+                      <div className="text-lg sm:text-xl font-bold text-emerald-400 mb-1 truncate">{t(analysisReport.analyst.consensus, analysisReport.analyst.consensus)}</div>
+                      <div className="text-[10px] text-slate-500 flex flex-wrap gap-x-2">
                         <span>{t("Buy", "买入")}: {analysisReport.analyst.breakdown.buy}</span>
                         <span>{t("Hold", "持有")}: {analysisReport.analyst.breakdown.hold}</span>
                         <span>{t("Sell", "卖出")}: {analysisReport.analyst.breakdown.sell}</span>
                       </div>
                     </div>
+                  </div>
 
-                    <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-4 sm:p-5">
-                      <div className="flex items-center gap-2 text-purple-400 mb-2">
-                        <ActivitySquare className="w-4 h-4" />
-                        <span className="text-xs font-bold uppercase tracking-wider">{t("Technical", "技术面评分")}</span>
+                  {/* Quantitative Scores */}
+                  <div className="grid grid-cols-2 gap-3 sm:gap-4 mt-3 sm:mt-4">
+                    <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-4">
+                      <div className="flex items-center gap-1.5 text-purple-400 mb-2">
+                        <ActivitySquare className="w-3.5 h-3.5 shrink-0" />
+                        <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider">{t("Technical", "技术面评分")}</span>
                       </div>
-                      <div className="flex items-baseline gap-2">
-                        <span className="text-2xl sm:text-3xl font-bold text-white">{analysisReport.technicalScore}</span>
-                        <span className="text-xs text-slate-500">/ 100</span>
+                      <div className="flex items-baseline gap-1.5">
+                        <span className="text-xl sm:text-2xl font-bold text-white">{analysisReport.technicalScore}</span>
+                        <span className="text-[10px] text-slate-500">/ 100</span>
                       </div>
                       <div className="w-full bg-slate-900 h-1.5 mt-2 rounded-full overflow-hidden">
                         <div className="bg-purple-500 h-full rounded-full" style={{ width: `${analysisReport.technicalScore}%` }} />
                       </div>
                     </div>
 
-                    <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-4 sm:p-5">
-                      <div className="flex items-center gap-2 text-amber-400 mb-2">
-                        <ShieldAlert className="w-4 h-4" />
-                        <span className="text-xs font-bold uppercase tracking-wider">{t("Fundamental", "基本面评分")}</span>
+                    <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-4">
+                      <div className="flex items-center gap-1.5 text-amber-400 mb-2">
+                        <ShieldAlert className="w-3.5 h-3.5 shrink-0" />
+                        <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider">{t("Fundamental", "基本面评分")}</span>
                       </div>
-                      <div className="flex items-baseline gap-2">
-                        <span className="text-2xl sm:text-3xl font-bold text-white">{analysisReport.fundamentalScore}</span>
-                        <span className="text-xs text-slate-500">/ 100</span>
+                      <div className="flex items-baseline gap-1.5">
+                        <span className="text-xl sm:text-2xl font-bold text-white">{analysisReport.fundamentalScore}</span>
+                        <span className="text-[10px] text-slate-500">/ 100</span>
                       </div>
                       <div className="w-full bg-slate-900 h-1.5 mt-2 rounded-full overflow-hidden">
                         <div className="bg-amber-500 h-full rounded-full" style={{ width: `${analysisReport.fundamentalScore}%` }} />
