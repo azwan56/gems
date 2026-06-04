@@ -365,7 +365,7 @@ export default function MacroEventWarningDashboard() {
                                   ))}
                                   {ev.category === "MACRO_DATA" || ev.category === "FED_POLICY" ? (
                                     <span className="text-[11px] text-slate-500 self-center ml-1">
-                                      {t("(Rate sensitive candidates)", "(利率敏感候选)")}
+                                      {t("(Your DailyStock holdings)", "(您的 DailyStock 持仓)")}
                                     </span>
                                   ) : (
                                     <span className="text-[11px] text-slate-500 self-center ml-1">

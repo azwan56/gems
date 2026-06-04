@@ -8,7 +8,31 @@ import { NextRequest, NextResponse } from "next/server";
 import { withPremium } from "@/lib/api-utils";
 import { getLatestSnapshots } from "@/lib/rebalance-store";
 import { getUpcomingMacroEvents } from "@/lib/market-calendar";
-import { getWatchlist } from "@/lib/user-store";
+import { getDb } from "@/lib/firebase";
+
+// ---- helpers for portfolio holdings from DailyStock ----
+
+/** Read user's observe_list (portfolio holdings) from DailyStock Firestore */
+async function getPortfolioSymbols(uid: string): Promise<string[]> {
+  try {
+    const db = getDb();
+    const snap = await db.collection("users").doc(uid).get();
+    if (!snap.exists) return [];
+    const data = snap.data();
+    const observeList: unknown[] = (data?.observe_list as unknown[]) || [];
+    // observe_list items can be plain strings ("AAPL") or objects ({ symbol: "AAPL", role: "core" })
+    return observeList
+      .map((item) => {
+        if (typeof item === "string") return item;
+        if (item && typeof item === "object" && "symbol" in item) return (item as { symbol: string }).symbol;
+        return null;
+      })
+      .filter((s): s is string => s != null);
+  } catch (e) {
+    console.error("Failed to read DailyStock observe_list:", e);
+    return [];
+  }
+}
 
 // VIX/TNX via FMP quote (lightweight — no historical data needed)
 async function fetchLiveQuote(symbol: string): Promise<number | null> {
@@ -59,13 +83,13 @@ export const GET = withPremium(async (request: NextRequest, user) => {
   const limitParam = request.nextUrl.searchParams.get("limit");
   const limit = Math.min(Math.max(parseInt(limitParam || "10", 10) || 10, 1), 30);
 
-  // Fetch snapshots, live quotes, VIX history, and user's watchlist in parallel
-  const [snapshots, vix, tnx, vixHistory, watchlist] = await Promise.all([
+  // Fetch snapshots, live quotes, VIX history, and user's DailyStock holdings in parallel
+  const [snapshots, vix, tnx, vixHistory, portfolioSymbols] = await Promise.all([
     getLatestSnapshots(limit),
     fetchLiveQuote("^VIX"),
     fetchLiveQuote("^TNX"),
     fetchVixHistory(7),
-    getWatchlist(user.uid),
+    getPortfolioSymbols(user.uid),
   ]);
 
   // Upcoming macro events (next 14 days) — pure computation, no API call
@@ -77,17 +101,19 @@ export const GET = withPremium(async (request: NextRequest, user) => {
     let impactedStocks: string[] = [];
     
     if (event.category === "MACRO_DATA" || event.category === "FED_POLICY") {
-      // For macro events, highlight watchlist stocks. 
-      // In a real app, we'd filter for high-beta or rate-sensitive tech stocks.
-      // Here we just pick up to 3 from the user's watchlist.
-      impactedStocks = watchlist.slice(0, 3).map(w => w.symbol);
+      // For macro/Fed events, all DailyStock holdings are potentially impacted
+      impactedStocks = portfolioSymbols;
     } else if (event.category === "OPTIONS_EXPIRY" || event.category === "REBALANCE_WINDOW") {
-      // For rebalancing or OPEX, highlight the extreme winners/losers from the latest snapshot
+      // For rebalancing or OPEX, highlight extreme winners/losers from snapshot
+      // AND cross-reference with the user's actual holdings
       if (latestSnapshot?.micro) {
-        // Grab top 2 winners and top 1 loser
         const topWinners = latestSnapshot.micro.winners.slice(0, 2).map(w => w.symbol);
         const topLosers = latestSnapshot.micro.losers.slice(0, 1).map(l => l.symbol);
-        impactedStocks = [...topWinners, ...topLosers];
+        const snapshotStocks = [...topWinners, ...topLosers];
+        // Holdings that overlap with momentum extremes are most at risk
+        const overlapping = portfolioSymbols.filter(s => snapshotStocks.includes(s));
+        // Show overlapping holdings first, then remaining momentum stocks
+        impactedStocks = [...overlapping, ...snapshotStocks.filter(s => !overlapping.includes(s))];
       }
     }
     
