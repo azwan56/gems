@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-import { Gem, ArrowLeft, StarOff, Trash2, Shield, Sword, Rocket, CircleDollarSign, RefreshCcw, AlertTriangle, HelpCircle, ChevronDown, Languages, ArrowUpFromLine, Check, Loader2, X, FileText, TrendingUp, Activity, Target, Users, Zap, ShieldAlert, Download } from "lucide-react";
+import { Gem, ArrowLeft, StarOff, Trash2, Shield, Sword, Rocket, CircleDollarSign, RefreshCcw, AlertTriangle, HelpCircle, ChevronDown, Languages, ArrowUpFromLine, Check, Loader2, X, FileText, TrendingUp, Activity, ActivitySquare, Target, Users, Zap, ShieldAlert, Download } from "lucide-react";
 import type { WatchlistItem } from "@/lib/types";
 import { useLanguage } from "@/lib/language-context";
 import { useAuth } from "@/lib/auth-context";
@@ -219,20 +219,8 @@ export default function WatchlistPage() {
     return `$${mc.toLocaleString()}`;
   };
 
-  // Analysis report slide-out panel
-  interface AnalysisReport {
-    overview: string;
-    fundamentals: string;
-    products: string;
-    rationale: string[];
-    risks: string[];
-    analyst: {
-      targetPrice: string;
-      upside: string;
-      consensus: string;
-      breakdown: { buy: number; hold: number; sell: number };
-    };
-  }
+  // Analysis report slide-out panel — uses the shared type with scores + catalysts
+  type AnalysisReport = import("@/lib/analysis-engine").StockAnalysisReport;
   const [analysisPanel, setAnalysisPanel] = useState<{ symbol: string; loading: boolean; report: AnalysisReport | null } | null>(null);
   const [shareCardUrl, setShareCardUrl] = useState<string | null>(null);
   const [isGeneratingCard, setIsGeneratingCard] = useState(false);
@@ -738,27 +726,57 @@ export default function WatchlistPage() {
               ) : analysisPanel.report ? (
                 <>
                   {/* Analyst Pricing & Targets */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="bg-gradient-to-br from-blue-900/30 to-indigo-900/30 border border-blue-500/20 rounded-xl p-5">
-                      <div className="flex items-center gap-2 text-blue-400 mb-1">
-                        <Target className="w-4 h-4" />
-                        <span className="text-xs font-bold uppercase tracking-wider">{t("Price Target", "目标价")}</span>
+                  <div className="grid grid-cols-2 gap-3 sm:gap-4">
+                    <div className="bg-gradient-to-br from-blue-900/30 to-indigo-900/30 border border-blue-500/20 rounded-xl p-4">
+                      <div className="flex items-center gap-1.5 text-blue-400 mb-2">
+                        <Target className="w-3.5 h-3.5 shrink-0" />
+                        <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider">{t("Price Target", "目标价")}</span>
                       </div>
-                      <div className="flex items-baseline gap-3">
-                        <span className="text-3xl font-bold text-white">{analysisPanel.report.analyst.targetPrice}</span>
-                        <span className="text-sm font-semibold text-emerald-400">{analysisPanel.report.analyst.upside}</span>
-                      </div>
+                      <div className="text-xl sm:text-2xl font-bold text-white truncate">{analysisPanel.report.analyst.targetPrice}</div>
+                      <div className="text-xs font-semibold text-emerald-400 mt-1">{analysisPanel.report.analyst.upside}</div>
                     </div>
-                    <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-5">
-                      <div className="flex items-center gap-2 text-slate-400 mb-1">
-                        <Users className="w-4 h-4" />
-                        <span className="text-xs font-bold uppercase tracking-wider">{t("Consensus", "市场共识")}</span>
+                    
+                    <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-4">
+                      <div className="flex items-center gap-1.5 text-slate-400 mb-2">
+                        <Users className="w-3.5 h-3.5 shrink-0" />
+                        <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider">{t("Consensus", "市场共识")}</span>
                       </div>
-                      <div className="text-xl font-bold text-emerald-400 mb-1">{t(analysisPanel.report.analyst.consensus, analysisPanel.report.analyst.consensus)}</div>
-                      <div className="text-xs text-slate-500 flex gap-2">
+                      <div className="text-lg sm:text-xl font-bold text-emerald-400 mb-1 truncate">{t(analysisPanel.report.analyst.consensus, analysisPanel.report.analyst.consensus)}</div>
+                      <div className="text-[10px] text-slate-500 flex flex-wrap gap-x-2">
                         <span>{t("Buy", "买入")}: {analysisPanel.report.analyst.breakdown.buy}</span>
                         <span>{t("Hold", "持有")}: {analysisPanel.report.analyst.breakdown.hold}</span>
                         <span>{t("Sell", "卖出")}: {analysisPanel.report.analyst.breakdown.sell}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Quantitative Scores */}
+                  <div className="grid grid-cols-2 gap-3 sm:gap-4">
+                    <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-4">
+                      <div className="flex items-center gap-1.5 text-purple-400 mb-2">
+                        <ActivitySquare className="w-3.5 h-3.5 shrink-0" />
+                        <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider">{t("Technical", "技术面评分")}</span>
+                      </div>
+                      <div className="flex items-baseline gap-1.5">
+                        <span className="text-xl sm:text-2xl font-bold text-white">{analysisPanel.report.technicalScore}</span>
+                        <span className="text-[10px] text-slate-500">/ 100</span>
+                      </div>
+                      <div className="w-full bg-slate-900 h-1.5 mt-2 rounded-full overflow-hidden">
+                        <div className="bg-purple-500 h-full rounded-full" style={{ width: `${analysisPanel.report.technicalScore}%` }} />
+                      </div>
+                    </div>
+
+                    <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-4">
+                      <div className="flex items-center gap-1.5 text-amber-400 mb-2">
+                        <ShieldAlert className="w-3.5 h-3.5 shrink-0" />
+                        <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider">{t("Fundamental", "基本面评分")}</span>
+                      </div>
+                      <div className="flex items-baseline gap-1.5">
+                        <span className="text-xl sm:text-2xl font-bold text-white">{analysisPanel.report.fundamentalScore}</span>
+                        <span className="text-[10px] text-slate-500">/ 100</span>
+                      </div>
+                      <div className="w-full bg-slate-900 h-1.5 mt-2 rounded-full overflow-hidden">
+                        <div className="bg-amber-500 h-full rounded-full" style={{ width: `${analysisPanel.report.fundamentalScore}%` }} />
                       </div>
                     </div>
                   </div>
@@ -787,7 +805,7 @@ export default function WatchlistPage() {
                     <p className="text-slate-400 text-sm leading-relaxed">{analysisPanel.report.products}</p>
                   </section>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 pt-2 sm:pt-4">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 pt-2 sm:pt-4">
                     {/* Rationale */}
                     <section className="bg-emerald-500/5 border border-emerald-500/10 rounded-xl p-5">
                       <h3 className="text-sm font-bold text-emerald-400 uppercase tracking-widest mb-3 flex items-center gap-2">
@@ -796,7 +814,7 @@ export default function WatchlistPage() {
                       <ul className="space-y-2 text-sm text-slate-400">
                         {analysisPanel.report.rationale.map((line, i) => (
                           <li key={i} className="flex gap-2">
-                            <span className="text-emerald-500 mt-0.5">•</span>
+                            <span className="text-emerald-500 mt-0.5 shrink-0">•</span>
                             <span className="leading-relaxed">{line}</span>
                           </li>
                         ))}
@@ -811,12 +829,50 @@ export default function WatchlistPage() {
                       <ul className="space-y-2 text-sm text-slate-400">
                         {analysisPanel.report.risks.map((line, i) => (
                           <li key={i} className="flex gap-2">
-                            <span className="text-red-500 mt-0.5">•</span>
+                            <span className="text-red-500 mt-0.5 shrink-0">•</span>
                             <span className="leading-relaxed">{line}</span>
                           </li>
                         ))}
                       </ul>
                     </section>
+
+                    {/* Catalysts */}
+                    <section className="bg-blue-500/5 border border-blue-500/10 rounded-xl p-5">
+                      <h3 className="text-sm font-bold text-blue-400 uppercase tracking-widest mb-3 flex items-center gap-2">
+                        <Rocket className="w-4 h-4" /> {t("Key Catalysts", "核心催化剂")}
+                      </h3>
+                      <ul className="space-y-2 text-sm text-slate-400">
+                        {analysisPanel.report.catalysts && analysisPanel.report.catalysts.length > 0 ? (
+                          analysisPanel.report.catalysts.map((line, i) => (
+                            <li key={i} className="flex gap-2">
+                              <span className="text-blue-500 mt-0.5 shrink-0">•</span>
+                              <span className="leading-relaxed">{line}</span>
+                            </li>
+                          ))
+                        ) : (
+                          <li className="text-slate-600 italic">{t("No near-term catalysts identified.", "暂无近期催化事件。")}</li>
+                        )}
+                      </ul>
+                    </section>
+                  </div>
+
+                  {/* Position Suggestion */}
+                  {analysisPanel.report.positionSuggestion && (
+                    <section className="bg-slate-800/30 border border-slate-700/50 rounded-xl p-5">
+                      <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">{t("Position Suggestion", "持仓建议")}</h3>
+                      <p className="text-sm text-slate-300 leading-relaxed">{analysisPanel.report.positionSuggestion}</p>
+                    </section>
+                  )}
+
+                  {/* Full PDF Report Link */}
+                  <div className="flex justify-center">
+                    <Link
+                      href={`/report/${analysisPanel.symbol}?strategy=${(() => { const item = watchlist.find(w => w.symbol === analysisPanel!.symbol); const role = item?.role; return (role === 'core_dividend' || role === 'turnaround' || role === 'special_situation') ? 'value' : 'large_growth'; })()}&lang=${lang}`}
+                      target="_blank"
+                      className="px-5 py-2.5 border border-slate-700 hover:bg-slate-800 text-slate-300 rounded-lg font-semibold flex items-center gap-2 transition-colors text-sm"
+                    >
+                      <FileText className="w-4 h-4" /> {t("Full PDF Report", "完整 PDF 研报")}
+                    </Link>
                   </div>
 
                   {/* Share Card Section */}
