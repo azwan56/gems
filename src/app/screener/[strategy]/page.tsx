@@ -1094,7 +1094,7 @@ export default function FunnelScreenerPage() {
                       </div>
                       <div className="flex flex-col sm:flex-row gap-3">
                         <Link
-                          href={`/report/${analyzingStock.symbol}?strategy=${strategyId}`}
+                          href={`/report/${analyzingStock.symbol}?strategy=${strategyId}&lang=${lang}`}
                           target="_blank"
                           className="px-4 py-2 border border-slate-700 hover:bg-slate-800 text-slate-300 rounded-lg font-semibold flex items-center justify-center gap-2 transition-colors"
                         >
