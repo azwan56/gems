@@ -2,6 +2,7 @@ import { GoogleGenAI, Type } from "@google/genai";
 import type { StockMetrics } from "./types";
 import type { StockAnalysisReport } from "./analysis-engine";
 import { getCached, setCache } from "./fmp-cache";
+import { calculateFundamentalScore, calculateTechnicalScore } from "./scoring-engine";
 
 export async function generateGeminiAnalysis(
   stock: StockMetrics,
@@ -54,6 +55,7 @@ Rules for fields:
 - products: A paragraph explaining their core revenue drivers and product/service ecosystem.
 - rationale: Array of 3 specific reasons to buy or hold this stock right now.
 - risks: Array of 3 specific risks (macro, competitive, or execution).
+- catalysts: Array of 1 to 3 specific upcoming catalysts or events that could trigger a re-rating in the next 3-6 months.
 - positionSuggestion: A short paragraph (1-2 sentences) giving specific sizing or holding horizon advice (持仓建议).
 - analyst.consensus: Must be exactly one of: "Strong Buy", "Buy", "Hold", "Sell", "Strong Sell".
 - analyst.targetPrice: Estimate a realistic 12-month target price formatted as "$X.XX".
@@ -76,6 +78,7 @@ Rules for fields:
           products: { type: Type.STRING },
           rationale: { type: Type.ARRAY, items: { type: Type.STRING } },
           risks: { type: Type.ARRAY, items: { type: Type.STRING } },
+          catalysts: { type: Type.ARRAY, items: { type: Type.STRING } },
           positionSuggestion: { type: Type.STRING },
           analyst: {
             type: Type.OBJECT,
@@ -103,6 +106,7 @@ Rules for fields:
           "products",
           "rationale",
           "risks",
+          "catalysts",
           "positionSuggestion",
           "analyst",
         ],
@@ -117,6 +121,10 @@ Rules for fields:
   
   // Guarantee symbol matches what we requested, regardless of hallucination
   parsed.symbol = stock.symbol;
+
+  // Mix in deterministic quantitative scores
+  parsed.technicalScore = calculateTechnicalScore(stock);
+  parsed.fundamentalScore = calculateFundamentalScore(stock);
 
   setCache(cacheKey, parsed);
   

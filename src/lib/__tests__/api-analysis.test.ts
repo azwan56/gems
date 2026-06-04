@@ -81,7 +81,10 @@ const mockReport = {
   products: "iPhone, Mac, Services.",
   rationale: ["Reason 1", "Reason 2", "Reason 3"],
   risks: ["Risk 1", "Risk 2", "Risk 3"],
+  catalysts: ["Catalyst 1", "Catalyst 2"],
   positionSuggestion: "Hold with conviction.",
+  technicalScore: 72,
+  fundamentalScore: 65,
   analyst: {
     consensus: "Buy",
     targetPrice: "$250.00",
@@ -98,7 +101,10 @@ vi.mock("@/lib/gemini-client", () => ({
     products: "iPhone, Mac, Services.",
     rationale: ["Reason 1", "Reason 2", "Reason 3"],
     risks: ["Risk 1", "Risk 2", "Risk 3"],
+    catalysts: ["Catalyst 1", "Catalyst 2"],
     positionSuggestion: "Hold with conviction.",
+    technicalScore: 72,
+    fundamentalScore: 65,
     analyst: {
       consensus: "Buy",
       targetPrice: "$250.00",

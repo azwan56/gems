@@ -7,7 +7,7 @@ import {
   Gem, ArrowLeft, Star, Activity, BrainCircuit, LineChart, 
   ChevronRight, CheckCircle2, AlertCircle, Loader2, Play,
   FileText, X, Target, ShieldAlert, Zap, TrendingUp, Users, Languages,
-  RefreshCw, Database, Cloud, BookOpen, Plus, Trash2, HelpCircle, Download
+  RefreshCw, Database, Cloud, BookOpen, Plus, Trash2, HelpCircle, Download, ExternalLink, ActivitySquare, Rocket
 } from "lucide-react";
 import type { StockMetrics, FilterCriterion, ScreenerResponse, StrategyType } from "@/lib/types";
 import type { StockAnalysisReport } from "@/lib/analysis-engine";
@@ -956,28 +956,57 @@ export default function FunnelScreenerPage() {
                 </div>
               ) : analysisReport ? (
                 <>
-                  {/* Analyst Pricing & Targets */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="bg-gradient-to-br from-blue-900/30 to-indigo-900/30 border border-blue-500/20 rounded-xl p-5">
-                      <div className="flex items-center gap-2 text-blue-400 mb-1">
+                  {/* Analyst Pricing & Targets & Scores */}
+                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div className="bg-gradient-to-br from-blue-900/30 to-indigo-900/30 border border-blue-500/20 rounded-xl p-4 sm:p-5">
+                      <div className="flex items-center gap-2 text-blue-400 mb-2">
                         <Target className="w-4 h-4" />
                         <span className="text-xs font-bold uppercase tracking-wider">{t("Price Target", "目标价")}</span>
                       </div>
-                      <div className="flex items-baseline gap-3">
-                        <span className="text-3xl font-bold text-white">{analysisReport.analyst.targetPrice}</span>
-                        <span className="text-sm font-semibold text-emerald-400">{analysisReport.analyst.upside}</span>
+                      <div className="flex items-baseline gap-2">
+                        <span className="text-2xl sm:text-3xl font-bold text-white">{analysisReport.analyst.targetPrice}</span>
+                        <span className="text-xs sm:text-sm font-semibold text-emerald-400">{analysisReport.analyst.upside}</span>
                       </div>
                     </div>
-                    <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-5">
-                      <div className="flex items-center gap-2 text-slate-400 mb-1">
+                    
+                    <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-4 sm:p-5">
+                      <div className="flex items-center gap-2 text-slate-400 mb-2">
                         <Users className="w-4 h-4" />
                         <span className="text-xs font-bold uppercase tracking-wider">{t("Consensus", "市场共识")}</span>
                       </div>
-                      <div className="text-xl font-bold text-emerald-400 mb-1">{t(analysisReport.analyst.consensus, analysisReport.analyst.consensus)}</div>
-                      <div className="text-xs text-slate-500 flex gap-2">
+                      <div className="text-lg sm:text-xl font-bold text-emerald-400 mb-1">{t(analysisReport.analyst.consensus, analysisReport.analyst.consensus)}</div>
+                      <div className="text-[10px] sm:text-xs text-slate-500 flex flex-wrap gap-x-2">
                         <span>{t("Buy", "买入")}: {analysisReport.analyst.breakdown.buy}</span>
                         <span>{t("Hold", "持有")}: {analysisReport.analyst.breakdown.hold}</span>
                         <span>{t("Sell", "卖出")}: {analysisReport.analyst.breakdown.sell}</span>
+                      </div>
+                    </div>
+
+                    <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-4 sm:p-5">
+                      <div className="flex items-center gap-2 text-purple-400 mb-2">
+                        <ActivitySquare className="w-4 h-4" />
+                        <span className="text-xs font-bold uppercase tracking-wider">{t("Technical", "技术面评分")}</span>
+                      </div>
+                      <div className="flex items-baseline gap-2">
+                        <span className="text-2xl sm:text-3xl font-bold text-white">{analysisReport.technicalScore}</span>
+                        <span className="text-xs text-slate-500">/ 100</span>
+                      </div>
+                      <div className="w-full bg-slate-900 h-1.5 mt-2 rounded-full overflow-hidden">
+                        <div className="bg-purple-500 h-full rounded-full" style={{ width: `${analysisReport.technicalScore}%` }} />
+                      </div>
+                    </div>
+
+                    <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-4 sm:p-5">
+                      <div className="flex items-center gap-2 text-amber-400 mb-2">
+                        <ShieldAlert className="w-4 h-4" />
+                        <span className="text-xs font-bold uppercase tracking-wider">{t("Fundamental", "基本面评分")}</span>
+                      </div>
+                      <div className="flex items-baseline gap-2">
+                        <span className="text-2xl sm:text-3xl font-bold text-white">{analysisReport.fundamentalScore}</span>
+                        <span className="text-xs text-slate-500">/ 100</span>
+                      </div>
+                      <div className="w-full bg-slate-900 h-1.5 mt-2 rounded-full overflow-hidden">
+                        <div className="bg-amber-500 h-full rounded-full" style={{ width: `${analysisReport.fundamentalScore}%` }} />
                       </div>
                     </div>
                   </div>
@@ -1006,7 +1035,7 @@ export default function FunnelScreenerPage() {
                     <p className="text-slate-400 text-sm leading-relaxed">{analysisReport.products}</p>
                   </section>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 pt-2 sm:pt-4">
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 pt-2 sm:pt-4">
                     {/* Rationale */}
                     <section className="bg-emerald-500/5 border border-emerald-500/10 rounded-xl p-5">
                       <h3 className="text-sm font-bold text-emerald-400 uppercase tracking-widest mb-3 flex items-center gap-2">
@@ -1036,6 +1065,23 @@ export default function FunnelScreenerPage() {
                         ))}
                       </ul>
                     </section>
+                    
+                    {/* Catalysts */}
+                    {analysisReport.catalysts && analysisReport.catalysts.length > 0 && (
+                      <section className="bg-blue-500/5 border border-blue-500/10 rounded-xl p-5">
+                        <h3 className="text-sm font-bold text-blue-400 uppercase tracking-widest mb-3 flex items-center gap-2">
+                          <Rocket className="w-4 h-4" /> {t("Catalysts", "核心催化剂")}
+                        </h3>
+                        <ul className="space-y-2 text-sm text-slate-400">
+                          {analysisReport.catalysts.map((line, i) => (
+                            <li key={i} className="flex gap-2">
+                              <span className="text-blue-500 mt-0.5">•</span>
+                              <span className="leading-relaxed">{line}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </section>
+                    )}
                   </div>
 
                   {/* Share Card Section */}
@@ -1045,19 +1091,29 @@ export default function FunnelScreenerPage() {
                         <h3 className="text-lg font-bold text-white mb-1">{t("Share Report", "分享报告")}</h3>
                         <p className="text-sm text-slate-400">{t("Download this deep dive as a shareable image.", "将此深度研报下载为图片分享。")}</p>
                       </div>
-                      <button
-                        onClick={async () => {
-                          if (shareCardUrl && analyzingStock) {
-                            const { downloadShareCard } = await import("@/lib/share-card");
-                            downloadShareCard(shareCardUrl, analyzingStock.symbol);
-                          }
-                        }}
-                        disabled={!shareCardUrl || isGeneratingCard}
-                        className="px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:bg-slate-800 disabled:text-slate-500 text-white rounded-lg font-semibold flex items-center gap-2 transition-colors"
-                      >
-                        {isGeneratingCard ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
-                        {t("Download Card", "下载分享卡片")}
-                      </button>
+                      <div className="flex flex-col sm:flex-row gap-3">
+                        <Link
+                          href={`/report/${analyzingStock.symbol}?strategy=${strategyId}`}
+                          target="_blank"
+                          className="px-4 py-2 border border-slate-700 hover:bg-slate-800 text-slate-300 rounded-lg font-semibold flex items-center justify-center gap-2 transition-colors"
+                        >
+                          <FileText className="w-4 h-4" />
+                          {t("Full PDF Report", "完整 PDF 研报")}
+                        </Link>
+                        <button
+                          onClick={async () => {
+                            if (shareCardUrl && analyzingStock) {
+                              const { downloadShareCard } = await import("@/lib/share-card");
+                              downloadShareCard(shareCardUrl, analyzingStock.symbol);
+                            }
+                          }}
+                          disabled={!shareCardUrl || isGeneratingCard}
+                          className="px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:bg-slate-800 disabled:text-slate-500 text-white rounded-lg font-semibold flex items-center justify-center gap-2 transition-colors"
+                        >
+                          {isGeneratingCard ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+                          {t("Download Card", "下载分享卡片")}
+                        </button>
+                      </div>
                     </div>
                     <div className="bg-slate-950 border border-slate-800 rounded-xl p-4 flex justify-center overflow-hidden relative">
                       {isGeneratingCard ? (

@@ -242,15 +242,17 @@ export async function generateShareCardDataURL(
   glassPanel(g, 45, curY, W - 90, 150, 16, "rgba(255,255,255,0.08)");
   
   const gridItems = [
+    { label: isEn ? "Tech Score" : "技术评分", val: report.technicalScore?.toString() || "--" },
+    { label: isEn ? "Fund Score" : "基本面评分", val: report.fundamentalScore?.toString() || "--" },
     { label: isEn ? "P/E Ratio" : "市盈率 P/E", val: formatNum(stock.peRatio) },
     { label: isEn ? "P/B Ratio" : "市净率 P/B", val: formatNum(stock.pbRatio) },
     { label: isEn ? "ROE" : "净资产收益率", val: formatNum(stock.roe, "%") },
-    { label: isEn ? "FCF Yield" : "自由现金流收益率", val: formatNum(stock.freeCashFlowYield, "%") },
-    { label: isEn ? "Rev Growth (YoY)" : "营收同比增长", val: formatNum(stock.revenueGrowthYoY, "%") },
+    { label: isEn ? "FCF Yield" : "现金流收益", val: formatNum(stock.freeCashFlowYield, "%") },
+    { label: isEn ? "Rev Growth" : "营收增长", val: formatNum(stock.revenueGrowthYoY, "%") },
     { label: isEn ? "Gross Margin" : "毛利率", val: formatNum(stock.grossMargin, "%") },
   ];
 
-  const cols = 3;
+  const cols = 4;
   const colW = (W - 90) / cols;
   const rowH = 70;
   
@@ -294,16 +296,16 @@ export async function generateShareCardDataURL(
     bulletY += 15;
   }
   
-  // Risks if space allows
-  if (report.risks && report.risks.length > 0 && bulletY < curY + 350) {
+  // Catalysts if space allows
+  if (report.catalysts && report.catalysts.length > 0 && bulletY < curY + 350) {
       bulletY += 10;
-      rr(g, 75, bulletY, 6, 24, 3, "#f87171", null);
-      bold(g, isEn ? "Key Risks" : "主要风险提示", 95, bulletY + 20, 20, "#ffffff");
+      rr(g, 75, bulletY, 6, 24, 3, "#3b82f6", null);
+      bold(g, isEn ? "Key Catalysts" : "核心催化剂", 95, bulletY + 20, 20, "#ffffff");
       bulletY += 50;
       
-      bold(g, "!»", 70, bulletY + 2, 22, "#f87171");
+      bold(g, "»", 75, bulletY + 2, 22, "#3b82f6");
       const bulletFont = "400 18px Inter,-apple-system,sans-serif";
-      const lines = wrapText(g, report.risks[0], W - 160, bulletFont, 3);
+      const lines = wrapText(g, report.catalysts[0], W - 160, bulletFont, 3);
       lines.forEach((line) => {
         txt(g, line, 105, bulletY, 18, "#c9d1d9");
         bulletY += 30;

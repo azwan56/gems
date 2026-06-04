@@ -4,6 +4,7 @@
 // ============================================================
 
 import { StockMetrics } from "./types";
+import { calculateFundamentalScore, calculateTechnicalScore } from "./scoring-engine";
 
 /** Analyst consensus breakdown */
 export interface AnalystConsensus {
@@ -21,8 +22,11 @@ export interface StockAnalysisReport {
   products: string;
   rationale: string[];
   risks: string[];
+  catalysts: string[];
   positionSuggestion: string;
   analyst: AnalystConsensus;
+  technicalScore: number;
+  fundamentalScore: number;
 }
 
 /** Portfolio role assigned during the final funnel step */
@@ -141,6 +145,21 @@ export function generateAnalysis(
     small_growth: "Speculative position. Cap weight at 2-4%. Implement trailing stop losses to manage downside volatility.",
   };
 
+  const catalystsMap: Record<string, string[]> = {
+    value: [
+      "Potential dividend hike or special dividend announcement in the upcoming quarter.",
+      "Activist investor involvement pushing for spin-offs or asset sales.",
+    ],
+    large_growth: [
+      "Integration of new AI-driven product suites driving ARPU expansion.",
+      "Margin expansion following recent headcount optimizations.",
+    ],
+    small_growth: [
+      "Securing a major tier-1 enterprise contract in the next 3-6 months.",
+      "Reaching cash-flow breakeven ahead of street estimates.",
+    ],
+  };
+
   const consensusOptions: AnalystConsensus["consensus"][] = ["Strong Buy", "Buy", "Hold"];
 
   return {
@@ -150,7 +169,10 @@ export function generateAnalysis(
     products: productsMap[strategyType] ?? productsMap.large_growth,
     rationale: rationaleMap[strategyType] ?? rationaleMap.large_growth,
     risks: risksMap[strategyType] ?? risksMap.large_growth,
+    catalysts: catalystsMap[strategyType] ?? catalystsMap.large_growth,
     positionSuggestion: positionSuggestionMap[strategyType] ?? positionSuggestionMap.large_growth,
+    technicalScore: calculateTechnicalScore(stock),
+    fundamentalScore: calculateFundamentalScore(stock),
     analyst: {
       consensus: consensusOptions[seed % consensusOptions.length],
       targetPrice: `$${targetPrice}`,
