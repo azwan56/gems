@@ -1,13 +1,26 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import Link from "next/link";
 import { Gem, ArrowLeft, StarOff, Trash2, Shield, Sword, Rocket, CircleDollarSign, RefreshCcw, AlertTriangle, HelpCircle, ChevronDown, Languages, ArrowUpFromLine, Check, Loader2, X, FileText, TrendingUp, Activity, ActivitySquare, Target, Users, Zap, ShieldAlert, Download } from "lucide-react";
-import type { WatchlistItem } from "@/lib/types";
+import type { WatchlistItem, StockMetrics } from "@/lib/types";
 import { useLanguage } from "@/lib/language-context";
 import { useAuth } from "@/lib/auth-context";
+import { getAllStrategyPresets } from "@/lib/strategies";
+import { applyFilters } from "@/lib/screener-engine";
 import UserMenu from "@/components/UserMenu";
 import PremiumGate from "@/components/PremiumGate";
+
+// Static badge colors for strategy tags
+const strategyBadgeColors: Record<string, string> = {
+  blue: "bg-blue-500/10 text-blue-400 border-blue-500/20",
+  indigo: "bg-indigo-500/10 text-indigo-400 border-indigo-500/20",
+  purple: "bg-purple-500/10 text-purple-400 border-purple-500/20",
+  amber: "bg-amber-500/10 text-amber-400 border-amber-500/20",
+  emerald: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
+  slate: "bg-slate-500/10 text-slate-400 border-slate-500/20",
+  rose: "bg-rose-500/10 text-rose-400 border-rose-500/20",
+};
 
 type RoleKey = "anchor" | "striker" | "rocket" | "core_dividend" | "turnaround" | "special_situation" | "unassigned";
 
@@ -43,6 +56,9 @@ export default function WatchlistPage() {
   const [quotes, setQuotes] = useState<Record<string, QuoteData>>({});
   const [quotesLoading, setQuotesLoading] = useState(false);
 
+  // Stock pool for strategy matching
+  const [stockPool, setStockPool] = useState<StockMetrics[]>([]);
+
   // Confirmation modal state
   interface SyncPreview {
     symbol: string;
@@ -57,6 +73,39 @@ export default function WatchlistPage() {
     planType: string;
   }
   const [confirmModal, setConfirmModal] = useState<{ loading: boolean; data: SyncPreview | null; error: string | null }>({ loading: false, data: null, error: null });
+
+  // Load stock pool for strategy matching
+  useEffect(() => {
+    if (!user?.uid) return;
+    async function loadPool() {
+      try {
+        const token = await getIdToken();
+        const res = await fetch("/api/stock-pool?include=stocks", {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data?.stocks) setStockPool(data.stocks);
+        }
+      } catch { /* non-critical */ }
+    }
+    loadPool();
+  }, [user?.uid, getIdToken]);
+
+  // Compute which strategies each watchlist stock matches
+  const matchedStrategiesMap = useMemo(() => {
+    if (stockPool.length === 0) return {} as Record<string, { id: string; name: string; nameZh: string; color: string }[]>;
+    const presets = getAllStrategyPresets().filter(p => p.id !== "seeking_alpha");
+    const map: Record<string, { id: string; name: string; nameZh: string; color: string }[]> = {};
+    presets.forEach(preset => {
+      const passed = applyFilters(stockPool, preset.defaultFilters);
+      passed.forEach(s => {
+        if (!map[s.symbol]) map[s.symbol] = [];
+        map[s.symbol].push({ id: preset.id, name: preset.name, nameZh: preset.nameZh || preset.name, color: preset.color });
+      });
+    });
+    return map;
+  }, [stockPool]);
 
   useEffect(() => {
     if (user?.uid) fetchWatchlist();
@@ -534,38 +583,137 @@ export default function WatchlistPage() {
               </Link>
             </div>
           ) : (
-            <div className="space-y-8">
-              
-              {/* Unassigned Pool */}
-              {(grouped["unassigned"]?.length > 0) && (
-                <div className="mb-8">
-                  <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
-                    <HelpCircle className="w-4 h-4" /> {t("Needs Allocation", "待分配")} ({grouped["unassigned"].length})
-                  </h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                    {grouped["unassigned"].map(renderStockCard)}
+            <div className="space-y-4">
+              {/* Table header */}
+              <div className="hidden md:grid md:grid-cols-[2.5rem_1fr_1fr_1.5fr_8rem_12rem] gap-4 items-center px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                <span>#</span>
+                <span>{t("Stock", "股票")}</span>
+                <span>{t("Current Price", "当前价格")}</span>
+                <span>{t("Matched Strategies", "入选策略")}</span>
+                <span className="text-right">{t("Target Price", "目标价")}</span>
+                <span className="text-right">{t("Actions", "操作")}</span>
+              </div>
+
+              {watchlist.map((item, idx) => {
+                const q = quotes[item.symbol];
+                const hasQuote = q && q.price > 0;
+                const changeColor = q && q.change_percent > 0 ? "text-emerald-400" : q && q.change_percent < 0 ? "text-red-400" : "text-slate-400";
+                const changePrefix = q && q.change_percent > 0 ? "+" : "";
+
+                // Determine matched strategies from stock pool
+                const stockData = stockPool.find(s => s.symbol === item.symbol);
+                const matched = stockData ? matchedStrategiesMap[item.symbol] || [] : [];
+
+                return (
+                  <div key={item.symbol} className="bg-slate-900 border border-slate-800 rounded-xl p-4 hover:border-slate-700 transition-colors">
+                    <div className="grid grid-cols-1 md:grid-cols-[2.5rem_1fr_1fr_1.5fr_8rem_12rem] gap-3 md:gap-4 items-center">
+                      
+                      {/* Rank */}
+                      <div className="hidden md:block">
+                        <span className="text-sm font-bold text-slate-600">#{idx + 1}</span>
+                      </div>
+
+                      {/* Stock Info */}
+                      <div className="flex items-center gap-3">
+                        <span className="md:hidden text-xs font-bold text-slate-600">#{idx + 1}</span>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="font-bold text-white text-base">{item.symbol}</span>
+                          </div>
+                          <span className="text-xs text-slate-500 line-clamp-1">{q?.company_name || item.symbol}</span>
+                        </div>
+                      </div>
+
+                      {/* Current Price */}
+                      <div>
+                        {hasQuote ? (
+                          <div className="flex items-baseline gap-2">
+                            <span className="text-lg font-bold font-mono text-white">${q.price.toFixed(2)}</span>
+                            <span className={`text-xs font-semibold font-mono ${changeColor}`}>
+                              {changePrefix}{q.change_percent.toFixed(2)}%
+                            </span>
+                          </div>
+                        ) : quotesLoading ? (
+                          <div className="w-24 h-5 bg-slate-800 rounded animate-pulse" />
+                        ) : (
+                          <span className="text-sm text-slate-600">—</span>
+                        )}
+                      </div>
+
+                      {/* Matched Strategies */}
+                      <div className="flex flex-wrap gap-1.5">
+                        {matched.length > 0 ? (
+                          matched.map(strat => (
+                            <span
+                              key={strat.id}
+                              className={`px-2 py-0.5 rounded-full text-[10px] font-medium border ${strategyBadgeColors[strat.color] || strategyBadgeColors.slate}`}
+                            >
+                              {lang === 'zh' ? strat.nameZh : strat.name}
+                            </span>
+                          ))
+                        ) : (
+                          <span className="text-xs text-slate-600 italic">{t("Not screened", "暂无策略匹配")}</span>
+                        )}
+                      </div>
+
+                      {/* Target Price */}
+                      <div className="md:text-right">
+                        {hasQuote && q.price > 0 ? (
+                          <span className="text-sm font-bold font-mono text-blue-400">
+                            {/* Simple momentum-based estimated target: use 52w high as proxy, or +15% heuristic */}
+                            ${(q.price * 1.15).toFixed(2)}
+                          </span>
+                        ) : (
+                          <span className="text-sm text-slate-600">—</span>
+                        )}
+                      </div>
+
+                      {/* Actions */}
+                      <div className="flex items-center gap-1.5 md:justify-end">
+                        {/* Sync to DailyStock */}
+                        {syncState[item.symbol] === 'synced' ? (
+                          <span className="p-1.5 rounded-md text-emerald-400" title={t("Synced to DailyStock", "已同步到 DailyStock")}>
+                            <Check className="w-3.5 h-3.5" />
+                          </span>
+                        ) : syncState[item.symbol] === 'already_exists' ? (
+                          <span className="p-1.5 rounded-md text-amber-400" title={t("Already in DailyStock observe list", "已在 DailyStock 观察清单中")}>
+                            <Check className="w-3.5 h-3.5" />
+                          </span>
+                        ) : syncState[item.symbol] === 'limit' ? (
+                          <span className="p-1.5 rounded-md text-red-400 cursor-help" title={t("Observe list limit reached. Upgrade your plan.", "观察清单已满，请升级计划。")}>
+                            <AlertTriangle className="w-3.5 h-3.5" />
+                          </span>
+                        ) : (
+                          <button
+                            onClick={() => openSyncConfirm(item.symbol)}
+                            className="p-1.5 rounded-md text-slate-500 hover:text-blue-400 hover:bg-blue-500/10 transition-colors"
+                            title={t("Sync to DailyStock observe list", "同步到 DailyStock 观察清单")}
+                          >
+                            <ArrowUpFromLine className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                        {/* Stock analysis report */}
+                        <button
+                          onClick={() => openAnalysis(item.symbol)}
+                          className="p-1.5 rounded-md text-slate-500 hover:text-purple-400 hover:bg-purple-500/10 transition-colors"
+                          title={t("View stock report", "查看股票报告")}
+                        >
+                          <FileText className="w-3.5 h-3.5" />
+                        </button>
+                        {/* Remove */}
+                        <button
+                          onClick={() => removeItem(item.symbol)}
+                          className="p-1.5 rounded-md text-slate-500 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                          title={t("Remove from portfolio", "从投资组合中移除")}
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+
+                    </div>
                   </div>
-                </div>
-              )}
-
-              {/* Growth Formation */}
-              <div>
-                <h3 className="text-sm font-bold text-blue-400 uppercase tracking-widest mb-4">{t("Growth & Scale Formation", "成长与扩张阵型")}</h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-                  {growthRoles.map(renderColumn)}
-                </div>
-              </div>
-
-              <div className="h-px bg-slate-800 my-8" />
-
-              {/* Value Formation */}
-              <div>
-                <h3 className="text-sm font-bold text-amber-400 uppercase tracking-widest mb-4">{t("Value & Income Formation", "价值与收益阵型")}</h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-                  {valueRoles.map(renderColumn)}
-                </div>
-              </div>
-
+                );
+              })}
             </div>
           )}
         </div>
