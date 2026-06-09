@@ -76,6 +76,10 @@ export default function ReportPage() {
     large_growth: t("Large-Cap Growth", "大盘成长"),
     small_growth: t("Small-Cap Growth", "小盘成长"),
     seeking_alpha: t("Seeking Alpha", "Seeking Alpha"),
+    garp: t("GARP", "合理价格成长"),
+    wide_moat: t("Wide Moat", "深宽护城河"),
+    short_term_catalyst: t("Short-Term Catalyst", "短线催化剂"),
+    multi_strategy: t("Multi-Strategy Matrix", "多策略共振矩阵"),
   }[strategy] || strategy.replace(/_/g, " ").toUpperCase();
 
   return (

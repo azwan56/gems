@@ -45,13 +45,13 @@ export default function SuperScreenerMatrix() {
   const { t, lang } = useLanguage();
   const [stocks, setStocks] = useState<StockMetrics[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedStock, setSelectedStock] = useState<MultiStrategyStock | null>(null);
 
-  // Load all stocks
+  // Load the full stock pool — we need all stocks to cross-check against every strategy
   useEffect(() => {
     async function loadAllStocks() {
       try {
-        const res = await fetch("/api/screener?strategy=large_growth&limit=2000");
+        const res = await fetch("/api/stock-pool?include=stocks");
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
         if (data && Array.isArray(data.stocks)) {
           setStocks(data.stocks);
@@ -59,7 +59,7 @@ export default function SuperScreenerMatrix() {
           setStocks(FALLBACK_STOCKS);
         }
       } catch (err) {
-        console.error("Failed to fetch stocks for matrix:", err);
+        console.error("Failed to fetch stock pool for matrix:", err);
         setStocks(FALLBACK_STOCKS);
       } finally {
         setLoading(false);
