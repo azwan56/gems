@@ -11,7 +11,7 @@ import type { StockMetrics } from "@/lib/types";
 import { requirePremium } from "@/lib/auth-middleware";
 
 const VALID_STRATEGIES = ["value", "large_growth", "small_growth"] as const;
-const ACCEPTED_STRATEGIES = ["value", "large_growth", "small_growth", "seeking_alpha"] as const;
+const ACCEPTED_STRATEGIES = ["value", "large_growth", "small_growth", "seeking_alpha", "garp", "wide_moat", "short_term_catalyst"] as const;
 type Strategy = (typeof VALID_STRATEGIES)[number];
 type Lang = "en" | "zh";
 
@@ -21,10 +21,14 @@ function isAcceptedStrategy(s: string): boolean {
 
 /**
  * Map incoming strategy to an analysis-compatible strategy.
- * seeking_alpha → large_growth (SA picks bypass screening but use growth-style analysis)
+ * seeking_alpha / garp → large_growth (growth-style analysis)
+ * wide_moat → value (value-style analysis)
+ * short_term_catalyst → small_growth (momentum-style analysis)
  */
 function toAnalysisStrategy(s: string): Strategy {
-  if (s === "seeking_alpha") return "large_growth";
+  if (s === "seeking_alpha" || s === "garp") return "large_growth";
+  if (s === "wide_moat") return "value";
+  if (s === "short_term_catalyst") return "small_growth";
   return s as Strategy;
 }
 
