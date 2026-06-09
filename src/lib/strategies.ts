@@ -72,6 +72,51 @@ export const STRATEGY_PRESETS: Record<string, StrategyPreset> = {
     color: "amber",
     defaultFilters: [], // No filters — SA stocks bypass Step 1
   },
+  garp: {
+    id: "garp",
+    name: "GARP (Growth At a Reasonable Price)",
+    nameZh: "合理价格成长",
+    description: "Combines growth and value investing. Looks for companies with strong EPS growth but undervalued PEG ratios.",
+    descriptionZh: "结合成长与价值投资。寻找具有强劲EPS增长但PEG估值偏低的公司。",
+    icon: "TrendingUp",
+    color: "emerald",
+    defaultFilters: [
+      { field: "epsGrowthYoY", operator: "gt", value: 20 },
+      { field: "pegRatio", operator: "gt", value: 0 },
+      { field: "pegRatio", operator: "lt", value: 1.0 },
+      { field: "marketCap", operator: "gt", value: 500_000_000 },
+    ],
+  },
+  wide_moat: {
+    id: "wide_moat",
+    name: "Wide Moat",
+    nameZh: "深宽护城河",
+    description: "Companies with enduring competitive advantages. Features high return on equity and superior gross margins.",
+    descriptionZh: "具有持久竞争优势的公司。拥有极高的净资产收益率(ROE)和优异的毛利率。",
+    icon: "Castle",
+    color: "slate",
+    defaultFilters: [
+      { field: "roe", operator: "gt", value: 15 },
+      { field: "grossMargin", operator: "gt", value: 40 },
+      { field: "marketCap", operator: "gt", value: 2_000_000_000 },
+      { field: "debtToEquity", operator: "lt", value: 1.0 },
+    ],
+  },
+  short_term_catalyst: {
+    id: "short_term_catalyst",
+    name: "Short-Term Catalyst",
+    nameZh: "短线催化剂",
+    description: "Momentum play focusing on technical breakouts and short-term trends.",
+    descriptionZh: "侧重于技术面突破和短期趋势的动量策略。",
+    icon: "Zap",
+    color: "rose",
+    defaultFilters: [
+      { field: "priceVs50SMA", operator: "gt", value: 0 },
+      { field: "priceVs200SMA", operator: "gt", value: 0 },
+      { field: "revenueGrowthYoY", operator: "gt", value: 5 },
+      { field: "marketCap", operator: "gt", value: 1_000_000_000 },
+    ],
+  },
 };
 
 /** Returns the preset for a given strategy type, or undefined */

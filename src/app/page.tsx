@@ -1,6 +1,6 @@
 "use client";
 
-import { ShieldCheck, TrendingUp, Activity, Gem, Rocket, Languages, BookOpen } from "lucide-react";
+import { ShieldCheck, TrendingUp, Activity, Gem, Rocket, Languages, BookOpen, Castle, Zap } from "lucide-react";
 import Link from "next/link";
 import { useLanguage } from "@/lib/language-context";
 import { useAuth } from "@/lib/auth-context";
@@ -62,6 +62,48 @@ const strategies = [
       { label: "Source", value: "Seeking Alpha" },
       { label: "Screening", value: "Bypassed" },
       { label: "Direct to", value: "Step 2" },
+    ],
+  },
+  {
+    id: "garp",
+    name: "GARP",
+    nameZh: "合理价格成长",
+    description: "Combines growth and value investing. Looks for companies with strong EPS growth but undervalued PEG ratios.",
+    descriptionZh: "结合成长与价值投资。寻找具有强劲EPS增长但PEG估值偏低的公司。",
+    icon: TrendingUp,
+    color: "emerald",
+    metrics: [
+      { label: "EPS Growth", value: "> 20%" },
+      { label: "PEG Ratio", value: "< 1.0" },
+      { label: "Market Cap", value: "> $500M" },
+    ],
+  },
+  {
+    id: "wide_moat",
+    name: "Wide Moat",
+    nameZh: "深宽护城河",
+    description: "Companies with enduring competitive advantages. Features high return on equity and superior gross margins.",
+    descriptionZh: "具有持久竞争优势的公司。拥有极高的净资产收益率(ROE)和优异的毛利率。",
+    icon: Castle,
+    color: "slate",
+    metrics: [
+      { label: "ROE", value: "> 15%" },
+      { label: "Gross Margin", value: "> 40%" },
+      { label: "D/E Ratio", value: "< 1.0" },
+    ],
+  },
+  {
+    id: "short_term_catalyst",
+    name: "Short-Term Catalyst",
+    nameZh: "短线催化剂",
+    description: "Momentum play focusing on technical breakouts and short-term trends.",
+    descriptionZh: "侧重于技术面突破和短期趋势的动量策略。",
+    icon: Zap,
+    color: "rose",
+    metrics: [
+      { label: "Price vs 50SMA", value: "> 0%" },
+      { label: "Price vs 200SMA", value: "> 0%" },
+      { label: "Rev Growth", value: "> 5%" },
     ],
   },
 ];
@@ -146,13 +188,16 @@ export default function Home() {
 
         {/* Strategy Cards — Premium Only */}
         <PremiumGate featureName={t("Quantitative Stock Screener", "量化选股系统")}>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 w-full max-w-[1400px] px-1">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 w-full max-w-[1400px] px-1">
           {strategies.map((strategy) => {
             const Icon = strategy.icon;
             const colorClass =
               strategy.color === "blue" ? "text-blue-400 border-blue-500 bg-blue-500" :
               strategy.color === "indigo" ? "text-indigo-400 border-indigo-500 bg-indigo-500" :
               strategy.color === "amber" ? "text-amber-400 border-amber-500 bg-amber-500" :
+              strategy.color === "emerald" ? "text-emerald-400 border-emerald-500 bg-emerald-500" :
+              strategy.color === "slate" ? "text-slate-400 border-slate-500 bg-slate-500" :
+              strategy.color === "rose" ? "text-rose-400 border-rose-500 bg-rose-500" :
               "text-purple-400 border-purple-500 bg-purple-500";
 
             return (

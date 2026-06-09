@@ -325,6 +325,19 @@ export default function FunnelScreenerPage() {
 
   const isValue = strategyId === "value";
   const isLarge = strategyId === "large_growth";
+  const isWideMoat = strategyId === "wide_moat";
+  const isShortCatalyst = strategyId === "short_term_catalyst";
+
+  // Static color class map to avoid Tailwind purging dynamic interpolation
+  const stepColorClasses: Record<string, string> = {
+    blue: "bg-blue-500/20 border-blue-500/50 text-blue-400",
+    indigo: "bg-indigo-500/20 border-indigo-500/50 text-indigo-400",
+    purple: "bg-purple-500/20 border-purple-500/50 text-purple-400",
+    amber: "bg-amber-500/20 border-amber-500/50 text-amber-400",
+    emerald: "bg-emerald-500/20 border-emerald-500/50 text-emerald-400",
+    slate: "bg-slate-500/20 border-slate-500/50 text-slate-400",
+    rose: "bg-rose-500/20 border-rose-500/50 text-rose-400",
+  };
 
   const step1Columns = useMemo(() => {
     if (isValue) return [
@@ -339,13 +352,25 @@ export default function FunnelScreenerPage() {
       { key: "freeCashFlowYield", label: t("FCF Yield", "自由现金流收益率"), suffix: "%", desc: t("Free cash flow per share divided by share price. Shows cash generation efficiency.", "自由现金流收益率：公司每股自由现金流与股价的比例，代表产生真实现金的能力。") },
       { key: "roe", label: t("ROE", "净资产收益率"), suffix: "%", desc: t("Return on Equity. Measures profitability relative to shareholder's equity.", "净资产收益率：净利润与股东权益的比率，衡量资本运作效率。") },
     ];
+    if (isWideMoat) return [
+      { key: "roe", label: t("ROE", "净资产收益率"), suffix: "%", desc: t("Return on Equity. High ROE indicates strong competitive advantage.", "净资产收益率：高ROE通常意味着强大的竞争优势。") },
+      { key: "grossMargin", label: t("Gross Margin", "毛利率"), suffix: "%", desc: t("Gross profit margin. Higher margin indicates pricing power.", "毛利率：较高的毛利率意味着较强的定价权。") },
+      { key: "debtToEquity", label: t("D/E Ratio", "债务股权比"), suffix: "x", desc: t("Debt to Equity ratio. Lower means less financial leverage risk.", "债务股权比：较低意味着更少的财务杠杆风险。") },
+      { key: "netMargin", label: t("Net Margin", "净利率"), suffix: "%", desc: t("Net profit margin after all expenses.", "净利率：扣除所有费用后的利润率。") },
+    ];
+    if (isShortCatalyst) return [
+      { key: "priceVs50SMA", label: t("vs 50SMA", "相对50日均线"), suffix: "%", desc: t("Price relative to 50-day SMA. Positive means short-term uptrend.", "相对50日均线：正值代表短期上升趋势。") },
+      { key: "priceVs200SMA", label: t("vs 200SMA", "相对200日均线"), suffix: "%", desc: t("Price relative to 200-day SMA. Positive means long-term uptrend.", "相对200日均线：正值代表长期上升趋势。") },
+      { key: "revenueGrowthYoY", label: t("Rev Growth", "营收增长"), suffix: "%", desc: t("Revenue growth year-over-year.", "营收增长：营业收入同比增长率。") },
+      { key: "epsGrowthYoY", label: t("EPS Growth", "EPS增长"), suffix: "%", desc: t("Earnings per share growth.", "EPS增长：每股收益同比增长率。") },
+    ];
     return [
       { key: "revenueGrowthYoY", label: t("Rev Growth", "营收增长"), suffix: "%", desc: t("Revenue growth year-over-year. Indicates business expansion.", "营收增长：营业收入同比上一年的增长率，反映业务扩张速度。") },
       { key: "epsGrowthYoY", label: t("EPS Growth", "EPS增长"), suffix: "%", desc: t("Earnings per share growth. Shows profitability growth.", "EPS增长：每股收益同比增长率，反映盈利增长速度。") },
       { key: "pegRatio", label: t("PEG", "PEG比率"), suffix: "x", desc: t("P/E ratio divided by growth rate. A lower PEG suggests better value relative to growth.", "PEG比率：市盈率除以盈利增长率，综合考量估值与成长性。") },
       { key: "priceVs50SMA", label: t("vs 50SMA", "相对50日均线"), suffix: "%", desc: t("Price relative to 50-day simple moving average. Positive means upward momentum.", "相对50日均线：当前股价高于过去50天平均价格的百分比，正值代表近期动量向上。") },
     ];
-  }, [isValue, isLarge, t]);
+  }, [isValue, isLarge, isWideMoat, isShortCatalyst, t]);
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-950 text-slate-200">
@@ -393,7 +418,7 @@ export default function FunnelScreenerPage() {
               <div className={`flex items-center gap-2 sm:gap-3 min-w-0 ${currentStep === s.step ? "opacity-100" : currentStep > s.step || (isSA && s.step === 1) ? "opacity-60" : "opacity-30 grayscale"}`}>
                 <div className={`p-1.5 sm:p-2.5 rounded-lg border flex-shrink-0 ${
                   currentStep === s.step 
-                    ? `bg-${preset.color}-500/20 border-${preset.color}-500/50 text-${preset.color}-400`
+                    ? stepColorClasses[preset.color] || "bg-blue-500/20 border-blue-500/50 text-blue-400"
                     : "bg-slate-800 border-slate-700 text-slate-400"
                 }`}>
                   <s.icon className="w-4 h-4 sm:w-5 sm:h-5" />
