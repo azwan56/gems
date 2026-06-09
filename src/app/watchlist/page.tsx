@@ -151,36 +151,28 @@ export default function WatchlistPage() {
     return () => clearInterval(interval);
   }, [watchlist, getIdToken]);
 
-  // Fetch analyst target prices from backend deep-insights for each stock
-  const PYTHON_BACKEND = process.env.NEXT_PUBLIC_PYTHON_BACKEND_URL || "https://api.vanpower.live";
+  // Fetch analyst target prices via server-side proxy (avoids CORS)
   useEffect(() => {
     if (watchlist.length === 0) return;
     let cancelled = false;
     const fetchTargets = async () => {
       setTargetPricesLoading(true);
-      const results: Record<string, TargetPriceData> = {};
-      // Fetch in parallel but with a small batch to avoid overwhelming the backend
-      const symbols = watchlist.map(w => w.symbol);
-      await Promise.allSettled(
-        symbols.map(async (sym) => {
-          try {
-            const res = await fetch(`${PYTHON_BACKEND}/api/deep-insights?symbol=${encodeURIComponent(sym)}`);
-            if (res.ok) {
-              const data = await res.json();
-              const pt = data?.insights?.price_target;
-              if (pt && pt.targetConsensus) {
-                results[sym] = pt;
-              }
-            }
-          } catch { /* ignore per-stock failures */ }
-        })
-      );
-      if (!cancelled) setTargetPrices(results);
+      try {
+        const token = await getIdToken();
+        const symbols = watchlist.map(w => w.symbol).join(",");
+        const res = await fetch(`/api/target-prices?symbols=${encodeURIComponent(symbols)}`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (!cancelled) setTargetPrices(data.targets || {});
+        }
+      } catch { /* ignore — target prices are non-critical */ }
       if (!cancelled) setTargetPricesLoading(false);
     };
     fetchTargets();
     return () => { cancelled = true; };
-  }, [watchlist]);
+  }, [watchlist, getIdToken]);
 
   // Fetch observe list status (which stocks are synced to DailyStock)
   useEffect(() => {
