@@ -2,6 +2,7 @@
 
 import React, { useMemo, useState, useEffect } from "react";
 import { useLanguage } from "@/lib/language-context";
+import { useAuth } from "@/lib/auth-context";
 import { StockMetrics } from "@/lib/types";
 import { getAllStrategyPresets } from "@/lib/strategies";
 import { applyFilters } from "@/lib/screener-engine";
@@ -43,14 +44,20 @@ interface MultiStrategyStock extends StockMetrics {
 
 export default function SuperScreenerMatrix() {
   const { t, lang } = useLanguage();
+  const { user, getIdToken, loading: authLoading } = useAuth();
   const [stocks, setStocks] = useState<StockMetrics[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Load the full stock pool — we need all stocks to cross-check against every strategy
   useEffect(() => {
+    if (authLoading || !user) return;
+
     async function loadAllStocks() {
       try {
-        const res = await fetch("/api/stock-pool?include=stocks");
+        const token = await getIdToken();
+        const res = await fetch("/api/stock-pool?include=stocks", {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
         if (data && Array.isArray(data.stocks)) {
@@ -66,7 +73,7 @@ export default function SuperScreenerMatrix() {
       }
     }
     loadAllStocks();
-  }, []);
+  }, [authLoading, user, getIdToken]);
 
   // Compute matrix
   const matrixStocks = useMemo(() => {
