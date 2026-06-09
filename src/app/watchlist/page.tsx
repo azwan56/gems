@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from "react";
 import Link from "next/link";
-import { Gem, ArrowLeft, StarOff, Trash2, Shield, Sword, Rocket, CircleDollarSign, RefreshCcw, AlertTriangle, HelpCircle, ChevronDown, Languages, ArrowUpFromLine, Check, Loader2, X, FileText, TrendingUp, Activity, ActivitySquare, Target, Users, Zap, ShieldAlert, Download } from "lucide-react";
+import { Gem, ArrowLeft, StarOff, Trash2, Shield, Sword, Rocket, CircleDollarSign, RefreshCcw, AlertTriangle, HelpCircle, ChevronDown, Languages, ArrowUpFromLine, Check, Loader2, X, FileText, TrendingUp, Activity, ActivitySquare, Target, Users, Zap, ShieldAlert, Download, Eye } from "lucide-react";
 import type { WatchlistItem, StockMetrics } from "@/lib/types";
 import { useLanguage } from "@/lib/language-context";
 import { useAuth } from "@/lib/auth-context";
@@ -58,6 +58,19 @@ export default function WatchlistPage() {
 
   // Stock pool for strategy matching
   const [stockPool, setStockPool] = useState<StockMetrics[]>([]);
+
+  // Analyst target prices from FMP deep insights
+  interface TargetPriceData {
+    targetConsensus: number;
+    targetHigh: number;
+    targetLow: number;
+    targetMedian: number;
+  }
+  const [targetPrices, setTargetPrices] = useState<Record<string, TargetPriceData>>({});
+  const [targetPricesLoading, setTargetPricesLoading] = useState(false);
+
+  // Observe list status — set of symbols already synced to DailyStock
+  const [observeListSymbols, setObserveListSymbols] = useState<Set<string>>(new Set());
 
   // Confirmation modal state
   interface SyncPreview {
@@ -121,7 +134,10 @@ export default function WatchlistPage() {
     const fetchQuotes = async () => {
       setQuotesLoading(true);
       try {
-        const res = await fetch(`/api/quotes?symbols=${encodeURIComponent(symbols)}`);
+        const token = await getIdToken();
+        const res = await fetch(`/api/quotes?symbols=${encodeURIComponent(symbols)}`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
         if (res.ok) {
           const data = await res.json();
           setQuotes(data.quotes || {});
@@ -133,7 +149,72 @@ export default function WatchlistPage() {
     // Refresh quotes every 60 seconds while the page is open
     const interval = setInterval(fetchQuotes, 60_000);
     return () => clearInterval(interval);
+  }, [watchlist, getIdToken]);
+
+  // Fetch analyst target prices from backend deep-insights for each stock
+  const PYTHON_BACKEND = process.env.NEXT_PUBLIC_PYTHON_BACKEND_URL || "https://api.vanpower.live";
+  useEffect(() => {
+    if (watchlist.length === 0) return;
+    let cancelled = false;
+    const fetchTargets = async () => {
+      setTargetPricesLoading(true);
+      const results: Record<string, TargetPriceData> = {};
+      // Fetch in parallel but with a small batch to avoid overwhelming the backend
+      const symbols = watchlist.map(w => w.symbol);
+      await Promise.allSettled(
+        symbols.map(async (sym) => {
+          try {
+            const res = await fetch(`${PYTHON_BACKEND}/api/deep-insights?symbol=${encodeURIComponent(sym)}`);
+            if (res.ok) {
+              const data = await res.json();
+              const pt = data?.insights?.price_target;
+              if (pt && pt.targetConsensus) {
+                results[sym] = pt;
+              }
+            }
+          } catch { /* ignore per-stock failures */ }
+        })
+      );
+      if (!cancelled) setTargetPrices(results);
+      if (!cancelled) setTargetPricesLoading(false);
+    };
+    fetchTargets();
+    return () => { cancelled = true; };
   }, [watchlist]);
+
+  // Fetch observe list status (which stocks are synced to DailyStock)
+  useEffect(() => {
+    if (!user?.uid) return;
+    async function loadObserveList() {
+      try {
+        // Use the first watchlist symbol to check observe list, or just fetch user doc
+        const token = await getIdToken();
+        // We can check any symbol — the GET returns observeListCount and the full list
+        // But we need to check each symbol — simpler: use the first symbol to get the observe list shape
+        // Actually the sync-dailystock GET returns alreadyInList per symbol, so batch check:
+        const checks = await Promise.allSettled(
+          watchlist.map(async (item) => {
+            const res = await fetch(`/api/sync-dailystock?symbol=${encodeURIComponent(item.symbol)}`, {
+              headers: token ? { Authorization: `Bearer ${token}` } : {},
+            });
+            if (res.ok) {
+              const data = await res.json();
+              return { symbol: item.symbol, inList: data.alreadyInList };
+            }
+            return { symbol: item.symbol, inList: false };
+          })
+        );
+        const synced = new Set<string>();
+        checks.forEach(r => {
+          if (r.status === 'fulfilled' && r.value.inList) {
+            synced.add(r.value.symbol);
+          }
+        });
+        setObserveListSymbols(synced);
+      } catch { /* non-critical */ }
+    }
+    if (watchlist.length > 0) loadObserveList();
+  }, [watchlist, user?.uid, getIdToken]);
 
   const fetchWatchlist = async () => {
     if (!user?.uid) return;
@@ -585,7 +666,7 @@ export default function WatchlistPage() {
           ) : (
             <div className="space-y-4">
               {/* Table header */}
-              <div className="hidden md:grid md:grid-cols-[2.5rem_1fr_1fr_1.5fr_8rem_12rem] gap-4 items-center px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+              <div className="hidden md:grid md:grid-cols-[2.5rem_1.2fr_1fr_1.5fr_10rem_12rem] gap-4 items-center px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">
                 <span>#</span>
                 <span>{t("Stock", "股票")}</span>
                 <span>{t("Current Price", "当前价格")}</span>
@@ -603,35 +684,53 @@ export default function WatchlistPage() {
                 // Determine matched strategies from stock pool
                 const stockData = stockPool.find(s => s.symbol === item.symbol);
                 const matched = stockData ? matchedStrategiesMap[item.symbol] || [] : [];
+                const companyName = stockData?.companyName || q?.company_name || item.symbol;
+                const sector = stockData?.sector || "";
+                const industry = stockData?.industry || "";
+                const isObserved = observeListSymbols.has(item.symbol);
+                const tp = targetPrices[item.symbol];
+                const currentPrice = hasQuote ? q.price : 0;
+                const upsidePercent = tp && currentPrice > 0 ? ((tp.targetConsensus - currentPrice) / currentPrice * 100) : null;
 
                 return (
                   <div key={item.symbol} className="bg-slate-900 border border-slate-800 rounded-xl p-4 hover:border-slate-700 transition-colors">
-                    <div className="grid grid-cols-1 md:grid-cols-[2.5rem_1fr_1fr_1.5fr_8rem_12rem] gap-3 md:gap-4 items-center">
+                    <div className="grid grid-cols-1 md:grid-cols-[2.5rem_1.2fr_1fr_1.5fr_10rem_12rem] gap-3 md:gap-4 items-center">
                       
                       {/* Rank */}
                       <div className="hidden md:block">
                         <span className="text-sm font-bold text-slate-600">#{idx + 1}</span>
                       </div>
 
-                      {/* Stock Info */}
+                      {/* Stock Info — enriched with company, sector/industry, observe status */}
                       <div className="flex items-center gap-3">
                         <span className="md:hidden text-xs font-bold text-slate-600">#{idx + 1}</span>
-                        <div>
+                        <div className="min-w-0">
                           <div className="flex items-center gap-2">
                             <span className="font-bold text-white text-base">{item.symbol}</span>
+                            {isObserved && (
+                              <span className="flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-cyan-500/10 border border-cyan-500/20" title={t("Synced to DailyStock observe list", "已同步至观察清单")}>
+                                <Eye className="w-3 h-3 text-cyan-400" />
+                                <span className="text-[9px] font-medium text-cyan-400 hidden sm:inline">{t("Observed", "观察中")}</span>
+                              </span>
+                            )}
                           </div>
-                          <span className="text-xs text-slate-500 line-clamp-1">{q?.company_name || item.symbol}</span>
+                          <p className="text-xs text-slate-400 line-clamp-1">{companyName}</p>
+                          {(sector || industry) && (
+                            <p className="text-[10px] text-slate-600 line-clamp-1 mt-0.5">
+                              {sector}{sector && industry ? " · " : ""}{industry}
+                            </p>
+                          )}
                         </div>
                       </div>
 
-                      {/* Current Price */}
+                      {/* Current Price — from quotes API */}
                       <div>
                         {hasQuote ? (
-                          <div className="flex items-baseline gap-2">
+                          <div>
                             <span className="text-lg font-bold font-mono text-white">${q.price.toFixed(2)}</span>
-                            <span className={`text-xs font-semibold font-mono ${changeColor}`}>
+                            <div className={`text-xs font-semibold font-mono ${changeColor}`}>
                               {changePrefix}{q.change_percent.toFixed(2)}%
-                            </span>
+                            </div>
                           </div>
                         ) : quotesLoading ? (
                           <div className="w-24 h-5 bg-slate-800 rounded animate-pulse" />
@@ -656,13 +755,21 @@ export default function WatchlistPage() {
                         )}
                       </div>
 
-                      {/* Target Price */}
+                      {/* Target Price — from FMP analyst consensus */}
                       <div className="md:text-right">
-                        {hasQuote && q.price > 0 ? (
-                          <span className="text-sm font-bold font-mono text-blue-400">
-                            {/* Simple momentum-based estimated target: use 52w high as proxy, or +15% heuristic */}
-                            ${(q.price * 1.15).toFixed(2)}
-                          </span>
+                        {tp ? (
+                          <div>
+                            <span className="text-sm font-bold font-mono text-blue-400">
+                              ${tp.targetConsensus.toFixed(2)}
+                            </span>
+                            {upsidePercent !== null && (
+                              <div className={`text-[10px] font-semibold font-mono ${upsidePercent >= 0 ? "text-emerald-400" : "text-red-400"}`}>
+                                {upsidePercent >= 0 ? "↑" : "↓"} {Math.abs(upsidePercent).toFixed(1)}%
+                              </div>
+                            )}
+                          </div>
+                        ) : targetPricesLoading ? (
+                          <div className="w-16 h-5 bg-slate-800 rounded animate-pulse ml-auto" />
                         ) : (
                           <span className="text-sm text-slate-600">—</span>
                         )}
