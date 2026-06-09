@@ -6,7 +6,7 @@ import { calculateFundamentalScore, calculateTechnicalScore } from "./scoring-en
 
 export async function generateGeminiAnalysis(
   stock: StockMetrics,
-  strategyType: "value" | "large_growth" | "small_growth",
+  strategyType: "value" | "large_growth" | "small_growth" | "multi_strategy",
   language: "en" | "zh" = "en"
 ): Promise<StockAnalysisReport> {
   const cacheKey = `gemini:${stock.symbol.toUpperCase()}:${strategyType}:${language}`;
@@ -23,9 +23,38 @@ export async function generateGeminiAnalysis(
 
   const ai = new GoogleGenAI({ apiKey });
 
+  // Try to fetch deep insights from the Python backend
+  let deepInsightsStr = "";
+  try {
+    const pythonBackendUrl = process.env.NEXT_PUBLIC_PYTHON_BACKEND_URL || "https://api.vanpower.live";
+    const res = await fetch(`${pythonBackendUrl}/api/deep-insights?symbol=${stock.symbol}`, { next: { revalidate: 3600 } });
+    if (res.ok) {
+      const data = await res.json();
+      if (data.insights && Object.keys(data.insights).length > 0) {
+        deepInsightsStr = `
+Deep Fundamental Insights (FMP Data):
+- Institutional Ownership: ${data.insights.institutional ? `Total Invested $${(data.insights.institutional.totalInvested / 1e9).toFixed(2)}B by ${data.insights.institutional.investorsHolding} investors` : 'N/A'}
+- Recent Insider Trading: ${data.insights.insider_trading ? data.insights.insider_trading.map((t: any) => `${t.transactionType} of ${t.securitiesTransacted} shares @ $${t.price} by ${t.reportingName}`).join('; ') : 'N/A'}
+- Analyst Consensus: ${data.insights.analyst_ratings ? `${data.insights.analyst_ratings.consensus} (Strong Buy: ${data.insights.analyst_ratings.strongBuy}, Buy: ${data.insights.analyst_ratings.buy}, Hold: ${data.insights.analyst_ratings.hold}, Sell: ${data.insights.analyst_ratings.sell})` : 'N/A'}
+- Analyst Price Target: ${data.insights.price_target ? `Consensus $${data.insights.price_target.targetConsensus} (High: $${data.insights.price_target.targetHigh}, Low: $${data.insights.price_target.targetLow})` : 'N/A'}
+`;
+      }
+    }
+  } catch (error) {
+    console.warn(`[gemini] Failed to fetch deep insights for ${stock.symbol}`, error);
+  }
+
+  let strategyContext = "";
+  if (strategyType === "multi_strategy") {
+    strategyContext = "This stock is a highly-coveted 'Multi-Strategy Matrix' pick, meaning it simultaneously passes multiple stringent quantitative screening criteria (such as GARP, Wide Moat, Short-Term Momentum, etc.). You must highlight this multi-dimensional strength.";
+  } else {
+    strategyContext = `based on a ${strategyType} investment strategy.`;
+  }
+
   const prompt = `
 You are a top-tier Wall Street quantitative and qualitative equity analyst. 
-You are tasked with writing a deep-dive investment memo for ${stock.companyName} (${stock.symbol}) based on the following real-time metrics and a ${strategyType} investment strategy.
+You are tasked with writing a deep-dive investment memo for ${stock.companyName} (${stock.symbol}).
+${strategyContext}
 
 Metrics Data:
 - Sector: ${stock.sector}
@@ -42,6 +71,7 @@ Metrics Data:
 - Gross Margin: ${stock.grossMargin !== null ? stock.grossMargin + "%" : "N/A"}
 - Net Margin: ${stock.netMargin !== null ? stock.netMargin + "%" : "N/A"}
 - Price vs 50SMA: ${stock.priceVs50SMA !== null ? stock.priceVs50SMA + "%" : "N/A"}
+${deepInsightsStr}
 
 Please provide a structured report. Make it sound extremely professional, insightful, and specific to the company's real-world business model and recent macroeconomic environment.
 Do not use generic fluff. Use the provided metrics to ground your analysis.
@@ -50,7 +80,7 @@ IMPORTANT LANGUAGE INSTRUCTION:
 Please generate the entire report (including all text fields like overview, fundamentals, products, rationale, risks) in ${language === "zh" ? "Simplified Chinese (简体中文)" : "English"}.
 
 Rules for fields:
-- overview: A strong paragraph (3-4 sentences) summarizing the company's moat, TAM, and why it fits the ${strategyType} strategy.
+- overview: A strong paragraph (3-4 sentences) summarizing the company's moat, TAM, and why it fits the given strategy (or why it's a multi-strategy winner). Incorporate the deep insights (institutional/insider/analyst) if available and relevant.
 - fundamentals: A paragraph analyzing their margins, growth rates, and capital efficiency based on the provided metrics.
 - products: A paragraph explaining their core revenue drivers and product/service ecosystem.
 - rationale: Array of 3 specific reasons to buy or hold this stock right now.

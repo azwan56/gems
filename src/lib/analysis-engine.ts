@@ -66,7 +66,7 @@ function seedFromSymbol(symbol: string): number {
  */
 export function generateAnalysis(
   stock: StockMetrics,
-  strategyType: "value" | "large_growth" | "small_growth"
+  strategyType: "value" | "large_growth" | "small_growth" | "multi_strategy"
 ): StockAnalysisReport {
   const seed = seedFromSymbol(stock.symbol);
   const upside = ((seed % 200) / 10 + 5).toFixed(1); // 5.0 – 25.0
@@ -187,7 +187,7 @@ export function generateAnalysis(
  */
 export function generateAnalysisBatch(
   stocks: StockMetrics[],
-  strategyType: "value" | "large_growth" | "small_growth"
+  strategyType: "value" | "large_growth" | "small_growth" | "multi_strategy"
 ): StockAnalysisReport[] {
   return stocks.map((s) => generateAnalysis(s, strategyType));
 }

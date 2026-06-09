@@ -1,6 +1,6 @@
 "use client";
 
-import { ShieldCheck, TrendingUp, Activity, Gem, Rocket, Languages, BookOpen, Castle, Zap } from "lucide-react";
+import { ShieldCheck, TrendingUp, Activity, Gem, Rocket, Languages, BookOpen, Castle, Zap, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { useLanguage } from "@/lib/language-context";
 import { useAuth } from "@/lib/auth-context";
@@ -189,6 +189,41 @@ export default function Home() {
         {/* Strategy Cards — Premium Only */}
         <PremiumGate featureName={t("Quantitative Stock Screener", "量化选股系统")}>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 w-full max-w-[1400px] px-1">
+          {/* Super Screener Matrix Card */}
+          <Link
+            href="/screener/matrix"
+            className="group relative overflow-hidden rounded-xl border border-indigo-500/30 bg-slate-800/40 backdrop-blur-sm p-5 sm:p-8 transition-all duration-300 hover:bg-slate-800/80 hover:border-indigo-500/80 hover:shadow-2xl hover:shadow-indigo-500/10 hover:-translate-y-1 cursor-pointer flex flex-col col-span-1"
+          >
+            <div className="absolute -top-4 -right-4 opacity-[0.06] group-hover:opacity-[0.12] transition-opacity duration-500">
+              <Activity className="w-40 h-40" />
+            </div>
+            <div className="flex items-center gap-3 sm:gap-4 mb-3 sm:mb-4 relative z-10">
+              <div className="p-3 rounded-lg border border-indigo-500/30 bg-indigo-500/20 text-indigo-400">
+                <Activity className="w-6 h-6" />
+              </div>
+              <div>
+                <h2 className="text-lg sm:text-xl font-bold bg-gradient-to-r from-indigo-400 to-cyan-400 bg-clip-text text-transparent">
+                  {lang === "en" ? "Super Screener" : "多策略共振矩阵"}
+                </h2>
+                <p className="text-sm text-slate-500">
+                  {lang === "en" ? "多策略共振矩阵" : "Multi-Strategy Matrix"}
+                </p>
+              </div>
+            </div>
+            <p className="text-xs sm:text-sm text-slate-400 mb-4 sm:mb-6 leading-relaxed relative z-10 flex-1">
+              {lang === "en" 
+                ? "Discover high-conviction stocks that simultaneously pass multiple stringent quantitative models." 
+                : "发现同时通过多个严苛量化筛选模型的高确信度投资标的。"}
+            </p>
+            <div className="flex items-center justify-between mt-auto relative z-10 pt-4 sm:pt-5 border-t border-slate-700/50">
+              <div className="flex items-center gap-1.5 text-xs font-semibold tracking-wider uppercase text-indigo-400">
+                <Gem className="w-3.5 h-3.5" />
+                <span>Premium Conviction</span>
+              </div>
+              <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 text-slate-500 group-hover:text-white group-hover:translate-x-1 transition-all" />
+            </div>
+          </Link>
+
           {strategies.map((strategy) => {
             const Icon = strategy.icon;
             const colorClass =

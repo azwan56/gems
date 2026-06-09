@@ -10,8 +10,8 @@ import { resolveStock } from "@/lib/stock-resolver";
 import type { StockMetrics } from "@/lib/types";
 import { requirePremium } from "@/lib/auth-middleware";
 
-const VALID_STRATEGIES = ["value", "large_growth", "small_growth"] as const;
-const ACCEPTED_STRATEGIES = ["value", "large_growth", "small_growth", "seeking_alpha", "garp", "wide_moat", "short_term_catalyst"] as const;
+const VALID_STRATEGIES = ["value", "large_growth", "small_growth", "multi_strategy"] as const;
+const ACCEPTED_STRATEGIES = ["value", "large_growth", "small_growth", "seeking_alpha", "garp", "wide_moat", "short_term_catalyst", "multi_strategy"] as const;
 type Strategy = (typeof VALID_STRATEGIES)[number];
 type Lang = "en" | "zh";
 
