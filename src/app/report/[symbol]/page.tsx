@@ -204,13 +204,7 @@ export default function ReportPage() {
               <div className="mt-2 pt-2 border-t border-slate-200">
                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">{t("Wall Street Avg", "华尔街平均估值")}</p>
                 {analystTarget !== null ? (
-                  <div>
-                    <span className="text-xl font-bold text-slate-700">${analystTarget.toFixed(2)}</span>
-                    <p className="text-[9px] text-slate-400 mt-0.5 font-mono">
-                      {t("Valuation Date: ", "估价日期: ")}
-                      {new Date().toLocaleDateString(lang === "zh" ? "zh-CN" : "en-US")}
-                    </p>
-                  </div>
+                  <span className="text-xl font-bold text-slate-700">${analystTarget.toFixed(2)}</span>
                 ) : (
                   <span className="text-xs text-slate-400 italic">{t("Loading...", "加载中...")}</span>
                 )}
