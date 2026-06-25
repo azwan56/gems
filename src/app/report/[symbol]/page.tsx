@@ -25,6 +25,7 @@ export default function ReportPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
+  const [analystTarget, setAnalystTarget] = useState<number | null>(null);
 
   const handleSaveAsPDF = async () => {
     try {
@@ -52,10 +53,12 @@ export default function ReportPage() {
   useEffect(() => {
     if (!symbol || authLoading) return;
     
-    async function fetchReport() {
+    async function fetchData() {
       try {
         setLoading(true);
         const token = await getIdToken();
+        
+        // Fetch report
         const res = await fetch(`/api/analysis?symbol=${symbol}&strategy=${strategy}&lang=${lang}`, {
           headers: token ? { Authorization: `Bearer ${token}` } : {},
         });
@@ -65,6 +68,21 @@ export default function ReportPage() {
         }
         const data = await res.json();
         setReport(data.report);
+
+        // Fetch analyst target consensus (non-blocking)
+        try {
+          const targetRes = await fetch(`/api/target-prices?symbols=${symbol}`, {
+            headers: token ? { Authorization: `Bearer ${token}` } : {},
+          });
+          if (targetRes.ok) {
+            const targetData = await targetRes.json();
+            if (targetData?.targets && targetData.targets[symbol]) {
+              setAnalystTarget(targetData.targets[symbol].targetConsensus);
+            }
+          }
+        } catch (targetErr) {
+          console.warn("Failed to fetch analyst target price", targetErr);
+        }
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to load");
       } finally {
@@ -72,7 +90,7 @@ export default function ReportPage() {
       }
     }
 
-    fetchReport();
+    fetchData();
   }, [symbol, strategy, lang, authLoading, getIdToken]);
 
   if (loading || authLoading) {
@@ -177,12 +195,28 @@ export default function ReportPage() {
             
             {/* Target Price Visualization */}
             <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 w-64 text-right">
-              <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1">{t("Target Price", "目标价")}</p>
+              <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1">{t("Target Price (AI)", "目标价 (AI预测)")}</p>
               <div className="flex justify-end items-baseline gap-2">
                 <span className="text-3xl font-black text-blue-900">{report.analyst.targetPrice}</span>
                 <span className="text-sm font-bold text-emerald-600">{report.analyst.upside}</span>
               </div>
-              <div className="text-[10px] text-slate-400 mt-2 flex justify-end gap-3">
+              
+              <div className="mt-2 pt-2 border-t border-slate-200">
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">{t("Wall Street Avg", "华尔街平均估值")}</p>
+                {analystTarget !== null ? (
+                  <div>
+                    <span className="text-xl font-bold text-slate-700">${analystTarget.toFixed(2)}</span>
+                    <p className="text-[9px] text-slate-400 mt-0.5 font-mono">
+                      {t("Valuation Date: ", "估价日期: ")}
+                      {new Date().toLocaleDateString(lang === "zh" ? "zh-CN" : "en-US")}
+                    </p>
+                  </div>
+                ) : (
+                  <span className="text-xs text-slate-400 italic">{t("Loading...", "加载中...")}</span>
+                )}
+              </div>
+
+              <div className="text-[10px] text-slate-400 mt-2 pt-2 border-t border-slate-200 flex justify-end gap-3">
                 <span>{t("Buy", "买入")}: {report.analyst.breakdown.buy}</span>
                 <span>{t("Hold", "持有")}: {report.analyst.breakdown.hold}</span>
                 <span>{t("Sell", "卖出")}: {report.analyst.breakdown.sell}</span>
