@@ -24,6 +24,20 @@ vi.mock("@google/genai", () => {
   };
 });
 
+// Mock the Firebase Admin SDK to bypass Firestore caching during tests
+vi.mock("@/lib/firebase", () => {
+  return {
+    getDb: () => ({
+      collection: () => ({
+        doc: () => ({
+          get: async () => ({ exists: false }),
+          set: async () => {},
+        }),
+      }),
+    }),
+  };
+});
+
 const validResponse = {
   text: JSON.stringify({
     symbol: "TEST",

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useSearchParams } from "next/navigation";
-import { Loader2, Printer, ChevronLeft, ShieldAlert, Zap, TrendingUp, ActivitySquare, Rocket, Gem } from "lucide-react";
+import { Loader2, Download, ChevronLeft, ShieldAlert, Zap, TrendingUp, ActivitySquare, Rocket, Gem } from "lucide-react";
 import Link from "next/link";
 import type { StockAnalysisReport } from "@/lib/analysis-engine";
 import { useAuth } from "@/lib/auth-context";
@@ -24,6 +24,30 @@ export default function ReportPage() {
   const [report, setReport] = useState<StockAnalysisReport | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
+
+  const handleSaveAsPDF = async () => {
+    try {
+      setIsGeneratingPDF(true);
+      const element = document.getElementById("report-content");
+      if (!element) return;
+      const html2pdf = (await import("html2pdf.js")).default;
+      
+      const opt = {
+        margin:       10,
+        filename:     `${report?.symbol || "GEMS_QUANT"}_report.pdf`,
+        image:        { type: 'jpeg', quality: 0.98 },
+        html2canvas:  { scale: 2, useCORS: true },
+        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+      };
+
+      await html2pdf().set(opt as any).from(element).save();
+    } catch (error) {
+      console.error("Error generating PDF", error);
+    } finally {
+      setIsGeneratingPDF(false);
+    }
+  };
 
   useEffect(() => {
     if (!symbol || authLoading) return;
@@ -85,7 +109,7 @@ export default function ReportPage() {
   return (
     <>
       {/* Inline print styles — scoped to this page */}
-      <style jsx global>{`
+      <style dangerouslySetInnerHTML={{ __html: `
         @media print {
           html, body {
             background: white !important;
@@ -101,7 +125,7 @@ export default function ReportPage() {
             break-inside: avoid;
           }
         }
-      `}</style>
+      ` }} />
 
       <div className="min-h-screen bg-slate-100 print:bg-white text-slate-900 font-sans pb-20 print:pb-0">
         {/* Floating Action Bar (hidden when printing) */}
@@ -113,15 +137,17 @@ export default function ReportPage() {
             <ChevronLeft className="w-5 h-5" /> {t("Back", "返回")}
           </button>
           <button 
-            onClick={() => window.print()} 
-            className="px-8 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold flex items-center gap-2 shadow-lg shadow-blue-500/30 transition-all hover:scale-105"
+            onClick={handleSaveAsPDF} 
+            disabled={isGeneratingPDF}
+            className="px-8 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold flex items-center gap-2 shadow-lg shadow-blue-500/30 transition-all hover:scale-105 disabled:opacity-70 disabled:hover:scale-100 disabled:cursor-not-allowed"
           >
-            <Printer className="w-5 h-5" /> {t("Print / Save as PDF", "打印 / 保存为 PDF")}
+            {isGeneratingPDF ? <Loader2 className="w-5 h-5 animate-spin" /> : <Download className="w-5 h-5" />} 
+            {isGeneratingPDF ? t("Generating...", "生成中...") : t("Save as PDF", "保存为 PDF")}
           </button>
         </div>
 
         {/* A4 Page Container */}
-        <div className="max-w-[800px] mx-auto bg-white shadow-xl mt-8 mb-24 min-h-[1122px] p-10 relative print:shadow-none print:m-0 print:mt-0 print:mb-0 print:max-w-none print:min-h-0 print:p-0">
+        <div id="report-content" className="max-w-[800px] mx-auto bg-white shadow-xl mt-8 mb-24 min-h-[1122px] p-10 relative print:shadow-none print:m-0 print:mt-0 print:mb-0 print:max-w-none print:min-h-0 print:p-0">
           
           {/* Header */}
           <header className="report-section border-b-2 border-blue-900 pb-6 mb-8 flex justify-between items-end">

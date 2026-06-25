@@ -6,11 +6,14 @@ import { describe, it, expect } from "vitest";
 import { getStrategyPreset, getAllStrategyPresets, STRATEGY_PRESETS } from "@/lib/strategies";
 
 describe("Strategy Presets", () => {
-  it("should have all 4 presets defined", () => {
+  it("should have all 7 presets defined", () => {
     expect(STRATEGY_PRESETS.value).toBeDefined();
     expect(STRATEGY_PRESETS.large_growth).toBeDefined();
     expect(STRATEGY_PRESETS.small_growth).toBeDefined();
     expect(STRATEGY_PRESETS.seeking_alpha).toBeDefined();
+    expect(STRATEGY_PRESETS.garp).toBeDefined();
+    expect(STRATEGY_PRESETS.wide_moat).toBeDefined();
+    expect(STRATEGY_PRESETS.short_term_catalyst).toBeDefined();
   });
 
   it("should return a preset by ID", () => {
@@ -28,12 +31,15 @@ describe("Strategy Presets", () => {
   it("should return all presets as an array", () => {
     const all = getAllStrategyPresets();
     expect(Array.isArray(all)).toBe(true);
-    expect(all.length).toBe(4);
+    expect(all.length).toBe(7);
     const ids = all.map((p) => p.id);
     expect(ids).toContain("value");
     expect(ids).toContain("large_growth");
     expect(ids).toContain("small_growth");
     expect(ids).toContain("seeking_alpha");
+    expect(ids).toContain("garp");
+    expect(ids).toContain("wide_moat");
+    expect(ids).toContain("short_term_catalyst");
   });
 
   it("large_growth preset should have correct default filters", () => {

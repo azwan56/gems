@@ -10,9 +10,29 @@ export async function generateGeminiAnalysis(
   language: "en" | "zh" = "en"
 ): Promise<StockAnalysisReport> {
   const cacheKey = `gemini:${stock.symbol.toUpperCase()}:${strategyType}:${language}`;
+  
+  // Try server-side persistent Firestore cache first
+  const docId = `${stock.symbol.toUpperCase()}_${strategyType}_${language}`;
+  try {
+    const { getDb } = await import("./firebase");
+    const db = getDb();
+    const docRef = db.collection("gemini_reports_cache").doc(docId);
+    const docSnap = await docRef.get();
+    if (docSnap.exists) {
+      const cachedData = docSnap.data();
+      if (cachedData && cachedData.expiresAt > Date.now()) {
+        console.log(`[gemini] Serving Firestore cached report for ${stock.symbol} (${strategyType}, ${language})`);
+        return cachedData.report as StockAnalysisReport;
+      }
+    }
+  } catch (error) {
+    console.warn(`[gemini] Firestore cache check failed for ${stock.symbol}`, error);
+  }
+
+  // Fallback to in-memory cache
   const cached = getCached<StockAnalysisReport>(cacheKey);
   if (cached) {
-    console.log(`[gemini] Serving cached report for ${stock.symbol} (${strategyType}, ${language})`);
+    console.log(`[gemini] Serving in-memory cached report for ${stock.symbol} (${strategyType}, ${language})`);
     return cached;
   }
 
@@ -51,27 +71,17 @@ Deep Fundamental Insights (FMP Data):
     strategyContext = `based on a ${strategyType} investment strategy.`;
   }
 
-  const prompt = `
-You are a top-tier Wall Street quantitative and qualitative equity analyst. 
-You are tasked with writing a deep-dive investment memo for ${stock.companyName} (${stock.symbol}).
-${strategyContext}
+  const currentDateStr = new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
 
-Metrics Data:
-- Sector: ${stock.sector}
-- Industry: ${stock.industry}
-- Market Cap: $${(stock.marketCap / 1e9).toFixed(2)}B
-- Price: $${stock.price}
-- P/E Ratio: ${stock.peRatio !== null ? stock.peRatio : "N/A"}
-- P/B Ratio: ${stock.pbRatio !== null ? stock.pbRatio : "N/A"}
-- FCF Yield: ${stock.freeCashFlowYield !== null ? stock.freeCashFlowYield + "%" : "N/A"}
-- Dividend Yield: ${stock.dividendYield !== null ? stock.dividendYield + "%" : "N/A"}
-- YoY Revenue Growth: ${stock.revenueGrowthYoY !== null ? stock.revenueGrowthYoY + "%" : "N/A"}
-- YoY EPS Growth: ${stock.epsGrowthYoY !== null ? stock.epsGrowthYoY + "%" : "N/A"}
-- ROE: ${stock.roe !== null ? stock.roe + "%" : "N/A"}
-- Gross Margin: ${stock.grossMargin !== null ? stock.grossMargin + "%" : "N/A"}
-- Net Margin: ${stock.netMargin !== null ? stock.netMargin + "%" : "N/A"}
-- Price vs 50SMA: ${stock.priceVs50SMA !== null ? stock.priceVs50SMA + "%" : "N/A"}
-${deepInsightsStr}
+  const systemInstruction = `You are a top-tier Wall Street quantitative and qualitative equity analyst. 
+You are tasked with writing a deep-dive investment memo for ${stock.companyName} (${stock.symbol}) ${strategyContext}
+
+TEMPORAL AWARENESS & HALLUCINATION CONTROL:
+- Today's current date is ${currentDateStr}. All analysis and forward-looking statements MUST be relative to this date.
+- The system generating this report is powered by Gemini 3.5.
+- DO NOT refer to past/historical versions of models (such as Gemini 1.0, Gemini 1.5, Gemini 2.0, or GPT-4) as upcoming or future catalysts. Treat them as already released, historical models.
+- Specifically, for Google (Alphabet / GOOGL), do NOT write "release of Gemini 2.0" as an upcoming catalyst. Gemini 2.0 is already released. Future upcoming catalysts should reference Gemini 4.0 or next-generation architectures.
+- Verify that all upcoming catalysts in your response are genuinely forward-looking relative to ${currentDateStr}.
 
 Please provide a structured report. Make it sound extremely professional, insightful, and specific to the company's real-world business model and recent macroeconomic environment.
 Do not use generic fluff. Use the provided metrics to ground your analysis.
@@ -90,13 +100,30 @@ Rules for fields:
 - analyst.consensus: Must be exactly one of: "Strong Buy", "Buy", "Hold", "Sell", "Strong Sell".
 - analyst.targetPrice: Estimate a realistic 12-month target price formatted as "$X.XX".
 - analyst.upside: Calculate the percentage upside to your target price formatted as "+X.X%" or "-X.X%".
-- analyst.breakdown: A realistic distribution of analyst ratings matching the consensus.
-`;
+- analyst.breakdown: A realistic distribution of analyst ratings matching the consensus.`;
+
+  const userPrompt = `Metrics Data:
+- Sector: ${stock.sector}
+- Industry: ${stock.industry}
+- Market Cap: $${(stock.marketCap / 1e9).toFixed(2)}B
+- Price: $${stock.price}
+- P/E Ratio: ${stock.peRatio !== null ? stock.peRatio : "N/A"}
+- P/B Ratio: ${stock.pbRatio !== null ? stock.pbRatio : "N/A"}
+- FCF Yield: ${stock.freeCashFlowYield !== null ? stock.freeCashFlowYield + "%" : "N/A"}
+- Dividend Yield: ${stock.dividendYield !== null ? stock.dividendYield + "%" : "N/A"}
+- YoY Revenue Growth: ${stock.revenueGrowthYoY !== null ? stock.revenueGrowthYoY + "%" : "N/A"}
+- YoY EPS Growth: ${stock.epsGrowthYoY !== null ? stock.epsGrowthYoY + "%" : "N/A"}
+- ROE: ${stock.roe !== null ? stock.roe + "%" : "N/A"}
+- Gross Margin: ${stock.grossMargin !== null ? stock.grossMargin + "%" : "N/A"}
+- Net Margin: ${stock.netMargin !== null ? stock.netMargin + "%" : "N/A"}
+- Price vs 50SMA: ${stock.priceVs50SMA !== null ? stock.priceVs50SMA + "%" : "N/A"}
+${deepInsightsStr}`;
 
   const response = await ai.models.generateContent({
     model: "gemini-3.5-flash",
-    contents: prompt,
+    contents: userPrompt,
     config: {
+      systemInstruction: systemInstruction,
       temperature: 0.2,
       responseMimeType: "application/json",
       responseSchema: {
@@ -156,6 +183,22 @@ Rules for fields:
   parsed.technicalScore = calculateTechnicalScore(stock);
   parsed.fundamentalScore = calculateFundamentalScore(stock);
 
+  // Save to server-side persistent Firestore cache
+  try {
+    const { getDb } = await import("./firebase");
+    const db = getDb();
+    const docRef = db.collection("gemini_reports_cache").doc(docId);
+    await docRef.set({
+      report: parsed,
+      expiresAt: Date.now() + 24 * 60 * 60 * 1000, // 24 hours TTL
+      createdAt: new Date().toISOString()
+    });
+    console.log(`[gemini] Saved report to Firestore cache for ${stock.symbol}`);
+  } catch (error) {
+    console.warn(`[gemini] Failed to save report to Firestore cache for ${stock.symbol}`, error);
+  }
+
+  // Also update local in-memory cache
   setCache(cacheKey, parsed);
   
   return parsed;
