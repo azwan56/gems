@@ -25,7 +25,10 @@ export default function ReportPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
-  const [analystTarget, setAnalystTarget] = useState<number | null>(null);
+  const [analystTarget, setAnalystTarget] = useState<{
+    targetConsensus: number;
+    targetHigh: number;
+  } | null>(null);
 
   const handleSaveAsPDF = async () => {
     try {
@@ -77,7 +80,10 @@ export default function ReportPage() {
           if (targetRes.ok) {
             const targetData = await targetRes.json();
             if (targetData?.targets && targetData.targets[symbol]) {
-              setAnalystTarget(targetData.targets[symbol].targetConsensus);
+              setAnalystTarget({
+                targetConsensus: targetData.targets[symbol].targetConsensus,
+                targetHigh: targetData.targets[symbol].targetHigh,
+              });
             }
           }
         } catch (targetErr) {
@@ -201,13 +207,23 @@ export default function ReportPage() {
                 <span className="text-sm font-bold text-emerald-600">{report.analyst.upside}</span>
               </div>
               
-              <div className="mt-2 pt-2 border-t border-slate-200">
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">{t("Wall Street Avg", "华尔街平均估值")}</p>
-                {analystTarget !== null ? (
-                  <span className="text-xl font-bold text-slate-700">${analystTarget.toFixed(2)}</span>
-                ) : (
-                  <span className="text-xs text-slate-400 italic">{t("Loading...", "加载中...")}</span>
-                )}
+              <div className="mt-2 pt-2 border-t border-slate-200 grid grid-cols-2 gap-2 text-right">
+                <div className="border-r border-slate-200 pr-2">
+                  <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">{t("Wall Street Avg", "华尔街平均")}</p>
+                  {analystTarget !== null ? (
+                    <span className="text-base font-bold text-slate-700">${analystTarget.targetConsensus.toFixed(2)}</span>
+                  ) : (
+                    <span className="text-xs text-slate-400 italic">{t("Loading...", "加载中...")}</span>
+                  )}
+                </div>
+                <div className="pl-2">
+                  <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">{t("Wall Street High", "华尔街最高")}</p>
+                  {analystTarget !== null ? (
+                    <span className="text-base font-bold text-slate-700">${analystTarget.targetHigh.toFixed(2)}</span>
+                  ) : (
+                    <span className="text-xs text-slate-400 italic">{t("Loading...", "加载中...")}</span>
+                  )}
+                </div>
               </div>
 
               <div className="text-[10px] text-slate-400 mt-2 pt-2 border-t border-slate-200 flex justify-end gap-3">
