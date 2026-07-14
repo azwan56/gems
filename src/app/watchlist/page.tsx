@@ -659,13 +659,37 @@ export default function WatchlistPage() {
             </div>
           ) : (
             <div className="space-y-4">
+              {/* Date Header Block */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-900/40 p-4 rounded-xl border border-slate-800">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">{t("Market Active", "美股交易跟踪")}</span>
+                </div>
+                <div className="flex items-center gap-4 text-xs font-medium text-slate-400">
+                  <span>
+                    {t("Current Date:", "当前日期：")}
+                    <span className="text-slate-200 font-bold ml-1">{new Date().toLocaleDateString(lang === 'zh' ? 'zh-CN' : 'en-US', { year: 'numeric', month: '2-digit', day: '2-digit' })}</span>
+                  </span>
+                  {poolUpdatedAt && (
+                    <>
+                      <span className="text-slate-700">|</span>
+                      <span>
+                        {t("Data Updated:", "行情更新时间：")}
+                        <span className="text-slate-200 font-bold ml-1">{new Date(poolUpdatedAt).toLocaleString(lang === 'zh' ? 'zh-CN' : 'en-US', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false })}</span>
+                      </span>
+                    </>
+                  )}
+                </div>
+              </div>
+
               {/* Table header */}
-              <div className="hidden md:grid md:grid-cols-[2.5rem_1.2fr_1fr_1.5fr_10rem_12rem] gap-4 items-center px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+              <div className="hidden md:grid md:grid-cols-[2.5rem_1.2fr_1.3fr_1fr_1fr_5rem_8rem] gap-4 items-center px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">
                 <span>#</span>
                 <span>{t("Stock", "股票")}</span>
-                <span>{t("Current Price", "当前价格")}</span>
                 <span>{t("Matched Strategies", "入选策略")}</span>
+                <span>{t("Current Price", "当前价格")}</span>
                 <span className="text-right">{t("Target Price", "目标价")}</span>
+                <span className="text-right">Beta</span>
                 <span className="text-right">{t("Actions", "操作")}</span>
               </div>
 
@@ -688,7 +712,7 @@ export default function WatchlistPage() {
 
                 return (
                   <div key={item.symbol} className="bg-slate-900 border border-slate-800 rounded-xl p-4 hover:border-slate-700 transition-colors">
-                    <div className="grid grid-cols-1 md:grid-cols-[2.5rem_1.2fr_1fr_1.5fr_10rem_12rem] gap-3 md:gap-4 items-center">
+                    <div className="grid grid-cols-1 md:grid-cols-[2.5rem_1.2fr_1.3fr_1fr_1fr_5rem_8rem] gap-3 md:gap-4 items-center">
                       
                       {/* Rank */}
                       <div className="hidden md:block">
@@ -714,37 +738,7 @@ export default function WatchlistPage() {
                               {sector}{sector && industry ? " · " : ""}{industry}
                             </p>
                           )}
-                          <div className="flex flex-wrap items-center gap-3 mt-1 text-[10px] text-slate-500">
-                            {stockData?.price !== undefined && (
-                              <span>
-                                {t("Prev Close", "前收盘价")}
-                                {poolUpdatedAt ? ` (${new Date(poolUpdatedAt).toLocaleDateString(lang === 'zh' ? 'zh-CN' : 'en-US', { month: '2-digit', day: '2-digit' })})` : ""}
-                                : <strong className="text-slate-300 font-mono">${stockData.price.toFixed(2)}</strong>
-                              </span>
-                            )}
-                            {stockData?.beta !== undefined && stockData.beta !== null && (
-                              <span>
-                                Beta: <strong className={stockData.beta > 1.0 ? "text-orange-400 font-bold" : "text-cyan-400 font-bold"}>{stockData.beta.toFixed(2)}</strong>
-                              </span>
-                            )}
-                          </div>
                         </div>
-                      </div>
-
-                      {/* Current Price — from quotes API */}
-                      <div>
-                        {hasQuote ? (
-                          <div>
-                            <span className="text-lg font-bold font-mono text-white">${q.price.toFixed(2)}</span>
-                            <div className={`text-xs font-semibold font-mono ${changeColor}`}>
-                              {changePrefix}{q.change_percent.toFixed(2)}%
-                            </div>
-                          </div>
-                        ) : quotesLoading ? (
-                          <div className="w-24 h-5 bg-slate-800 rounded animate-pulse" />
-                        ) : (
-                          <span className="text-sm text-slate-600">—</span>
-                        )}
                       </div>
 
                       {/* Matched Strategies */}
@@ -763,6 +757,37 @@ export default function WatchlistPage() {
                         )}
                       </div>
 
+                      {/* Current Price — from quotes API */}
+                      <div>
+                        {hasQuote ? (
+                          <div>
+                            <span className="text-lg font-bold font-mono text-white">${q.price.toFixed(2)}</span>
+                            <div className={`text-xs font-semibold font-mono ${changeColor}`}>
+                              {changePrefix}{q.change_percent.toFixed(2)}%
+                            </div>
+                            {stockData?.price !== undefined && (
+                              <div className="text-[11px] text-slate-500 mt-0.5">
+                                {t("Prev Close: ", "前收: ")}
+                                <span className="font-mono text-slate-400">${stockData.price.toFixed(2)}</span>
+                              </div>
+                            )}
+                          </div>
+                        ) : quotesLoading ? (
+                          <div className="w-24 h-5 bg-slate-800 rounded animate-pulse" />
+                        ) : (
+                          <div>
+                            {stockData?.price !== undefined ? (
+                              <div>
+                                <span className="text-sm font-semibold text-slate-400">${stockData.price.toFixed(2)}</span>
+                                <div className="text-[10px] text-slate-600 mt-0.5">{t("Pool Price", "缓存价格")}</div>
+                              </div>
+                            ) : (
+                              <span className="text-sm text-slate-600">—</span>
+                            )}
+                          </div>
+                        )}
+                      </div>
+
                       {/* Target Price — from FMP analyst consensus */}
                       <div className="md:text-right">
                         {tp ? (
@@ -778,6 +803,18 @@ export default function WatchlistPage() {
                           </div>
                         ) : targetPricesLoading ? (
                           <div className="w-16 h-5 bg-slate-800 rounded animate-pulse ml-auto" />
+                        ) : (
+                          <span className="text-sm text-slate-600">—</span>
+                        )}
+                      </div>
+
+                      {/* Beta Value Column */}
+                      <div className="md:text-right">
+                        <span className="text-xs font-semibold text-slate-500 md:hidden block mb-1">Beta</span>
+                        {stockData?.beta !== undefined && stockData.beta !== null ? (
+                          <span className={`text-base font-bold font-mono ${stockData.beta > 1.0 ? "text-orange-400" : "text-cyan-400"}`}>
+                            {stockData.beta.toFixed(2)}
+                          </span>
                         ) : (
                           <span className="text-sm text-slate-600">—</span>
                         )}
