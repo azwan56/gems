@@ -58,8 +58,11 @@ export async function GET(request: NextRequest) {
   // ---- Parse force flag ----
   const force = request.nextUrl.searchParams.get("force") === "true";
 
-  // ---- Skip non-trading days (unless forced) ----
-  if (!isTradingDay() && !force) {
+  // ---- Skip non-trading days (unless forced or Saturday) ----
+  const etDow = new Date(
+    new Date().toLocaleString("en-US", { timeZone: "America/New_York" })
+  ).getDay();
+  if (!isTradingDay() && etDow !== 6 && !force) {
     return NextResponse.json({
       status: "skipped",
       reason: "not_trading_day",

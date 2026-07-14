@@ -29,9 +29,9 @@ export default function WatchlistPage() {
   const { user, getIdToken } = useAuth();
 
   const getRoleConfigs = () => ({
-    anchor: { icon: Shield, color: "text-blue-400", bg: "bg-blue-500/10", border: "border-blue-500/20", label: t("Anchor (Stability)", "压舱石 (稳健)"), desc: t("Low volatility, strong cash flow", "低波动，强现金流") },
-    striker: { icon: Sword, color: "text-emerald-400", bg: "bg-emerald-500/10", border: "border-emerald-500/20", label: t("Striker (Core Growth)", "攻击手 (核心成长)"), desc: t("High conviction, steady compounding", "高信念，稳健复利") },
-    rocket: { icon: Rocket, color: "text-purple-400", bg: "bg-purple-500/10", border: "border-purple-500/20", label: t("Rocket (High Beta)", "火箭 (高Beta)"), desc: t("High risk/reward, hyper-growth", "高风险高回报，超高速成长") },
+    anchor: { icon: Shield, color: "text-blue-400", bg: "bg-blue-500/10", border: "border-blue-500/20", label: t("Anchor", "压舱石"), desc: t("Low volatility, strong cash flow", "低波动，强现金流") },
+    striker: { icon: Sword, color: "text-emerald-400", bg: "bg-emerald-500/10", border: "border-emerald-500/20", label: t("Striker", "攻击手"), desc: t("High conviction, steady compounding", "高信念，稳健复利") },
+    rocket: { icon: Rocket, color: "text-purple-400", bg: "bg-purple-500/10", border: "border-purple-500/20", label: t("Rocket", "火箭"), desc: t("High risk/reward, hyper-growth", "高风险高回报，超高速成长") },
     core_dividend: { icon: CircleDollarSign, color: "text-amber-400", bg: "bg-amber-500/10", border: "border-amber-500/20", label: t("Core Dividend", "核心收息"), desc: t("Value: Reliable yield", "价值：可靠收益率") },
     turnaround: { icon: RefreshCcw, color: "text-cyan-400", bg: "bg-cyan-500/10", border: "border-cyan-500/20", label: t("Turnaround", "困境反转"), desc: t("Value: Cyclical reversion", "价值：周期均值回归") },
     special_situation: { icon: AlertTriangle, color: "text-pink-400", bg: "bg-pink-500/10", border: "border-pink-500/20", label: t("Special Sit.", "特殊情况"), desc: t("Value: Event-driven", "价值：事件驱动") },
@@ -58,6 +58,7 @@ export default function WatchlistPage() {
 
   // Stock pool for strategy matching
   const [stockPool, setStockPool] = useState<StockMetrics[]>([]);
+  const [poolUpdatedAt, setPoolUpdatedAt] = useState<string | null>(null);
 
   // Analyst target prices from FMP deep insights
   interface TargetPriceData {
@@ -99,6 +100,7 @@ export default function WatchlistPage() {
         if (res.ok) {
           const data = await res.json();
           if (data?.stocks) setStockPool(data.stocks);
+          if (data?.meta?.updatedAt) setPoolUpdatedAt(data.meta.updatedAt);
         }
       } catch { /* non-critical */ }
     }
@@ -712,6 +714,20 @@ export default function WatchlistPage() {
                               {sector}{sector && industry ? " · " : ""}{industry}
                             </p>
                           )}
+                          <div className="flex flex-wrap items-center gap-3 mt-1 text-[10px] text-slate-500">
+                            {stockData?.price !== undefined && (
+                              <span>
+                                {t("Prev Close", "前收盘价")}
+                                {poolUpdatedAt ? ` (${new Date(poolUpdatedAt).toLocaleDateString(lang === 'zh' ? 'zh-CN' : 'en-US', { month: '2-digit', day: '2-digit' })})` : ""}
+                                : <strong className="text-slate-300 font-mono">${stockData.price.toFixed(2)}</strong>
+                              </span>
+                            )}
+                            {stockData?.beta !== undefined && stockData.beta !== null && (
+                              <span>
+                                Beta: <strong className={stockData.beta > 1.0 ? "text-orange-400 font-bold" : "text-cyan-400 font-bold"}>{stockData.beta.toFixed(2)}</strong>
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </div>
 

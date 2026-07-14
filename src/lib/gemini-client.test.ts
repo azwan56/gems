@@ -146,7 +146,7 @@ describe("generateGeminiAnalysis", () => {
 
     expect(mockGenerateContent).toHaveBeenCalledWith(
       expect.objectContaining({
-        model: "gemini-3.1-flash-lite",
+        model: "gemini-3.5-flash",
       })
     );
   });

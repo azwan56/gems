@@ -29,6 +29,7 @@ export interface StockMetrics {
   priceVs200SMA: number | null;
   fiftyTwoWeekHigh: number | null;
   fiftyTwoWeekLow: number | null;
+  beta?: number | null;
 }
 
 /** The strategy types supported by the MVP */

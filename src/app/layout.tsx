@@ -30,6 +30,19 @@ export default function RootLayout({
       className={`${inter.variable} ${jetbrainsMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "WebApplication",
+              "name": "Gems US Stock Quantitative Screener",
+              "description": "Professional-grade quantitative stock screening platform. Filter US equities by value, growth, and momentum strategies.",
+              "applicationCategory": "FinanceApplication",
+              "operatingSystem": "All"
+            }),
+          }}
+        />
         <AuthProvider>
           <LanguageProvider>{children}</LanguageProvider>
         </AuthProvider>

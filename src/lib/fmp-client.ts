@@ -29,6 +29,7 @@ export interface FmpScreenerResult {
   country: string;
   isEtf: boolean;
   isActivelyTrading: boolean;
+  beta?: number;
 }
 
 /** /stable/ratios-ttm response */
@@ -135,6 +136,7 @@ export async function fetchScreenerStocks(
           country: string;
           isEtf: boolean;
           isActivelyTrading: boolean;
+          beta?: number;
         }>>("/profile", { symbol }, { revalidate: 1800 });
 
         if (!data || data.length === 0) return null;
@@ -152,6 +154,7 @@ export async function fetchScreenerStocks(
           country: p.country || "US",
           isEtf: p.isEtf ?? false,
           isActivelyTrading: p.isActivelyTrading ?? true,
+          beta: p.beta,
         };
         setCache(profileCacheKey, entry);
         return entry;
@@ -325,6 +328,7 @@ export function buildStockMetrics(
     priceVs200SMA: priceVs200,
     fiftyTwoWeekHigh: numOrNull(quote?.yearHigh),
     fiftyTwoWeekLow: numOrNull(quote?.yearLow),
+    beta: numOrNull(screener.beta),
   };
 }
 

@@ -59,8 +59,11 @@ export async function GET(request: NextRequest) {
   const chunkParam = request.nextUrl.searchParams.get("chunk");
   const chunkIndex = chunkParam ? parseInt(chunkParam, 10) - 1 : -1; // 0-indexed internally
 
-  // ---- Skip non-trading days ----
-  if (!isTradingDay()) {
+  // ---- Skip non-trading days (except Saturdays) ----
+  const etDow = new Date(
+    new Date().toLocaleString("en-US", { timeZone: "America/New_York" })
+  ).getDay();
+  if (!isTradingDay() && etDow !== 6) {
     console.log("[cron] Today is not a trading day, skipping refresh.");
     return NextResponse.json({
       status: "skipped",

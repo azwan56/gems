@@ -897,9 +897,9 @@ export default function FunnelScreenerPage() {
                                 </>
                               ) : (
                                 <>
-                                  <option value="anchor">{t("🛡️ Anchor (Stability)", "🛡️ 压舱石 (稳健)")}</option>
-                                  <option value="striker">{t("⚔️ Striker (Core Growth)", "⚔️ 攻击手 (核心成长)")}</option>
-                                  <option value="rocket">{t("🚀 Rocket (High Beta)", "🚀 火箭 (高Beta)")}</option>
+                                  <option value="anchor">{t("🛡️ Anchor", "🛡️ 压舱石")}</option>
+                                  <option value="striker">{t("⚔️ Striker", "⚔️ 攻击手")}</option>
+                                  <option value="rocket">{t("🚀 Rocket", "🚀 火箭")}</option>
                                 </>
                               )}
                             </select>

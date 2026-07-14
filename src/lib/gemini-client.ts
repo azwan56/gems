@@ -120,7 +120,7 @@ Rules for fields:
 ${deepInsightsStr}`;
 
   const response = await ai.models.generateContent({
-    model: "gemini-3.1-flash-lite",
+    model: "gemini-3.5-flash",
     contents: userPrompt,
     config: {
       systemInstruction: systemInstruction,
@@ -172,7 +172,10 @@ ${deepInsightsStr}`;
   });
 
   const text = response.text;
-  if (!text) throw new Error("Empty response from Gemini");
+  if (!text) {
+    console.error("[gemini] Empty response from Gemini. Full response:", JSON.stringify(response));
+    throw new Error("Empty response from Gemini");
+  }
   
   const parsed = JSON.parse(text) as StockAnalysisReport;
   

@@ -6,7 +6,7 @@
 import { StockMetrics } from "./types";
 
 export function generateMockStocks(): StockMetrics[] {
-  return [
+  const staticStocks: StockMetrics[] = [
     {
       symbol: "AAPL", companyName: "Apple Inc.", sector: "Technology", industry: "Consumer Electronics",
       marketCap: 3_000_000_000_000, price: 195.5,
@@ -228,4 +228,10 @@ export function generateMockStocks(): StockMetrics[] {
       priceVs50SMA: 10.0, priceVs200SMA: 45.0, fiftyTwoWeekHigh: 18.0, fiftyTwoWeekLow: 7.0,
     },
   ];
+  
+  // Dynamically map realistic beta values (0.5 to 2.2) to make sure mock data has beta
+  return staticStocks.map(s => ({
+    ...s,
+    beta: parseFloat((0.5 + (s.symbol.charCodeAt(0) % 17) * 0.1).toFixed(2)) // deterministic pseudo-random beta based on symbol name
+  }));
 }
