@@ -687,7 +687,7 @@ export default function WatchlistPage() {
                 <span>#</span>
                 <span>{t("Stock", "股票")}</span>
                 <span>{t("Matched Strategies", "入选策略")}</span>
-                <span>{t("Current Price", "当前价格")}</span>
+                <span>{t("Prev Close Price", "前收盘价")}</span>
                 <span className="text-right">{t("Target Price", "目标价")}</span>
                 <span className="text-right">Beta</span>
                 <span className="text-right">{t("Actions", "操作")}</span>
@@ -707,8 +707,8 @@ export default function WatchlistPage() {
                 const industry = stockData?.industry || "";
                 const isObserved = observeListSymbols.has(item.symbol);
                 const tp = targetPrices[item.symbol];
-                const currentPrice = hasQuote ? q.price : 0;
-                const upsidePercent = tp && currentPrice > 0 ? ((tp.targetConsensus - currentPrice) / currentPrice * 100) : null;
+                const prevClosePrice = stockData?.price || 0;
+                const upsidePercent = tp && prevClosePrice > 0 ? ((tp.targetConsensus - prevClosePrice) / prevClosePrice * 100) : null;
 
                 return (
                   <div key={item.symbol} className="bg-slate-900 border border-slate-800 rounded-xl p-4 hover:border-slate-700 transition-colors">
@@ -757,34 +757,12 @@ export default function WatchlistPage() {
                         )}
                       </div>
 
-                      {/* Current Price — from quotes API */}
+                      {/* Previous Close Price — from stock pool */}
                       <div>
-                        {hasQuote ? (
-                          <div>
-                            <span className="text-lg font-bold font-mono text-white">${q.price.toFixed(2)}</span>
-                            <div className={`text-xs font-semibold font-mono ${changeColor}`}>
-                              {changePrefix}{q.change_percent.toFixed(2)}%
-                            </div>
-                            {stockData?.price !== undefined && (
-                              <div className="text-[11px] text-slate-500 mt-0.5">
-                                {t("Prev Close: ", "前收: ")}
-                                <span className="font-mono text-slate-400">${stockData.price.toFixed(2)}</span>
-                              </div>
-                            )}
-                          </div>
-                        ) : quotesLoading ? (
-                          <div className="w-24 h-5 bg-slate-800 rounded animate-pulse" />
+                        {stockData?.price !== undefined ? (
+                          <span className="text-lg font-bold font-mono text-white">${stockData.price.toFixed(2)}</span>
                         ) : (
-                          <div>
-                            {stockData?.price !== undefined ? (
-                              <div>
-                                <span className="text-sm font-semibold text-slate-400">${stockData.price.toFixed(2)}</span>
-                                <div className="text-[10px] text-slate-600 mt-0.5">{t("Pool Price", "缓存价格")}</div>
-                              </div>
-                            ) : (
-                              <span className="text-sm text-slate-600">—</span>
-                            )}
-                          </div>
+                          <span className="text-sm text-slate-600">—</span>
                         )}
                       </div>
 
