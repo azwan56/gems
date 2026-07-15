@@ -81,10 +81,11 @@ export const STRATEGY_PRESETS: Record<string, StrategyPreset> = {
     icon: "TrendingUp",
     color: "emerald",
     defaultFilters: [
-      { field: "epsGrowthYoY", operator: "gt", value: 20 },
-      { field: "pegRatio", operator: "gt", value: 0 },
-      { field: "pegRatio", operator: "lt", value: 1.0 },
-      { field: "marketCap", operator: "gt", value: 500_000_000 },
+      { field: "epsGrowthYoY", operator: "gt", value: 30 },
+      { field: "pegRatio", operator: "gt", value: 0.1 },
+      { field: "pegRatio", operator: "lt", value: 0.7 },
+      { field: "roe", operator: "gt", value: 25 },
+      { field: "marketCap", operator: "gt", value: 2_000_000_000 },
     ],
   },
   wide_moat: {
@@ -96,10 +97,10 @@ export const STRATEGY_PRESETS: Record<string, StrategyPreset> = {
     icon: "Castle",
     color: "slate",
     defaultFilters: [
-      { field: "roe", operator: "gt", value: 15 },
-      { field: "grossMargin", operator: "gt", value: 40 },
-      { field: "marketCap", operator: "gt", value: 2_000_000_000 },
-      { field: "debtToEquity", operator: "lt", value: 1.0 },
+      { field: "roe", operator: "gt", value: 25 },
+      { field: "grossMargin", operator: "gt", value: 60 },
+      { field: "marketCap", operator: "gt", value: 5_000_000_000 },
+      { field: "debtToEquity", operator: "lt", value: 0.8 },
     ],
   },
   short_term_catalyst: {
@@ -111,10 +112,10 @@ export const STRATEGY_PRESETS: Record<string, StrategyPreset> = {
     icon: "Zap",
     color: "rose",
     defaultFilters: [
-      { field: "priceVs50SMA", operator: "gt", value: 0 },
-      { field: "priceVs200SMA", operator: "gt", value: 0 },
-      { field: "revenueGrowthYoY", operator: "gt", value: 5 },
-      { field: "marketCap", operator: "gt", value: 1_000_000_000 },
+      { field: "priceVs50SMA", operator: "gt", value: 4 },
+      { field: "priceVs200SMA", operator: "gt", value: 10 },
+      { field: "revenueGrowthYoY", operator: "gt", value: 20 },
+      { field: "marketCap", operator: "gt", value: 3_000_000_000 },
     ],
   },
 };
