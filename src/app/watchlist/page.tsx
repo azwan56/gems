@@ -72,6 +72,7 @@ export default function WatchlistPage() {
 
   // Observe list status — set of symbols already synced to DailyStock
   const [observeListSymbols, setObserveListSymbols] = useState<Set<string>>(new Set());
+  const [saList, setSaList] = useState<Set<string>>(new Set());
 
   // Confirmation modal state
   interface SyncPreview {
@@ -94,13 +95,23 @@ export default function WatchlistPage() {
     async function loadPool() {
       try {
         const token = await getIdToken();
-        const res = await fetch("/api/stock-pool?include=stocks", {
-          headers: token ? { Authorization: `Bearer ${token}` } : {},
-        });
-        if (res.ok) {
-          const data = await res.json();
+        const headers: HeadersInit = token ? { Authorization: `Bearer ${token}` } : {};
+        const [poolRes, saRes] = await Promise.all([
+          fetch("/api/stock-pool?include=stocks", { headers }),
+          fetch("/api/seeking-alpha", { headers }),
+        ]);
+
+        if (poolRes.ok) {
+          const data = await poolRes.json();
           if (data?.stocks) setStockPool(data.stocks);
           if (data?.meta?.updatedAt) setPoolUpdatedAt(data.meta.updatedAt);
+        }
+
+        if (saRes.ok) {
+          const data = await saRes.json();
+          if (data?.symbols) {
+            setSaList(new Set(data.symbols.map((s: string) => s.toUpperCase())));
+          }
         }
       } catch { /* non-critical */ }
     }
@@ -110,17 +121,19 @@ export default function WatchlistPage() {
   // Compute which strategies each watchlist stock matches
   const matchedStrategiesMap = useMemo(() => {
     if (stockPool.length === 0) return {} as Record<string, { id: string; name: string; nameZh: string; color: string }[]>;
-    const presets = getAllStrategyPresets().filter(p => p.id !== "seeking_alpha");
+    const presets = getAllStrategyPresets();
     const map: Record<string, { id: string; name: string; nameZh: string; color: string }[]> = {};
     presets.forEach(preset => {
-      const passed = applyFilters(stockPool, preset.defaultFilters);
+      const passed = preset.id === "seeking_alpha"
+        ? stockPool.filter(s => saList.has(s.symbol.toUpperCase()))
+        : applyFilters(stockPool, preset.defaultFilters);
       passed.forEach(s => {
         if (!map[s.symbol]) map[s.symbol] = [];
         map[s.symbol].push({ id: preset.id, name: preset.name, nameZh: preset.nameZh || preset.name, color: preset.color });
       });
     });
     return map;
-  }, [stockPool]);
+  }, [stockPool, saList]);
 
   useEffect(() => {
     if (user?.uid) fetchWatchlist();
