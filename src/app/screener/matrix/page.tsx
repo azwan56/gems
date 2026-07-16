@@ -51,6 +51,7 @@ export default function SuperScreenerMatrix() {
   const [stocks, setStocks] = useState<StockMetrics[]>([]);
   const [loading, setLoading] = useState(true);
   const [watchlist, setWatchlist] = useState<Set<string>>(new Set());
+  const [saList, setSaList] = useState<Set<string>>(new Set());
   const [addingSymbol, setAddingSymbol] = useState<string | null>(null);
 
   // Load full stock pool + existing watchlist in parallel
@@ -62,10 +63,11 @@ export default function SuperScreenerMatrix() {
         const token = await getIdToken();
         const headers: HeadersInit = token ? { Authorization: `Bearer ${token}` } : {};
 
-        // Fetch stock pool and watchlist in parallel
-        const [poolRes, wlRes] = await Promise.all([
+        // Fetch stock pool, watchlist and Seeking Alpha list in parallel
+        const [poolRes, wlRes, saRes] = await Promise.all([
           fetch("/api/stock-pool?include=stocks", { headers }),
           fetch("/api/watchlist", { headers }),
+          fetch("/api/seeking-alpha", { headers }),
         ]);
 
         if (poolRes.ok) {
@@ -79,6 +81,13 @@ export default function SuperScreenerMatrix() {
           const wlData = await wlRes.json();
           if (wlData && Array.isArray(wlData.watchlist)) {
             setWatchlist(new Set(wlData.watchlist.map((w: any) => w.symbol)));
+          }
+        }
+
+        if (saRes.ok) {
+          const saData = await saRes.json();
+          if (saData && Array.isArray(saData.symbols)) {
+            setSaList(new Set(saData.symbols.map((s: string) => s.toUpperCase())));
           }
         }
       } catch (err) {
@@ -95,12 +104,14 @@ export default function SuperScreenerMatrix() {
   const matrixStocks = useMemo(() => {
     if (stocks.length === 0) return [];
 
-    const presets = getAllStrategyPresets().filter(p => p.id !== "seeking_alpha");
+    const presets = getAllStrategyPresets();
     const stockMap = new Map<string, MultiStrategyStock>();
 
     // Apply each strategy and accumulate matches
     presets.forEach(preset => {
-      const passed = applyFilters(stocks, preset.defaultFilters);
+      const passed = preset.id === "seeking_alpha"
+        ? stocks.filter(s => saList.has(s.symbol.toUpperCase()))
+        : applyFilters(stocks, preset.defaultFilters);
       passed.forEach(s => {
         let entry = stockMap.get(s.symbol);
         if (!entry) {
