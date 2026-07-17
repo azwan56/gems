@@ -22,6 +22,7 @@ import {
   saveScreenerSnapshot,
   diffSnapshots,
   ScreenerDiff,
+  saveScreenerChange,
 } from "@/lib/screener-snapshot-store";
 import { fanOutScreenerAlerts } from "@/lib/webhook-notifier";
 import { isTradingDay } from "@/lib/market-calendar";
@@ -137,6 +138,18 @@ export async function GET(request: NextRequest) {
 
       // Save new snapshot (always, so next diff is against today)
       await saveScreenerSnapshot(strategyId, filtered);
+
+      // Save persistent change history log if any additions or removals occurred
+      if (diff.added.length > 0 || diff.removed.length > 0) {
+        await saveScreenerChange({
+          strategyId,
+          strategyName: preset.name,
+          strategyNameZh: preset.nameZh || preset.name,
+          added: diff.added,
+          removed: diff.removed,
+          timestamp: new Date().toISOString()
+        });
+      }
     }
 
     // ---- Send notifications if there are changes ----

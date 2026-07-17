@@ -630,6 +630,10 @@ export default function WatchlistPage() {
             </div>
           </div>
           <div className="flex items-center gap-2 sm:gap-6 text-xs sm:text-sm w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0 scrollbar-hide">
+            <Link href="/updates" className="text-slate-400 hover:text-white transition-colors whitespace-nowrap">
+              {t("Updates", "更新动态")}
+            </Link>
+            <div className="h-4 sm:h-5 w-px bg-slate-700 hidden sm:block" />
             <div className="text-slate-400 whitespace-nowrap">
               <span className="hidden sm:inline">{t("Total Conviction Picks:", "总计高信念优选：")}</span> <span className="text-white font-bold">{watchlist.length}</span> / 10
             </div>

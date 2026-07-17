@@ -127,6 +127,9 @@ export default function Home() {
           <nav className="flex items-center gap-2 sm:gap-4">
             {user?.isPremium && (
               <>
+                <Link href="/updates" className="text-sm text-slate-400 hover:text-white transition-colors hidden sm:inline">
+                  {t("Updates", "更新动态")}
+                </Link>
                 <Link href="/rebalance" className="text-sm text-slate-400 hover:text-white transition-colors hidden sm:inline">
                   {t("Macro Alert", "宏观预警")}
                 </Link>
@@ -178,12 +181,30 @@ export default function Home() {
             )}
           </h1>
 
-          <p className="text-sm sm:text-lg text-slate-400 max-w-2xl mb-8 sm:mb-12 leading-relaxed px-2">
+          <p className="text-sm sm:text-lg text-slate-400 max-w-2xl mb-8 leading-relaxed px-2">
             {t(
               "Professional-grade stock screening powered by quantitative analysis. Choose a strategy below to start filtering US equities.",
               "专业级量化分析驱动的股票筛选平台。选择以下策略，开始筛选美股标的。"
             )}
           </p>
+
+          <Link
+            href="/updates"
+            className="inline-flex items-center gap-2 px-4 py-2 sm:py-2.5 rounded-xl bg-slate-900/60 hover:bg-slate-900/90 border border-slate-800 hover:border-slate-700 text-xs sm:text-sm transition-all duration-300 hover:scale-[1.02] shadow-lg mb-8 cursor-pointer group"
+          >
+            <span className="flex h-2 w-2 relative">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+            </span>
+            <span className="font-bold text-emerald-400 tracking-wider uppercase text-[9px] sm:text-xs">
+              {t("LIVE UPDATES", "变动动态")}
+            </span>
+            <span className="w-1.5 h-1.5 rounded-full bg-slate-750 hidden sm:inline"></span>
+            <span className="text-slate-400 group-hover:text-slate-200 transition-colors text-[11px] sm:text-xs">
+              {t("View latest model additions & removals", "查看最新美股策略个股流入/流出更替记录")}
+            </span>
+            <ChevronRight className="w-3.5 h-3.5 text-slate-500 group-hover:text-white group-hover:translate-x-0.5 transition-all" />
+          </Link>
         </div>
 
         {/* Strategy Cards — Premium Only */}
