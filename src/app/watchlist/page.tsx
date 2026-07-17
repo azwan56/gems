@@ -774,10 +774,12 @@ export default function WatchlistPage() {
                         )}
                       </div>
 
-                      {/* Previous Close Price — from stock pool */}
+                      {/* Previous Close Price — from stock pool or live quote */}
                       <div>
                         {stockData?.price !== undefined ? (
                           <span className="text-lg font-bold font-mono text-white">${stockData.price.toFixed(2)}</span>
+                        ) : quotes[item.symbol]?.price !== undefined && quotes[item.symbol]?.price > 0 ? (
+                          <span className="text-lg font-bold font-mono text-white">${quotes[item.symbol].price.toFixed(2)}</span>
                         ) : (
                           <span className="text-sm text-slate-600">—</span>
                         )}
