@@ -346,7 +346,7 @@ export default function ReportPage() {
 
         </div>
       </div>
-      <StockChatAssistant symbol={symbol} companyName={symbol} lang={lang} />
+      <StockChatAssistant symbol={symbol} companyName={symbol} lang={lang} strategy={strategy} />
     </>
   );
 }

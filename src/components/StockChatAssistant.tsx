@@ -19,12 +19,14 @@ interface StockChatAssistantProps {
   symbol: string;
   companyName: string;
   lang?: "en" | "zh";
+  strategy?: string;
 }
 
 export default function StockChatAssistant({
   symbol,
   companyName,
   lang = "zh",
+  strategy,
 }: StockChatAssistantProps) {
   const { user, getIdToken } = useAuth();
   
@@ -104,6 +106,8 @@ export default function StockChatAssistant({
           symbol,
           message: trimmed,
           history: historyPayload,
+          strategy,
+          lang,
         }),
       });
 
