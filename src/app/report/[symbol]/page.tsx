@@ -6,6 +6,7 @@ import { Loader2, Download, ChevronLeft, ShieldAlert, Zap, TrendingUp, ActivityS
 import Link from "next/link";
 import type { StockAnalysisReport } from "@/lib/analysis-engine";
 import { useAuth } from "@/lib/auth-context";
+import StockChatAssistant from "@/components/StockChatAssistant";
 
 type Lang = "en" | "zh";
 
@@ -345,6 +346,7 @@ export default function ReportPage() {
 
         </div>
       </div>
+      <StockChatAssistant symbol={symbol} companyName={symbol} lang={lang} />
     </>
   );
 }
