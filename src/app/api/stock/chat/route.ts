@@ -7,8 +7,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyAuth } from "@/lib/auth-middleware";
 
+const envUrl = process.env.DAILYSTOCK_API_URL;
 const DAILYSTOCK_API_URL =
-  process.env.DAILYSTOCK_API_URL || "https://gems-backend-91000643407.us-central1.run.app/api";
+  (envUrl && !envUrl.includes("onrender.com"))
+    ? envUrl
+    : "https://gems-backend-91000643407.us-central1.run.app/api";
 
 export async function POST(request: NextRequest) {
   // 1. Verify Authentication
