@@ -125,6 +125,10 @@ export default function Home() {
             </span>
           </div>
           <nav className="flex items-center gap-2 sm:gap-4">
+            <a href="/value-proposition.html" target="_blank" rel="noreferrer" className="text-sm text-slate-400 hover:text-cyan-400 transition-colors flex items-center gap-1.5 px-3 py-1.5 bg-slate-800/60 border border-slate-700/50 rounded-lg">
+              <BookOpen className="w-4 h-4 text-cyan-400" />
+              <span>{t("Value Guide", "价值白皮书")}</span>
+            </a>
             {user?.isPremium && (
               <Link href="/watchlist" className="text-sm text-slate-400 hover:text-white transition-colors hidden sm:inline">
                 {t("Watchlist", "自选股")}

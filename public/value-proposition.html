@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GEMS & DailyStock | 平台价值定位与用户指南</title>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <style>
+    :root {
+      --bg-dark: #070a12;
+      --card-bg: rgba(22, 30, 46, 0.7);
+      --border-color: rgba(255, 255, 255, 0.1);
+      --accent-cyan: #38bdf8;
+      --accent-indigo: #818cf8;
+      --accent-purple: #c084fc;
+      --accent-green: #34d399;
+      --accent-amber: #fbbf24;
+      --accent-red: #f87171;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      line-height: 1.6;
+      padding-bottom: 60px;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    /* Hero Section */
+    .hero {
+      text-align: center;
+      padding: 80px 0 60px;
+      background: radial-gradient(circle at top, rgba(56, 189, 248, 0.15), transparent 70%);
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .hero-badge {
+      display: inline-block;
+      background: rgba(56, 189, 248, 0.15);
+      color: var(--accent-cyan);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      padding: 6px 18px;
+      border-radius: 20px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      margin-bottom: 20px;
+    }
+
+    .hero-title {
+      font-size: 3rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #ffffff 30%, var(--accent-cyan) 70%, var(--accent-purple));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 16px;
+      line-height: 1.2;
+    }
+
+    .hero-subtitle {
+      font-size: 1.25rem;
+      color: var(--text-muted);
+      max-width: 800px;
+      margin: 0 auto 32px;
+    }
+
+    /* Sections Layout */
+    section {
+      padding: 60px 0;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .section-title {
+      font-size: 2rem;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .section-desc {
+      color: var(--text-muted);
+      font-size: 1rem;
+      margin-bottom: 36px;
+    }
+
+    /* Grid Layouts */
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 24px;
+    }
+
+    /* Cards */
+    .card {
+      background: var(--card-bg);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 28px;
+      transition: all 0.3s ease;
+    }
+
+    .card:hover {
+      border-color: rgba(56, 189, 248, 0.4);
+      transform: translateY(-4px);
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
+    }
+
+    .card-highlight {
+      border: 1px solid var(--accent-green);
+      background: rgba(52, 211, 153, 0.08);
+    }
+
+    .card-icon {
+      font-size: 2rem;
+      margin-bottom: 16px;
+    }
+
+    .card-title {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--accent-cyan);
+      margin-bottom: 12px;
+    }
+
+    .card p, .card li {
+      font-size: 0.95rem;
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+
+    /* Comparison Table */
+    .table-wrapper {
+      overflow-x: auto;
+      background: var(--card-bg);
+      border-radius: 16px;
+      border: 1px solid var(--border-color);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+    }
+
+    th, td {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border-color);
+      font-size: 0.95rem;
+    }
+
+    th {
+      background: rgba(30, 41, 59, 0.8);
+      color: var(--accent-cyan);
+      font-weight: 700;
+    }
+
+    td {
+      color: var(--text-main);
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    .highlight-row {
+      background: rgba(52, 211, 153, 0.12);
+      font-weight: bold;
+    }
+
+    /* Metaphor Quote Box */
+    .quote-box {
+      background: rgba(129, 140, 248, 0.1);
+      border-left: 4px solid var(--accent-indigo);
+      border-radius: 8px;
+      padding: 20px;
+      margin-top: 16px;
+    }
+
+    .quote-title {
+      font-weight: 700;
+      color: var(--accent-indigo);
+      margin-bottom: 6px;
+    }
+
+    /* Badge Pills */
+    .pill {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+    .pill-red { background: rgba(248, 113, 113, 0.2); color: var(--accent-red); }
+    .pill-green { background: rgba(52, 211, 153, 0.2); color: var(--accent-green); }
+    .pill-cyan { background: rgba(56, 189, 248, 0.2); color: var(--accent-cyan); }
+  </style>
+</head>
+<body>
+
+  <!-- Hero Header -->
+  <header class="hero">
+    <div class="container">
+      <div class="hero-badge">GEMS & DailyStock 用户价值指南</div>
+      <h1 class="hero-title">不止是 AI，更是您的 7×24h 投研中枢<br>与风控大脑</h1>
+      <p class="hero-subtitle">
+        告别传统 AI 的模糊猜测与数据幻觉：打造 100% 真实财报滚算、机构级风控与无缝多端体验。
+      </p>
+    </div>
+  </header>
+
+  <main class="container">
+
+    <!-- Section 1: 极致性价比与市场定价比对 -->
+    <section>
+      <h2 class="section-title">💰 杀手级定价与美股投研市场性价比比对</h2>
+      <p class="section-desc">仅为 Seeking Alpha ($239+/年) 的 1/5 价格，提供 200% 的 AI 智能化与风控体验：</p>
+
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>平台名称</th>
+              <th>主要定位</th>
+              <th>官方公开价格</th>
+              <th>核心体验差异</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><b>Seeking Alpha</b></td>
+              <td>Premium 会员 (社区长文+Quant评分)</td>
+              <td><b>$239 - $299 / 年</b></td>
+              <td>静态社区文章，独立作者观点冲突，无个性化风控。</td>
+            </tr>
+            <tr>
+              <td><b>Seeking Alpha</b></td>
+              <td>Pro 会员 (机构研报+买方圈子)</td>
+              <td><b>$2,400 / 年</b></td>
+              <td>价格极高，主要卖研报内容，无对话式 Agent 追问。</td>
+            </tr>
+            <tr>
+              <td><b>Simply Wall St</b></td>
+              <td>Premium / Unlimited</td>
+              <td><b>$120 - $240 / 年</b></td>
+              <td>可视化雪花图，图表死板，无 4 大宏观压力测试推演。</td>
+            </tr>
+            <tr>
+              <td><b>Motley Fool</b></td>
+              <td>Stock Advisor</td>
+              <td><b>$199 / 年</b></td>
+              <td>每月推 2 支个股，无动态对话与持仓风控功能。</td>
+            </tr>
+            <tr class="highlight-row">
+              <td><b style="color: var(--accent-green);">GEMS & DailyStock</b></td>
+              <td><b style="color: var(--accent-green);">Pro 个人专业版 ★</b></td>
+              <td><b style="color: var(--accent-green); font-size: 1.15rem;">$50 / 年</b></td>
+              <td><b style="color: var(--accent-green);">17季度 TTM 滚算 + ADK AI 智能体 + 4大压力测试 + 一键 PDF 研报</b></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="grid-2" style="margin-top: 28px;">
+        <div class="card card-highlight">
+          <div class="card-title" style="color: var(--accent-green);">🎯 1/5 价格降维打击</div>
+          <p> Seeking Alpha 年费 $239+，我们仅收 <b>$50/年 (折合每天仅 $0.13 美元)</b>。在美股投资者眼中属于无痛小额消费，性价比优势极其明显。</p>
+        </div>
+        <div class="card card-highlight">
+          <div class="card-title" style="color: var(--accent-green);">⚡ 200% AI 体验倒挂</div>
+          <p>传统平台给死板文章和表格让用户自己读，而 GEMS 拥有 <b>Google ADK 智能体对话、17季度 TTM 计算器与一键 PDF 机构研报</b>。</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 2: 核心区别 1 - GEMS vs 通用 AI -->
+    <section>
+      <h2 class="section-title">🥊 核心对比 1：GEMS vs 裸用 DeepSeek / ChatGPT</h2>
+      <p class="section-desc">为什么通用聊天软件无法替代垂直领域的专业 AI 智能体系统？</p>
+
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 20%;">对比维度</th>
+              <th style="width: 40%;">裸用 DeepSeek / ChatGPT (通用聊天机器人)</th>
+              <th style="width: 40%;">GEMS & DailyStock 专用体系 (智能体架构)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><b>1. 数据真实性</b></td>
+              <td><span class="pill pill-red">凭空捏造与记忆模糊</span><br>依靠概率猜测，经常混淆旧数据，甚至凭空捏造市盈率、现金流等关键财务指标（数据幻觉）。</td>
+              <td><span class="pill pill-green">实时滚算 + 100% 真实财报</span><br>内置 17 季度动态 TTM 算法与机构 API，说话前先用代码算好真实财报，<b>0 数据幻觉</b>。</td>
+            </tr>
+            <tr>
+              <td><b>2. 分析深度</b></td>
+              <td><span class="pill pill-red">网文式套话</span><br>回答“苹果公司是一家伟大的科技公司”，属于公车废话，无真实交易指导意义。</td>
+              <td><span class="pill pill-green">机构卖方研究员标准</span><br>量化双评分（技术面+基本面 0-100）、催化剂时间轴、持仓 Beta 加权、4 大宏观场景推演。</td>
+            </tr>
+            <tr>
+              <td><b>3. 组合风控</b></td>
+              <td><span class="pill pill-red">单点孤立，看树不见林</span><br>问哪支聊哪支；不知道账户整体持仓，无法评估大盘与板块集中度风险。</td>
+              <td><span class="pill pill-green">全局持仓 + 宏观压力测试</span><br>模拟美联储加息/二次通胀时组合跌幅，提供具体对冲与调仓指南。</td>
+            </tr>
+            <tr>
+              <td><b>4. 决策工具箱</b></td>
+              <td><span class="pill pill-red">纯语言文科生</span><br>只有文字生成能力，无法调用任何专业的金融计算器或回测打分模型。</td>
+              <td><span class="pill pill-green">自动化工具链 (ADK Harness)</span><br>Google ADK 架构，AI 自主判断何时调用“历史估值引擎”或“回测模型”。</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="grid-2" style="margin-top: 24px;">
+        <div class="quote-box">
+          <div class="quote-title">🗣️ 通俗比喻 1：【文科生 vs 带着计算器的华尔街精算师】</div>
+          <p>裸用 ChatGPT 就像找了一个记忆力不错的文科生凭感觉跟你聊股票，数字经常乱填；而 GEMS 就像给文科生配了一个华尔街精算师团队和实时计算器，AI 说话前先把过去 4 年 17 季度的财报算得一干二净。</p>
+        </div>
+        <div class="quote-box">
+          <div class="quote-title">🗣️ 通俗比喻 2：【百度搜病症 vs 带着病历做全套 CT 体检】</div>
+          <p>问通用 AI 就像在网上搜“头疼怎么办”，得到通用废话；而 DailyStock 就像带着您整套资产做全套 CT 体检，结合持仓与加息风险，告诉您具体的避险方案。</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 3: 核心区别 2 - GEMS vs 富途 / Seeking Alpha -->
+    <section>
+      <h2 class="section-title">🥊 核心对比 2：GEMS vs 富途 / 嘉信理财 / Seeking Alpha</h2>
+      <p class="section-desc">与成熟的传统券商终端及财经内容社区相比，我们的独特定位与互补关系：</p>
+
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 20%;">对比维度</th>
+              <th style="width: 25%;">富途 Moomoo / 嘉信理财 (券商终端)</th>
+              <th style="width: 25%;">Seeking Alpha (内容社区)</th>
+              <th style="width: 30%;">GEMS & DailyStock (AI 原生智能体)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><b>角色定位</b></td>
+              <td><b>数据看板与下单工具</b><br>看 K 线、看报表，自己手动交易。</td>
+              <td><b>静态文章社区</b><br>看独立作者写的长文，观点分散。</td>
+              <td><span class="pill pill-cyan">7×24h 私人 AI 基金经理与投研中枢</span><br>主动计算、推演风控并生成研报。</td>
+            </tr>
+            <tr>
+              <td><b>信息消化成本</b></td>
+              <td><span class="pill pill-red">高载荷 (数据坟墓)</span><br>面对几百个财务指标，需花数小时解读。</td>
+              <td><span class="pill pill-red">高成本 (观点冲突)</span><br>看 5 篇文章观点完全矛盾。</td>
+              <td><span class="pill pill-green">极简消化 (机构研报)</span><br>量化双评分、催化剂时间轴，一键导出。</td>
+            </tr>
+            <tr>
+              <td><b>组合动态风控</b></td>
+              <td><b>静态浮盈浮亏</b><br>只显示亏赚，无法做未来情景推演。</td>
+              <td><b>无组合联动</b><br>文章只看单股，不关心的整体持仓。</td>
+              <td><span class="pill pill-green">4 大宏观压力测试引擎</span><br>计算组合在加息/通胀下的跌幅与对冲。</td>
+            </tr>
+            <tr>
+              <td><b>互补关系定位</b></td>
+              <td><b>交易执行端 (解决“怎么买”)</b></td>
+              <td><b>社区舆情端 (解决“别人怎么看”)</b></td>
+              <td><b>AI 决策大脑 (解决“买什么、怎么控风控”)</b></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="quote-box" style="margin-top: 24px;">
+        <div class="quote-title">🗣️ 通俗比喻 3：【交易武器库 vs 自动驾驶导航仪】</div>
+        <p>富途和嘉信理财是您的<b>交易武器库</b>，负责具体的买卖下单；而 GEMS 和 DailyStock 是您的<b>自动驾驶导航仪与参谋部</b>，负责告诉您战局走势、地形风险和策略路线。两者完美互补，在 DailyStock 完成选股诊断后，直接去富途执行交易。</p>
+      </div>
+    </section>
+
+    <!-- Section 4: GEMS 平台核心价值总结 -->
+    <section>
+      <h2 class="section-title">🌟 GEMS 平台给投资者带来的 3 大核心价值</h2>
+      <p class="section-desc">全天候助力美股投资者完成科学决策与风险防范：</p>
+
+      <div class="grid-3">
+        <div class="card">
+          <div class="card-icon">⚡</div>
+          <div class="card-title">1. 0 幻觉精准投研</div>
+          <p>AI 在回答任何估值问题前，都会由后台代码自动演算过去 17 季度的真实财务指标。数据 100% 吻合华尔街官方财报，告别模糊猜测。</p>
+        </div>
+        <div class="card">
+          <div class="card-icon">🤖</div>
+          <div class="card-title">2. 7×24h 私人 AI 基金经理</div>
+          <p>提供量化双评分（技术面+基本面 0-100）、3-12 个月催化剂时间轴，并支持一键导出机构级 PDF 研报与多端实时打字对话。</p>
+        </div>
+        <div class="card">
+          <div class="card-icon">🛡️</div>
+          <div class="card-title">3. 动态持仓与宏观风控大脑</div>
+          <p>可导入实际持仓计算 Beta 加权，推演鹰派加息、二次通胀或科技股回调下的账户受创程度，提供具体的对冲避险方案。</p>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer style="text-align: center; color: var(--text-muted); font-size: 0.9rem; margin-top: 40px;">
+    &copy; 2026 Vanpower AI. All Rights Reserved.
+  </footer>
+
+  <script>
+    mermaid.initialize({ startOnLoad: true, theme: 'dark' });
+  </script>
+</body>
+</html>
