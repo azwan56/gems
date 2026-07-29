@@ -8,7 +8,7 @@ import { getAllStrategyPresets } from "@/lib/strategies";
 import { applyFilters } from "@/lib/screener-engine";
 import {
   ShieldCheck, TrendingUp, Rocket, Castle, Zap, ChevronRight,
-  Activity, ArrowUpRight, Plus, Check, Briefcase,
+  Activity, ArrowUpRight, Plus, Check, Briefcase, Radio, BookOpen
 } from "lucide-react";
 import Link from "next/link";
 import PremiumGate from "@/components/PremiumGate";
@@ -22,6 +22,7 @@ const getStrategyIcon = (strategyId: string) => {
     case "value": return ShieldCheck;
     case "large_growth": return TrendingUp;
     case "small_growth": return Rocket;
+    case "seeking_alpha": return Radio;
     case "garp": return TrendingUp;
     case "wide_moat": return Castle;
     case "short_term_catalyst": return Zap;
@@ -53,6 +54,29 @@ export default function SuperScreenerMatrix() {
   const [watchlist, setWatchlist] = useState<Set<string>>(new Set());
   const [saList, setSaList] = useState<Set<string>>(new Set());
   const [addingSymbol, setAddingSymbol] = useState<string | null>(null);
+  const [syncingSa, setSyncingSa] = useState(false);
+
+  const handleSyncSa = useCallback(async () => {
+    setSyncingSa(true);
+    try {
+      const token = await getIdToken();
+      const headers: HeadersInit = token ? { Authorization: `Bearer ${token}` } : {};
+      const res = await fetch("/api/seeking-alpha/sync", { method: "POST", headers });
+      if (res.ok) {
+        const saRes = await fetch("/api/seeking-alpha", { headers });
+        if (saRes.ok) {
+          const saData = await saRes.json();
+          if (saData && Array.isArray(saData.symbols)) {
+            setSaList(new Set(saData.symbols.map((s: string) => s.toUpperCase())));
+          }
+        }
+      }
+    } catch (err) {
+      console.error("Failed to sync Seeking Alpha:", err);
+    } finally {
+      setSyncingSa(false);
+    }
+  }, [getIdToken]);
 
   // Load full stock pool + existing watchlist in parallel
   useEffect(() => {
@@ -247,9 +271,20 @@ export default function SuperScreenerMatrix() {
                   )}
                 </p>
               </div>
-              {/* Count summary pill */}
-              {!loading && matrixStocks.length > 0 && (
-                <div className="flex items-center gap-3 flex-shrink-0">
+              {/* Count summary pill & SA sync button */}
+              <div className="flex items-center gap-4 flex-shrink-0">
+                <button
+                  type="button"
+                  onClick={handleSyncSa}
+                  disabled={syncingSa}
+                  className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-amber-500/10 border border-amber-500/25 text-amber-400 hover:bg-amber-500/20 transition-all text-xs font-medium shadow-sm"
+                  title={t("Sync Seeking Alpha picks from Reddit & RSS feeds", "从 Reddit 和 Seeking Alpha 自动轮询同步最新精选标的")}
+                >
+                  <Radio className={`w-3.5 h-3.5 ${syncingSa ? "animate-spin" : ""}`} />
+                  <span>{syncingSa ? t("Syncing SA...", "轮询同步中...") : t("Sync Seeking Alpha", "自动轮询 SA 精选")}</span>
+                </button>
+
+                {!loading && matrixStocks.length > 0 && (
                   <div className="text-right">
                     <div className="text-3xl font-black bg-gradient-to-r from-indigo-400 to-cyan-400 bg-clip-text text-transparent">
                       {matrixStocks.length}
@@ -258,8 +293,8 @@ export default function SuperScreenerMatrix() {
                       {t("Stocks Selected", "只个股入选")}
                     </div>
                   </div>
-                </div>
-              )}
+                )}
+              </div>
             </div>
           </div>
 
