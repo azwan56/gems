@@ -31,12 +31,13 @@ export default function StockChatAssistant({
   const { user, getIdToken } = useAuth();
   
   const [isOpen, setIsOpen] = useState(false);
+  const [layoutMode, setLayoutMode] = useState<"floating" | "sidebar">("sidebar");
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const lastMessageRef = useRef<HTMLDivElement>(null);
 
   // Localization helpers
   const t = (en: string, zh: string) => (lang === "en" ? en : zh);
@@ -47,12 +48,12 @@ export default function StockChatAssistant({
     t("What are the core rationales and risks of the report?", "该公司定性研报的核心投资逻辑与潜在风险是什么？"),
   ];
 
-  // Auto-scroll to bottom of conversation
+  // Auto-scroll latest question/answer to the TOP of the scroll view
   useEffect(() => {
-    if (isOpen) {
-      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (isOpen && messages.length > 0) {
+      lastMessageRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
     }
-  }, [messages, isOpen, isLoading]);
+  }, [messages.length, isOpen]);
 
   // If user is not logged in or doesn't have a verified session, don't render the chat ball
   if (!user) return null;
@@ -75,7 +76,6 @@ export default function StockChatAssistant({
     setMessages((prev) => [...prev, newUserMsg]);
 
     // 2. Prepare payload history
-    // Map current message list (excluding the one we just added) to the simple payload format
     const historyPayload = messages.map((m) => ({
       role: m.role,
       content: m.content,
@@ -178,9 +178,15 @@ export default function StockChatAssistant({
 
       {/* Chat Drawer/Panel */}
       {isOpen && (
-        <div className="w-[400px] h-[600px] bg-slate-950/95 border border-slate-800/80 rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in fade-in slide-in-from-bottom-5 duration-200">
+        <div
+          className={
+            layoutMode === "sidebar"
+              ? "fixed top-0 right-0 bottom-0 z-[999999] w-full sm:w-[380px] md:w-[25vw] min-w-[320px] h-screen bg-slate-950/98 backdrop-blur-2xl border-l border-emerald-500/30 shadow-2xl flex flex-col animate-in slide-in-from-right duration-200"
+              : "fixed bottom-6 right-6 z-[999999] w-[400px] max-w-[calc(100vw-32px)] h-[600px] max-h-[85vh] bg-slate-950/95 border border-slate-800/80 rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in fade-in slide-in-from-bottom-5 duration-200"
+          }
+        >
           {/* Header */}
-          <div className="px-4 py-3 bg-slate-900 border-b border-slate-800/50 flex justify-between items-center">
+          <div className="px-4 py-3 bg-slate-900 border-b border-slate-800/50 flex justify-between items-center flex-shrink-0">
             <div className="flex items-center gap-2">
               <Sparkles className="w-5 h-5 text-emerald-400" />
               <div>
@@ -188,12 +194,23 @@ export default function StockChatAssistant({
                 <p className="text-[10px] text-slate-500">{companyName}</p>
               </div>
             </div>
-            <button
-              onClick={() => setIsOpen(false)}
-              className="p-1 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition-colors"
-            >
-              <X className="w-5 h-5" />
-            </button>
+            <div className="flex items-center gap-2">
+              {/* Desktop 1/4 Split-Screen Mode Toggle */}
+              <button
+                type="button"
+                onClick={() => setLayoutMode(layoutMode === "sidebar" ? "floating" : "sidebar")}
+                title={layoutMode === "sidebar" ? t("Switch to floating window", "切回浮窗模式") : t("Switch to 1/4 sidebar mode", "切到右侧 1/4 分屏模式")}
+                className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-xs text-emerald-400 border border-slate-700 rounded-lg transition-all flex items-center gap-1 font-mono shadow-sm"
+              >
+                {layoutMode === "sidebar" ? t("🔲 Float", "🔲 浮窗") : t("📐 1/4 Split", "📐 1/4分屏")}
+              </button>
+              <button
+                onClick={() => setIsOpen(false)}
+                className="p-1 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
           </div>
 
           {/* Conversation History */}
@@ -226,14 +243,16 @@ export default function StockChatAssistant({
               </div>
             ) : (
               <div className="space-y-4">
-                {messages.map((m) => {
+                {messages.map((m, idx) => {
                   const isUser = m.role === "user";
+                  const isLastUserMsg = isUser && (idx === messages.length - 1 || idx === messages.length - 2);
                   return (
                     <div
                       key={m.id}
+                      ref={isLastUserMsg ? lastMessageRef : null}
                       className={`flex ${isUser ? "justify-end" : "justify-start"}`}
                     >
-                      <div className="max-w-[85%] flex flex-col spacing-y-1">
+                      <div className="max-w-[88%] flex flex-col spacing-y-1">
                         {/* Role tag */}
                         <span className={`text-[9px] font-semibold text-slate-500 mb-1 ${isUser ? "text-right" : "text-left"}`}>
                           {isUser ? t("You", "您") : t("GEMS AI", "GEMS 助手")}
@@ -243,8 +262,8 @@ export default function StockChatAssistant({
                         <div
                           className={`px-4 py-2.5 rounded-2xl text-sm ${
                             isUser
-                              ? "bg-gradient-to-br from-blue-600 to-blue-700 text-white rounded-tr-none"
-                              : "bg-slate-900 border border-slate-800/80 text-slate-200 rounded-tl-none"
+                              ? "bg-gradient-to-br from-teal-600 to-emerald-600 text-white rounded-tr-none shadow-md shadow-teal-500/10"
+                              : "bg-slate-900 border border-slate-800/80 text-slate-200 rounded-tl-none shadow-sm"
                           }`}
                         >
                           {isUser ? (
@@ -276,7 +295,6 @@ export default function StockChatAssistant({
                 )}
               </div>
             )}
-            <div ref={messagesEndRef} />
           </div>
 
           {/* Error toast */}
