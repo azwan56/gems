@@ -6,7 +6,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { Sparkles, Send, X, Loader2 } from "lucide-react";
+import { Sparkles, Send, X, Loader2, RotateCcw } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 
 interface Message {
@@ -195,6 +195,18 @@ export default function StockChatAssistant({
               </div>
             </div>
             <div className="flex items-center gap-2">
+              {/* Clear History Button */}
+              {messages.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setMessages([])}
+                  title={t("Clear Chat History", "清空历史对话")}
+                  className="px-2 py-1 bg-slate-800 hover:bg-rose-950/40 text-xs text-slate-400 hover:text-rose-400 border border-slate-700 hover:border-rose-500/40 rounded-lg transition-all flex items-center gap-1 shadow-sm"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" />
+                  <span>{t("Clear", "清空")}</span>
+                </button>
+              )}
               {/* Desktop 1/4 Split-Screen Mode Toggle */}
               <button
                 type="button"
