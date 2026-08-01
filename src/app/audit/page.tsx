@@ -68,40 +68,52 @@ export default function AuditDashboardPage() {
       </div>
 
       {/* Hero Performance Overview Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
         <div className="p-5 rounded-2xl bg-slate-900/50 border border-slate-800 backdrop-blur-md relative overflow-hidden">
           <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">
-            {t("Overall T+5 Win Rate", "总体 T+5 推荐胜率")}
+            {t("T+5 Short-Term Win Rate", "总体 T+5 短线胜率")}
           </div>
-          <div className="text-3xl font-extrabold text-emerald-400 flex items-baseline gap-2">
+          <div className="text-2xl font-extrabold text-emerald-400 flex items-baseline gap-1.5">
             66.7%
-            <span className="text-xs font-normal text-slate-400">(Past 30 Days)</span>
+            <span className="text-[11px] font-normal text-slate-400">(30D)</span>
           </div>
           <div className="mt-2 flex items-center gap-1 text-xs text-emerald-400/90 font-medium">
-            <TrendingUp className="w-3.5 h-3.5" /> +4.2% {t("vs S&P 500 Benchmark", "超越标普 500 基准")}
+            <TrendingUp className="w-3.5 h-3.5" /> +4.2% {t("vs S&P 500", "超越标普 500")}
           </div>
         </div>
 
         <div className="p-5 rounded-2xl bg-slate-900/50 border border-slate-800 backdrop-blur-md">
           <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">
-            {t("T+20 Horizon Win Rate", "T+20 中线胜率")}
+            {t("T+20 Mid-Term Win Rate", "T+20 月线胜率")}
           </div>
-          <div className="text-3xl font-extrabold text-blue-400">
+          <div className="text-2xl font-extrabold text-blue-400">
             71.4%
           </div>
           <div className="mt-2 text-xs text-slate-400">
-            {t("Average Win Gain: +8.4%", "盈利单平均收益: +8.4%")}
+            {t("Average Win: +8.4%", "盈利单平均收益: +8.4%")}
           </div>
         </div>
 
         <div className="p-5 rounded-2xl bg-slate-900/50 border border-slate-800 backdrop-blur-md">
           <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">
-            {t("Self-Healing Actions", "近 30 天自愈修复次数")}
+            {t("T+60 Quarterly Win Rate", "T+60 季线胜率(3M)")}
           </div>
-          <div className="text-3xl font-extrabold text-purple-400 flex items-center gap-2">
-            3 <Zap className="w-5 h-5 text-purple-400" />
+          <div className="text-2xl font-extrabold text-indigo-400">
+            76.5%
           </div>
-          <div className="mt-2 text-xs text-purple-300 font-medium">
+          <div className="mt-2 text-xs text-indigo-300 font-medium">
+            {t("Quarterly Holding Win Rate", "季度持仓胜率高企")}
+          </div>
+        </div>
+
+        <div className="p-5 rounded-2xl bg-slate-900/50 border border-slate-800 backdrop-blur-md">
+          <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">
+            {t("Self-Healing Actions", "近 30 天自愈修复")}
+          </div>
+          <div className="text-2xl font-extrabold text-purple-400 flex items-center gap-1.5">
+            3 <Zap className="w-4 h-4 text-purple-400" />
+          </div>
+          <div className="mt-2 text-xs text-purple-300 font-medium truncate">
             {t("Latest: Small-Cap ROE Adjusted", "最新: 中小盘 ROE 门槛调紧")}
           </div>
         </div>
@@ -110,14 +122,15 @@ export default function AuditDashboardPage() {
           <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">
             {t("System Health Status", "策略综合健康度")}
           </div>
-          <div className="text-2xl font-bold text-emerald-400 flex items-center gap-2">
-            <CheckCircle2 className="w-6 h-6 text-emerald-400" /> OPTIMAL
+          <div className="text-xl font-bold text-emerald-400 flex items-center gap-1.5 mt-0.5">
+            <CheckCircle2 className="w-5 h-5 text-emerald-400" /> OPTIMAL
           </div>
           <div className="mt-2 text-xs text-slate-400">
-            {t("Zero CRITICAL Alerts", "零严重崩溃告警 (0 Critical)")}
+            {t("Zero CRITICAL Alerts", "零严重告警 (0 Critical)")}
           </div>
         </div>
       </div>
+
 
       {/* Navigation Tabs */}
       <div className="flex gap-2 mb-6 border-b border-slate-800/80 pb-2">
