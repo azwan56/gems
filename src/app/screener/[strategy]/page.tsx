@@ -32,26 +32,10 @@ function getStockEntryInfo(s: StockMetrics, isBatchImport = false, defaultBatchD
   let hash = 0;
   for (let i = 0; i < symbol.length; i++) hash += symbol.charCodeAt(i);
 
-  // Exact historical 7/1 closing prices matching Seeking Alpha charts
-  const authenticClosingPrices: Record<string, number> = {
-    CRNX: 38.68,   // Official Seeking Alpha 7/1 closing price ($38.68 -> $83.86, +116.8%)
-    AMZN: 186.21,
-    SNDK: 1098.50,
-    LITE: 612.40,
-    PACS: 38.20,
-    DAVE: 312.50,
-    NVDA: 126.40,
-    MSFT: 441.50,
-    TSM:  173.80,
-    AAPL: 226.30,
-    AVGO: 154.20,
-    MU:   121.50,
-  };
-
-  // Preferred entry dates per symbol
+  // Preferred entry dates per symbol to match realistic scenarios
   const entryDateMap: Record<string, string> = {
     NVDA: "2026-07-15",
-    MSFT: "2026-07-12",
+    MSFT: "2026-07-12", // Sunday, backend will resolve to 07-10 Friday
     TSM:  "2026-07-18",
     AAPL: "2026-07-10",
     AVGO: "2026-07-16",
@@ -62,42 +46,35 @@ function getStockEntryInfo(s: StockMetrics, isBatchImport = false, defaultBatchD
     FISV: "2026-07-13",
     CFG:  "2026-07-14",
     CRNX: "2026-07-01",
+    OSCR: "2026-07-12", // Added to demonstrate weekend resolution
   };
 
-  // 1. First Entry Date (首次入选日期)
+  // 1. First Entry Date
   const firstEntryDate = s.firstEntryDate || (
     isBatchImport 
       ? defaultBatchDate 
       : (entryDateMap[symbol] || `2026-07-${String(Math.max(1, (hash % 15) + 1)).padStart(2, '0')}`)
   );
 
-  // 2. First Entry Price (优先使用精确定位历史盘面收盘价，包含缺口暴涨股如 CRNX 7/1 真实收盘价 $38.68)
-  let firstEntryPrice: number;
-  if (s.firstEntryPrice && s.firstEntryPrice > 0) {
-    firstEntryPrice = s.firstEntryPrice;
-  } else if (authenticClosingPrices[symbol]) {
-    firstEntryPrice = authenticClosingPrices[symbol];
-  } else if (s.priceVs50SMA != null) {
+  // 2. First Entry Price (fallback, true price injected by frontend state via FMP API)
+  let firstEntryPrice = s.firstEntryPrice || 0;
+  if (!firstEntryPrice && s.priceVs50SMA != null) {
     const returnPct = s.priceVs50SMA / 100;
     firstEntryPrice = Math.round((s.price / (1 + returnPct)) * 100) / 100;
-  } else {
+  } else if (!firstEntryPrice) {
     firstEntryPrice = Math.round(s.price * 0.95 * 100) / 100;
   }
 
-
-  // 3. Latest Rebalance Date & Price (最新调仓日期与真实价格)
+  // 3. Latest Rebalance Date
   const latestEntryDate = s.latestEntryDate || (
     isBatchImport 
       ? defaultBatchDate 
       : s.entryDate || `2026-07-${String((hash % 6) + 21).padStart(2, '0')}`
   );
 
-  let latestEntryPrice: number;
-  if (s.latestEntryPrice && s.latestEntryPrice > 0) {
-    latestEntryPrice = s.latestEntryPrice;
-  } else if (s.entryPrice && s.entryPrice > 0) {
-    latestEntryPrice = s.entryPrice;
-  } else {
+  // 4. Latest Rebalance Price (fallback, true price injected by frontend state via FMP API)
+  let latestEntryPrice = s.latestEntryPrice || s.entryPrice || 0;
+  if (!latestEntryPrice) {
     latestEntryPrice = Math.round((firstEntryPrice + (s.price - firstEntryPrice) * 0.65) * 100) / 100;
   }
 
@@ -155,6 +132,36 @@ export default function FunnelScreenerPage() {
   const [saInput, setSaInput] = useState("");
   const [saLoading, setSaLoading] = useState(false);
   const isSA = strategyId === "seeking_alpha";
+
+  // Exact Historical Prices from FMP API
+  const [historicalPrices, setHistoricalPrices] = useState<Record<string, Record<string, number>>>({});
+
+  useEffect(() => {
+    if (stocks.length === 0) return;
+    
+    const queries: { symbol: string; date: string }[] = [];
+    stocks.forEach(s => {
+      const { firstEntryDate, latestEntryDate } = getStockEntryInfo(s, isSA);
+      queries.push({ symbol: s.symbol, date: firstEntryDate });
+      queries.push({ symbol: s.symbol, date: latestEntryDate });
+    });
+    
+    // De-duplicate queries
+    const uniqueQueries = Array.from(new Set(queries.map(q => JSON.stringify(q)))).map(q => JSON.parse(q));
+
+    fetch("/api/historical-prices", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ queries: uniqueQueries })
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.results) {
+        setHistoricalPrices(data.results);
+      }
+    })
+    .catch(err => console.error("[Screener] Failed to fetch historical prices:", err));
+  }, [stocks, isSA]);
 
   // Load SA list on mount if strategy is seeking_alpha
   useEffect(() => {
@@ -689,7 +696,12 @@ export default function FunnelScreenerPage() {
                       </thead>
                       <tbody className="divide-y divide-slate-800/50">
                         {stocks.map(s => {
-                          const { firstEntryDate, firstEntryPrice, latestEntryDate, latestEntryPrice } = getStockEntryInfo(s, isSA);
+                          const entryInfo = getStockEntryInfo(s, isSA);
+                          const firstEntryDate = entryInfo.firstEntryDate;
+                          const latestEntryDate = entryInfo.latestEntryDate;
+                          const firstEntryPrice = historicalPrices[s.symbol]?.[firstEntryDate] || entryInfo.firstEntryPrice;
+                          const latestEntryPrice = historicalPrices[s.symbol]?.[latestEntryDate] || entryInfo.latestEntryPrice;
+                          
                           const totalReturnPct = firstEntryPrice > 0 ? (((s.price - firstEntryPrice) / firstEntryPrice) * 100) : 0;
                           const latestReturnPct = latestEntryPrice > 0 ? (((s.price - latestEntryPrice) / latestEntryPrice) * 100) : 0;
 
@@ -745,7 +757,9 @@ export default function FunnelScreenerPage() {
                   <div className="md:hidden space-y-3">
                     {stocks.map(s => {
                       const isSelected = selectedInStep1.has(s.symbol);
-                      const { entryDate, entryPrice } = getStockEntryInfo(s, isSA);
+                      const entryInfo = getStockEntryInfo(s, isSA);
+                      const entryDate = entryInfo.entryDate;
+                      const entryPrice = historicalPrices[s.symbol]?.[entryDate] || entryInfo.entryPrice;
                       const returnPct = entryPrice > 0 ? (((s.price - entryPrice) / entryPrice) * 100) : 0;
 
 
@@ -911,7 +925,12 @@ export default function FunnelScreenerPage() {
                           </thead>
                           <tbody className="divide-y divide-slate-800/50">
                             {stocks.filter(s => selectedInStep1.has(s.symbol)).map(s => {
-                              const { firstEntryDate, firstEntryPrice, latestEntryDate, latestEntryPrice } = getStockEntryInfo(s, true);
+                              const entryInfo = getStockEntryInfo(s, true);
+                              const firstEntryDate = entryInfo.firstEntryDate;
+                              const latestEntryDate = entryInfo.latestEntryDate;
+                              const firstEntryPrice = historicalPrices[s.symbol]?.[firstEntryDate] || entryInfo.firstEntryPrice;
+                              const latestEntryPrice = historicalPrices[s.symbol]?.[latestEntryDate] || entryInfo.latestEntryPrice;
+
                               const totalReturnPct = firstEntryPrice > 0 ? (((s.price - firstEntryPrice) / firstEntryPrice) * 100) : 0;
 
                               return (
