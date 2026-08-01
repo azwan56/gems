@@ -27,56 +27,34 @@ function formatNum(val: number | null, suffix = ""): string {
   return val === null || val === undefined ? "—" : `${val.toFixed(1)}${suffix}`;
 }
 
-function getStockEntryInfo(s: StockMetrics, isBatchImport = false, defaultBatchDate = "2026-07-01") {
-  const symbol = s.symbol.toUpperCase();
-  let hash = 0;
-  for (let i = 0; i < symbol.length; i++) hash += symbol.charCodeAt(i);
+function todayIso(): string {
+  return new Date().toISOString().split("T")[0];
+}
 
-  // Preferred entry dates per symbol to match realistic scenarios
-  const entryDateMap: Record<string, string> = {
-    NVDA: "2026-07-15",
-    MSFT: "2026-07-12", // Sunday, backend will resolve to 07-10 Friday
-    TSM:  "2026-07-18",
-    AAPL: "2026-07-10",
-    AVGO: "2026-07-16",
-    MU:   "2026-07-20",
-    ASML: "2026-07-22",
-    MA:   "2026-07-08",
-    AMZN: "2026-07-01",
-    FISV: "2026-07-13",
-    CFG:  "2026-07-14",
-    CRNX: "2026-07-01",
-    OSCR: "2026-07-12", // Added to demonstrate weekend resolution
-  };
+/**
+ * Derive entry info for a stock from its StockMetrics fields.
+ *
+ * Priority (highest → lowest):
+ *   1. s.firstEntryDate / s.latestEntryDate — written by backend at import time (source of truth).
+ *   2. defaultBatchDate — for batch-imported SA lists that lack individual dates.
+ *   3. todayIso() — absolute last resort so dates are never stale hard-coded strings.
+ *
+ * Entry prices are intentionally left as 0 here; the caller is expected to overwrite
+ * them with real FMP historical closing prices fetched asynchronously via the
+ * /api/historical-prices endpoint (historicalPrices state).
+ */
+function getStockEntryInfo(s: StockMetrics, isBatchImport = false, defaultBatchDate?: string) {
+  const batchDate = defaultBatchDate ?? todayIso();
 
-  // 1. First Entry Date
-  const firstEntryDate = s.firstEntryDate || (
-    isBatchImport 
-      ? defaultBatchDate 
-      : (entryDateMap[symbol] || `2026-07-${String(Math.max(1, (hash % 15) + 1)).padStart(2, '0')}`)
-  );
+  // First Entry Date — prefer the real field written by the backend
+  const firstEntryDate = s.firstEntryDate || (isBatchImport ? batchDate : (s.entryDate || batchDate));
 
-  // 2. First Entry Price (fallback, true price injected by frontend state via FMP API)
-  let firstEntryPrice = s.firstEntryPrice || 0;
-  if (!firstEntryPrice && s.priceVs50SMA != null) {
-    const returnPct = s.priceVs50SMA / 100;
-    firstEntryPrice = Math.round((s.price / (1 + returnPct)) * 100) / 100;
-  } else if (!firstEntryPrice) {
-    firstEntryPrice = Math.round(s.price * 0.95 * 100) / 100;
-  }
+  // Latest Rebalance Date
+  const latestEntryDate = s.latestEntryDate || s.entryDate || batchDate;
 
-  // 3. Latest Rebalance Date
-  const latestEntryDate = s.latestEntryDate || (
-    isBatchImport 
-      ? defaultBatchDate 
-      : s.entryDate || `2026-07-${String((hash % 6) + 21).padStart(2, '0')}`
-  );
-
-  // 4. Latest Rebalance Price (fallback, true price injected by frontend state via FMP API)
-  let latestEntryPrice = s.latestEntryPrice || s.entryPrice || 0;
-  if (!latestEntryPrice) {
-    latestEntryPrice = Math.round((firstEntryPrice + (s.price - firstEntryPrice) * 0.65) * 100) / 100;
-  }
+  // Prices start at 0; the FMP historical-prices fetch will replace them.
+  const firstEntryPrice = s.firstEntryPrice || 0;
+  const latestEntryPrice = s.latestEntryPrice || s.entryPrice || 0;
 
   return {
     firstEntryDate,
@@ -129,6 +107,8 @@ export default function FunnelScreenerPage() {
 
   // Seeking Alpha custom list management
   const [saSymbols, setSaSymbols] = useState<string[]>([]);
+  // Per-symbol entry dates from SA import (populated from /api/seeking-alpha GET entries field)
+  const [saEntryDates, setSaEntryDates] = useState<Record<string, string>>({});
   const [saInput, setSaInput] = useState("");
   const [saLoading, setSaLoading] = useState(false);
   const isSA = strategyId === "seeking_alpha";
@@ -141,7 +121,10 @@ export default function FunnelScreenerPage() {
     
     const queries: { symbol: string; date: string }[] = [];
     stocks.forEach(s => {
-      const { firstEntryDate, latestEntryDate } = getStockEntryInfo(s, isSA);
+      // For SA stocks, use the real import date stored in saEntryDates
+      const saDate = isSA ? saEntryDates[s.symbol.toUpperCase()] : undefined;
+      const enriched = saDate ? { ...s, firstEntryDate: s.firstEntryDate || saDate } : s;
+      const { firstEntryDate, latestEntryDate } = getStockEntryInfo(enriched, isSA);
       queries.push({ symbol: s.symbol, date: firstEntryDate });
       queries.push({ symbol: s.symbol, date: latestEntryDate });
     });
@@ -161,7 +144,7 @@ export default function FunnelScreenerPage() {
       }
     })
     .catch(err => console.error("[Screener] Failed to fetch historical prices:", err));
-  }, [stocks, isSA]);
+  }, [stocks, isSA, saEntryDates]);
 
   // Load SA list on mount if strategy is seeking_alpha
   useEffect(() => {
@@ -175,6 +158,14 @@ export default function FunnelScreenerPage() {
         if (res.ok) {
           const data = await res.json();
           setSaSymbols(data.symbols || []);
+          // Build a per-symbol entry date map from the entries array
+          if (Array.isArray(data.entries)) {
+            const dateMap: Record<string, string> = {};
+            for (const e of data.entries as { symbol: string; entryDate: string }[]) {
+              dateMap[e.symbol.toUpperCase()] = e.entryDate;
+            }
+            setSaEntryDates(dateMap);
+          }
         }
       } catch {}
     };

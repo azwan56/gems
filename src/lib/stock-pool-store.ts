@@ -74,9 +74,11 @@ export async function loadStockPool(): Promise<StockPoolData | null> {
     if (!data?.stocks || !data?.meta) return null;
 
     const rawStocks = (data.stocks as StockMetrics[]) || [];
-    const BLACKLISTED = new Set(["APLS", "SGEN"]);
+    // Filter out any stocks FMP reports as no longer actively trading.
+    // This handles delisted, acquired, or suspended stocks automatically,
+    // without requiring a hardcoded symbol blacklist.
     const cleanStocks = rawStocks.filter(
-      (s) => !BLACKLISTED.has(s.symbol.toUpperCase()) && (s as any).isActivelyTrading !== false
+      (s) => (s as StockMetrics & { isActivelyTrading?: boolean }).isActivelyTrading !== false
     );
 
     cachedPool = {

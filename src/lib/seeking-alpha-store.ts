@@ -13,14 +13,28 @@ export interface SeekingAlphaList {
   updatedAt: string;
 }
 
+/** Entry info stored alongside SA symbols */
+export interface SASymbolEntry {
+  symbol: string;
+  /** ISO date when first added to the SA list (used as firstEntryDate) */
+  entryDate: string;
+}
+
+export interface SeekingAlphaListV2 {
+  entries: SASymbolEntry[];
+  /** Backward-compat flat list of symbols */
+  symbols: string[];
+  updatedAt: string;
+}
+
 let cachedSAList: SeekingAlphaList | null = null;
 let saListCacheExpiry = 0;
 const CACHE_TTL_MS = 60 * 1000;
 
-const BLACKLISTED_SYMBOLS = new Set(["APLS", "SGEN"]);
-
 /**
  * Load the Seeking Alpha symbol list from Firestore.
+ * Symbols are filtered at read time to exclude stocks that FMP
+ * reports as not actively trading. No hardcoded blacklist required.
  */
 export async function loadSAList(): Promise<SeekingAlphaList> {
   const now = Date.now();
@@ -38,10 +52,9 @@ export async function loadSAList(): Promise<SeekingAlphaList> {
     }
     const data = doc.data();
     const rawSymbols = (data?.symbols as string[]) ?? [];
-    const filteredSymbols = rawSymbols.filter((s) => !BLACKLISTED_SYMBOLS.has(s.toUpperCase().trim()));
 
     cachedSAList = {
-      symbols: filteredSymbols,
+      symbols: rawSymbols.map((s) => s.toUpperCase().trim()).filter(Boolean),
       updatedAt: (data?.updatedAt as string) ?? new Date().toISOString(),
     };
     saListCacheExpiry = now + CACHE_TTL_MS;
@@ -53,29 +66,72 @@ export async function loadSAList(): Promise<SeekingAlphaList> {
 }
 
 /**
- * Save the full Seeking Alpha symbol list to Firestore.
+ * Load symbol entries with their import dates.
+ * Falls back to the flat symbols list if no entries are stored yet.
  */
-export async function saveSAList(symbols: string[]): Promise<SeekingAlphaList> {
+export async function loadSAEntries(): Promise<SASymbolEntry[]> {
+  try {
+    const db = getDb();
+    const doc = await db.collection(COLLECTION).doc(DOC_ID).get();
+    if (!doc.exists) return [];
+    const data = doc.data();
+    if (data?.entries && Array.isArray(data.entries)) {
+      return data.entries as SASymbolEntry[];
+    }
+    // Migrate from flat list: backfill with today's date
+    const today = new Date().toISOString().split("T")[0];
+    const symbols: string[] = (data?.symbols as string[]) ?? [];
+    return symbols.map((s) => ({ symbol: s.toUpperCase(), entryDate: today }));
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Save the full Seeking Alpha symbol list to Firestore.
+ * Also persists per-symbol entry dates.
+ */
+export async function saveSAList(
+  symbols: string[],
+  entryDateOverrides?: Record<string, string>
+): Promise<SeekingAlphaList> {
   // Invalidate local cache
   cachedSAList = null;
   saListCacheExpiry = 0;
 
   const db = getDb();
-  const deduped = [...new Set(symbols.map((s) => s.toUpperCase().trim()).filter((s) => Boolean(s) && !BLACKLISTED_SYMBOLS.has(s)))];
-  const record: SeekingAlphaList = {
+  const today = new Date().toISOString().split("T")[0];
+  const deduped = [...new Set(symbols.map((s) => s.toUpperCase().trim()).filter(Boolean))];
+
+  // Load existing entries to preserve original entry dates
+  const existingEntries = await loadSAEntries();
+  const existingDateMap: Record<string, string> = {};
+  for (const e of existingEntries) {
+    existingDateMap[e.symbol] = e.entryDate;
+  }
+
+  const entries: SASymbolEntry[] = deduped.map((symbol) => ({
+    symbol,
+    entryDate: entryDateOverrides?.[symbol] ?? existingDateMap[symbol] ?? today,
+  }));
+
+  const record = {
     symbols: deduped,
+    entries,
     updatedAt: new Date().toISOString(),
   };
   await db.collection(COLLECTION).doc(DOC_ID).set(record);
-  return record;
+  return { symbols: deduped, updatedAt: record.updatedAt };
 }
 
 /**
- * Add one or more symbols to the SA list (deduplicates).
+ * Add one or more symbols to the SA list.
+ * Records today as their firstEntryDate if not already present.
  */
 export async function addToSAList(newSymbols: string[]): Promise<SeekingAlphaList> {
   const current = await loadSAList();
   const merged = [...new Set([...current.symbols, ...newSymbols.map((s) => s.toUpperCase().trim())])].filter(Boolean);
+  // New symbols get today as their entryDate; existing ones preserve theirs (handled in saveSAList)
   return saveSAList(merged);
 }
 

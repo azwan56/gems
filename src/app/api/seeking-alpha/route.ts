@@ -14,20 +14,21 @@ import {
   addToSAList,
   removeFromSAList,
   saveSAList,
+  loadSAEntries,
 } from "@/lib/seeking-alpha-store";
 import { requirePremium } from "@/lib/auth-middleware";
 import { sendSAUpdateNotification } from "@/lib/sa-notifier";
 
 /**
- * GET: Return the current Seeking Alpha symbol list.
+ * GET: Return the current Seeking Alpha symbol list, including per-symbol entry dates.
  */
 export async function GET(request: NextRequest) {
   const authResult = await requirePremium(request);
   if (!authResult.success) return authResult.response;
 
   try {
-    const list = await loadSAList();
-    return NextResponse.json(list);
+    const [list, entries] = await Promise.all([loadSAList(), loadSAEntries()]);
+    return NextResponse.json({ ...list, entries });
   } catch (err) {
     return NextResponse.json(
       { error: "SA_LIST_ERROR", message: String(err) },

@@ -355,36 +355,44 @@ export async function fetchOnDemandStocks(symbols: string[]): Promise<StockMetri
         const cached = getCached<StockMetrics>(cacheKey);
         if (cached) return cached;
 
-        // Fetch all 4 endpoints in parallel
-        const [quoteData, ratiosData, growthData, kmData] = await Promise.allSettled([
+        // Fetch all 5 endpoints in parallel: add profile to get isActivelyTrading, isEtf, sector
+        const [quoteData, ratiosData, growthData, kmData, profileData] = await Promise.allSettled([
           fmpFetch<FmpTechnical[]>("/quote", { symbol }),
           fmpFetch<FmpRatios[]>("/ratios-ttm", { symbol }),
           fmpFetch<FmpGrowth[]>("/financial-growth", { symbol, limit: "1" }),
           fmpFetch<FmpKeyMetrics[]>("/key-metrics-ttm", { symbol, limit: "1" }),
+          fmpFetch<FmpScreenerResult[]>("/profile", { symbol }, { revalidate: 3600 }),
         ]);
 
         const quote = quoteData.status === "fulfilled" ? quoteData.value?.[0] : undefined;
         const ratios = ratiosData.status === "fulfilled" ? ratiosData.value?.[0] : undefined;
         const growth = growthData.status === "fulfilled" ? growthData.value?.[0] : undefined;
         const km = kmData.status === "fulfilled" ? kmData.value?.[0] : undefined;
+        const profile = profileData.status === "fulfilled" ? profileData.value?.[0] : undefined;
 
         if (!quote?.symbol) return null;
 
-        // Try sector map first, then use "Unknown" (FMP quote doesn't include sector)
+        // Skip delisted / suspended stocks (FMP will return isActivelyTrading: false)
+        if (profile?.isActivelyTrading === false) {
+          console.log(`[ondemand] Skipping ${symbol}: isActivelyTrading=false`);
+          return null;
+        }
+
+        // Prefer profile for sector/industry/isEtf since quote doesn't carry these
         const sectorInfo = getSectorInfo(quote.symbol || symbol);
 
         const screener: FmpScreenerResult = {
           symbol: quote.symbol || symbol,
-          companyName: quote.name || symbol,
-          marketCap: quote.marketCap || 0,
-          sector: sectorInfo.sector,
-          industry: sectorInfo.industry,
+          companyName: profile?.companyName || quote.name || symbol,
+          marketCap: quote.marketCap || profile?.marketCap || 0,
+          sector: profile?.sector || sectorInfo.sector,
+          industry: profile?.industry || sectorInfo.industry,
           price: quote.price || 0,
           volume: quote.volume || 0,
-          exchangeShortName: quote.exchange || "US",
-          country: "US",
-          isEtf: false,
-          isActivelyTrading: true,
+          exchangeShortName: profile?.exchangeShortName || quote.exchange || "US",
+          country: profile?.country || "US",
+          isEtf: profile?.isEtf ?? false,
+          isActivelyTrading: profile?.isActivelyTrading ?? true,
         };
 
         const metrics = buildStockMetrics(screener, ratios, growth, quote, km);

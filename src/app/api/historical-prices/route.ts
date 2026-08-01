@@ -1,12 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { fmpFetch } from "@/lib/fmp-fetch";
 import { hasApiKey } from "@/lib/fmp-config";
+import { requirePremium } from "@/lib/auth-middleware";
 
 export interface HistoricalPricesRequest {
   queries: { symbol: string; date: string }[];
 }
 
 export async function POST(request: NextRequest) {
+  const authResult = await requirePremium(request);
+  if (!authResult.success) return authResult.response;
+
   if (!hasApiKey()) {
     return NextResponse.json(
       { error: "FMP_API_KEY is not configured on the server." },
