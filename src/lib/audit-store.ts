@@ -154,8 +154,32 @@ export function getPerformanceShowcase(): PerformanceShowcaseStock[] {
       currentPrice: 188.50,
       returnPct: 9.59,
       status: "WINNER",
-      keyRationaleZh: "Neo4j 图谱验证：先进制程独家产能垄断，PEG仅 0.62",
+      keyRationaleZh: "Neo4j 图谱验证：先进制程独家产能垄断，PEG 仅 0.62",
       keyRationaleEn: "Neo4j Graph Verified: Monopolistic foundry capacity, PEG 0.62"
+    },
+    {
+      symbol: "AAPL",
+      companyName: "Apple Inc.",
+      strategyId: "value",
+      entryDate: "2026-07-10",
+      entryPrice: 224.00,
+      currentPrice: 241.50,
+      returnPct: 7.81,
+      status: "WINNER",
+      keyRationaleZh: "自由现金流收益率达标 + 苹果 AI 换机周期催化",
+      keyRationaleEn: "FCF Yield qualified + Apple Intelligence upgrade cycle catalyst"
+    },
+    {
+      symbol: "MSFT",
+      companyName: "Microsoft Corporation",
+      strategyId: "large_growth",
+      entryDate: "2026-07-12",
+      entryPrice: 440.00,
+      currentPrice: 468.20,
+      returnPct: 6.41,
+      status: "WINNER",
+      keyRationaleZh: "Azure 云计算增长超预期 + OpenAI 独家生态图谱加持",
+      keyRationaleEn: "Azure growth beat expectations + OpenAI ecosystem integration"
     },
     {
       symbol: "SMCI",
@@ -168,6 +192,19 @@ export function getPerformanceShowcase(): PerformanceShowcaseStock[] {
       status: "LOSER",
       keyRationaleZh: "受行业供应链审计噪音拉低；系统随后触发自愈逻辑止损出局",
       keyRationaleEn: "Impacted by supply chain audit news; auto self-healing triggered stop-loss"
+    },
+    {
+      symbol: "ARM",
+      companyName: "Arm Holdings plc",
+      strategyId: "small_growth",
+      entryDate: "2026-07-24",
+      entryPrice: 152.00,
+      currentPrice: 145.50,
+      returnPct: -4.28,
+      status: "LOSER",
+      keyRationaleZh: "短期估值扩张过快引发高位获利盘回吐，已触发过热预警",
+      keyRationaleEn: "Short-term valuation overstretch triggered profit taking alert"
     }
   ];
 }
+
