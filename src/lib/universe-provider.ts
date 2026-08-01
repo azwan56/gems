@@ -26,7 +26,7 @@ export const RUSSELL_MIDCAP_ADDITIONS: string[] = [
   "EXAS", "PCVX", "IONS", "ALNY", "SRPT", "BMRN", "HALO", "RARE",
   "NBIX", "CRNX", "RVMD", "KRTX", "ADMA", "CORT", "INCY", "EXEL",
   "ITCI", "LEGN", "NTRA", "TWST", "CRSP", "NTLA", "BEAM", "EDIT",
-  "ARWR", "FATE", "SGEN", "MGNX", "XNCR", "APLS", "RCKT",
+  "ARWR", "FATE", "MGNX", "XNCR", "RCKT",
 
   // ---- Fintech / Financial ----
   "LPLA", "IBKR", "MKTX", "CBOE", "NDAQ", "FDS", "MSCI", "SPGI",
