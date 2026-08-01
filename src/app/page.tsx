@@ -132,8 +132,15 @@ export default function Home() {
             </Link>
             <a href="/value-proposition.html" target="_blank" rel="noreferrer" className="text-sm text-slate-400 hover:text-cyan-400 transition-colors flex items-center gap-1.5 px-3 py-1.5 bg-slate-800/60 border border-slate-700/50 rounded-lg">
               <BookOpen className="w-4 h-4 text-cyan-400" />
-              <span>{t("Value Guide", "价值白皮书")}</span>
+              <span>{t("Value Guide", "平台价值白皮书")}</span>
             </a>
+            {user?.isPremium && (
+              <Link href="/whitepaper" className="text-sm text-amber-300 hover:text-amber-200 transition-colors flex items-center gap-1.5 px-3 py-1.5 bg-amber-500/10 border border-amber-500/30 rounded-lg font-medium">
+                <Cpu className="w-4 h-4 text-amber-400" />
+                <span>{t("Data Architecture", "数据架构白皮书")}</span>
+              </Link>
+            )}
+
 
             {user?.isPremium && (
               <Link href="/watchlist" className="text-sm text-slate-400 hover:text-white transition-colors hidden sm:inline">

@@ -3,13 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>GEMS & DailyStock | 算法与多模态数据架构白皮书</title>
+  <title>GEMS & DailyStock | 平台价值定位与用户指南</title>
   <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
   <style>
     :root {
       --bg-dark: #070a12;
-      --card-bg: rgba(22, 30, 46, 0.75);
-      --border-color: rgba(255, 255, 255, 0.12);
+      --card-bg: rgba(22, 30, 46, 0.7);
+      --border-color: rgba(255, 255, 255, 0.1);
       --accent-cyan: #38bdf8;
       --accent-indigo: #818cf8;
       --accent-purple: #c084fc;
@@ -31,7 +31,7 @@
       background-color: var(--bg-dark);
       color: var(--text-main);
       line-height: 1.6;
-      padding-bottom: 80px;
+      padding-bottom: 60px;
     }
 
     .container {
@@ -50,9 +50,9 @@
 
     .hero-badge {
       display: inline-block;
-      background: rgba(192, 132, 252, 0.15);
-      color: var(--accent-purple);
-      border: 1px solid rgba(192, 132, 252, 0.3);
+      background: rgba(56, 189, 248, 0.15);
+      color: var(--accent-cyan);
+      border: 1px solid rgba(56, 189, 248, 0.3);
       padding: 6px 18px;
       border-radius: 20px;
       font-size: 0.9rem;
@@ -63,7 +63,7 @@
     .hero h1 {
       font-size: 2.8rem;
       font-weight: 800;
-      background: linear-gradient(135deg, #ffffff 0%, var(--accent-cyan) 50%, var(--accent-purple) 100%);
+      background: linear-gradient(135deg, #ffffff 0%, var(--accent-cyan) 50%, var(--accent-indigo) 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       margin-bottom: 16px;
@@ -77,7 +77,7 @@
     }
 
     /* Section Styles */
-    .section {
+    section {
       padding: 60px 0 40px;
       border-bottom: 1px solid var(--border-color);
     }
@@ -88,11 +88,11 @@
       color: var(--accent-cyan);
       margin-bottom: 12px;
       display: flex;
-      items-center;
+      align-items: center;
       gap: 12px;
     }
 
-    .section-subtitle {
+    .section-desc {
       font-size: 1.05rem;
       color: var(--text-muted);
       margin-bottom: 32px;
@@ -111,14 +111,8 @@
       gap: 24px;
     }
 
-    .grid-4 {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 20px;
-    }
-
     @media (max-width: 900px) {
-      .grid-2, .grid-3, .grid-4 {
+      .grid-2, .grid-3 {
         grid-template-columns: 1fr;
       }
     }
@@ -139,9 +133,9 @@
       box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
     }
 
-    .card-highlight {
-      border: 1px solid var(--accent-green);
-      background: rgba(52, 211, 153, 0.08);
+    .card-icon {
+      font-size: 2rem;
+      margin-bottom: 16px;
     }
 
     .card-title {
@@ -157,13 +151,12 @@
       line-height: 1.6;
     }
 
-    /* Table */
+    /* Comparison Table */
     .table-wrapper {
       overflow-x: auto;
       background: var(--card-bg);
       border-radius: 16px;
       border: 1px solid var(--border-color);
-      margin-bottom: 24px;
     }
 
     table {
@@ -192,26 +185,33 @@
       border-bottom: none;
     }
 
-    /* Code & Formulas */
-    .formula-box {
+    .pill {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+
+    .pill-red { background: rgba(248, 113, 113, 0.15); color: var(--accent-red); border: 1px solid rgba(248, 113, 113, 0.3); }
+    .pill-green { background: rgba(52, 211, 153, 0.15); color: var(--accent-green); border: 1px solid rgba(52, 211, 153, 0.3); }
+    .pill-cyan { background: rgba(56, 189, 248, 0.15); color: var(--accent-cyan); border: 1px solid rgba(56, 189, 248, 0.3); }
+
+    /* Metaphor Quote Box */
+    .quote-box {
       background: rgba(129, 140, 248, 0.1);
       border-left: 4px solid var(--accent-indigo);
       border-radius: 8px;
       padding: 20px;
-      margin: 20px 0;
-      font-family: monospace;
-      font-size: 1.05rem;
-      color: #e2e8f0;
+      margin-top: 16px;
     }
 
-    /* Mermaid Diagrams */
-    .mermaid-container {
-      background: rgba(15, 23, 42, 0.6);
-      border: 1px solid var(--border-color);
-      border-radius: 16px;
-      padding: 24px;
-      margin: 24px 0;
-      overflow-x: auto;
+    .quote-title {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--accent-indigo);
+      margin-bottom: 8px;
     }
 
     .nav-btn {
@@ -238,175 +238,144 @@
   <!-- Hero Header -->
   <header class="hero">
     <div class="container">
-      <span class="hero-badge">⚡ 项目算法与多模态数据架构白皮书</span>
-      <h1>GEMS & DailyStock 智能架构解析</h1>
-      <p>异构数据库协同、Neo4j 知识图谱 RAG、5 大维度量化选股逻辑与闭环胜率自愈进化机制白皮书。</p>
+      <span class="hero-badge">💡 GEMS & DailyStock 平台价值白皮书</span>
+      <h1>专业级 AI 驱动美股量化投研体系</h1>
+      <p>为您解答 GEMS & DailyStock 的核心价值定位、与通用 AI 及传统券商终端的区别与互补优势。</p>
       <a href="/" class="nav-btn">← 返回 GEMS 平台主页</a>
     </div>
   </header>
 
   <main class="container">
 
-    <!-- Section 1: Database Synergy -->
-    <section class="section">
-      <h2 class="section-title">1. 系统整体数据库架构与协同关系</h2>
-      <p class="section-subtitle">系统采用 NoSQL 文档数据库 + 关系图数据库 + 对象存储 + 内存级熔断缓存的异构多模态架构，实现高性能与高可用性。</p>
+    <!-- Section 1: 核心区别 1 - GEMS vs 通用 AI -->
+    <section>
+      <h2 class="section-title">🥊 核心对比 1：GEMS vs 裸用 DeepSeek / ChatGPT</h2>
+      <p class="section-desc">为什么通用聊天软件无法替代垂直领域的专业 AI 智能体系统？</p>
 
       <div class="table-wrapper">
         <table>
           <thead>
             <tr>
-              <th>存储组件</th>
-              <th>数据库类型</th>
-              <th>核心职责与保存的内容</th>
+              <th style="width: 20%;">对比维度</th>
+              <th style="width: 40%;">裸用 DeepSeek / ChatGPT (通用聊天机器人)</th>
+              <th style="width: 40%;">GEMS & DailyStock 专用体系 (智能体架构)</th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td><strong>Google Cloud Firestore</strong></td>
-              <td>NoSQL 文档数据库 <em>(主业务库)</em></td>
-              <td>• <strong>用户与权限</strong>：用户 Profile (`users/`)、身份鉴权、订阅等级。<br>• <strong>研报与历史归档</strong>：每日盘前简报 (`reports/`)、每周审计周报 (`weekly_cache/`)、宏观分析 (`macro_cache/`)、财报拆解 (`earnings_reports/`)。<br>• <strong>策略与快照</strong>：Gems 策略快照 (`gems_rebalance_snapshots/`)、自选股列表 (`stock_pool`)。<br>• <strong>系统配置</strong>：龙头股权重表、SRE 健康探针状态 (`system_status`)。</td>
+              <td><b>1. 数据真实性</b></td>
+              <td><span class="pill pill-red">凭空捏造与记忆模糊</span><br>依靠概率猜测，经常混淆旧数据，甚至凭空捏造市盈率、现金流等关键财务指标（数据幻觉）。</td>
+              <td><span class="pill pill-green">实时滚算 + 100% 真实财报</span><br>内置 17 季度动态 TTM 算法与机构 API，说话前先用代码算好真实财报，<b>0 数据幻觉</b>。</td>
             </tr>
             <tr>
-              <td><strong>Neo4j (AuraDB)</strong></td>
-              <td>图数据库 <em>(Graph RAG)</em></td>
-              <td>• <strong>产业链与上下游拓扑</strong>：如 AAPL → TSM（代工关系）、NVDA → TSMC → ASML。<br>• <strong>多跳关联图谱 (Multi-Hop Topologies)</strong>：板块传导效应、竞争对手替代关系、因果传导路径。<br>• <strong>AI 研报上下文增强</strong>：为 Gemini 生成深度研报提供图谱拓扑信息。</td>
+              <td><b>2. 分析深度</b></td>
+              <td><span class="pill pill-red">网文式套话</span><br>回答“苹果公司是一家伟大的科技公司”，属于公车废话，无真实交易指导意义。</td>
+              <td><span class="pill pill-green">机构卖方研究员标准</span><br>量化双评分（技术面+基本面 0-100）、催化剂时间轴、持仓 Beta 加权、4 大宏观场景推演。</td>
             </tr>
             <tr>
-              <td><strong>Firebase Storage</strong></td>
-              <td>对象存储 (Object Storage)</td>
-              <td>• <strong>媒体与渲染产物</strong>：生成的微信公众号预览页 HTML、动态渲染的 PNG K线与研报分享卡片。</td>
+              <td><b>3. 组合风控</b></td>
+              <td><span class="pill pill-red">单点孤立，看树不见林</span><br>问哪支聊哪支；不知道账户整体持仓，无法评估大盘与板块集中度风险。</td>
+              <td><span class="pill pill-green">全局持仓 + 宏观压力测试</span><br>模拟美联储加息/二次通胀时组合跌幅，提供具体对冲与调仓指南。</td>
             </tr>
             <tr>
-              <td><strong>内存/本地缓存</strong></td>
-              <td>In-Memory Cache</td>
-              <td>• <strong>高频行情缓存</strong>：FMP API 价格、VWAP、SMA 缓存。<br>• <strong>Circuit Breaker 熔断降级</strong>：外部 API 故障时的自动降级保护。</td>
+              <td><b>4. 决策工具箱</b></td>
+              <td><span class="pill pill-red">纯语言文科生</span><br>只有文字生成能力，无法调用任何专业的金融计算器或回测打分模型。</td>
+              <td><span class="pill pill-green">自动化工具链 (ADK Harness)</span><br>Google ADK 架构，AI 自主判断何时调用“历史估值引擎”或“回测模型”。</td>
             </tr>
           </tbody>
         </table>
       </div>
 
-      <div class="mermaid-container">
-        <div class="mermaid">
-        graph TD
-            User[用户 / 前端 App] -->|1. 身份鉴权 & 读取个人研报/快照| FS[(Firestore DB)]
-            User -->|2. 请求生成 AI 研报 / 选股策略| Backend[FastAPI / Next.js 后端]
-            
-            Backend -->|3. 提取上下游产业链拓扑图谱| Neo4j[(Neo4j 图数据库)]
-            Backend -->|4. 查询实时价格/技术指标| FMP[FMP API / yfinance]
-            
-            Neo4j -->|拓扑关系图谱| Agent[Gemini AI Engine]
-            FMP -->|实时 OHLCV 行情| Agent
-            
-            Agent -->|5. 推理生成深度分析| Backend
-            Backend -->|6. 持久化保存研报/策略快照| FS
-            Backend -->|7. 导出分享卡片/海报图片| Storage[(Firebase Storage)]
+      <div class="grid-2" style="margin-top: 24px;">
+        <div class="quote-box">
+          <div class="quote-title">🗣️ 通俗比喻 1：【文科生 vs 带着计算器的华尔街精算师】</div>
+          <p>裸用 ChatGPT 就像找了一个记忆力不错的文科生凭感觉跟你聊股票，数字经常乱填；而 GEMS 就像给文科生配了一个华尔街精算师团队和实时计算器，AI 说话前先把过去 4 年 17 季度的财报算得一干二净。</p>
+        </div>
+        <div class="quote-box">
+          <div class="quote-title">🗣️ 通俗比喻 2：【百度搜病症 vs 带着病历做全套 CT 体检】</div>
+          <p>问通用 AI 就像在网上搜“头疼怎么办”，得到通用废话；而 DailyStock 就像带着您整套资产做全套 CT 体检，结合持仓与加息风险，告诉您具体的避险方案。</p>
         </div>
       </div>
     </section>
 
-    <!-- Section 2: Neo4j 4 Core Graph Models -->
-    <section class="section">
-      <h2 class="section-title">2. Neo4j 图数据库四大类关键关系模型</h2>
-      <p class="section-subtitle">打破传统孤立看盘，在图数据库中构建产业链、竞品对标、生态联盟及研报质性逻辑四大拓扑关系。</p>
+    <!-- Section 2: 核心区别 2 - GEMS vs 富途 / Seeking Alpha -->
+    <section>
+      <h2 class="section-title">🥊 核心对比 2：GEMS vs 富途 / 嘉信理财 / Seeking Alpha</h2>
+      <p class="section-desc">与成熟的传统券商终端及财经内容社区相比，我们的独特定位与互补关系：</p>
 
-      <div class="grid-2">
-        <div class="card">
-          <div class="card-title">1. 上下游供应链关系 (SUPPLIES_TO)</div>
-          <p>记录芯片晶圆代工、组装厂及核心零部件供应商拓扑。如 AAPL → Foxconn、NVDA → TSM。当代工厂产能受限时，自动推导下游供给风险。</p>
-        </div>
-        <div class="card">
-          <div class="card-title">2. 行业竞品对标关系 (COMPETES_WITH)</div>
-          <p>记录同赛道竞争对手关系（如 NVDA vs AMD、MSFT vs GOOGL）。当某龙头财报异动时，实时推导对竞品估值与市场份额的连带影响。</p>
-        </div>
-        <div class="card">
-          <div class="card-title">3. 战略合作伙伴关系 (PARTNER_WITH)</div>
-          <p>记录非买卖关系的资本与生态联盟（如 MSFT -[PARTNER_WITH]-> OpenAI）。捕捉非传统交易下的深层生态捆绑效应。</p>
-        </div>
-        <div class="card">
-          <div class="card-title">4. 研报质性逻辑与事件图谱 (Knowledge Graph)</div>
-          <p>将研报拆解为节点关系：包含分析师研报概览 (:ResearchReport)、核心投资逻辑 (:InvestmentRationale)、风险因子 (:RiskFactor) 与股价催化剂 (:MarketCatalyst)。</p>
-        </div>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 20%;">对比维度</th>
+              <th style="width: 25%;">富途 Moomoo / 嘉信理财 (券商终端)</th>
+              <th style="width: 25%;">Seeking Alpha (内容社区)</th>
+              <th style="width: 30%;">GEMS & DailyStock (AI 原生智能体)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><b>角色定位</b></td>
+              <td><b>数据看板与下单工具</b><br>看 K 线、看报表，自己手动交易。</td>
+              <td><b>静态文章社区</b><br>看独立作者写的长文，观点分散。</td>
+              <td><span class="pill pill-cyan">7×24h 私人 AI 基金经理与投研中枢</span><br>主动计算、推演风控并生成研报。</td>
+            </tr>
+            <tr>
+              <td><b>信息消化成本</b></td>
+              <td><span class="pill pill-red">高载荷 (数据坟墓)</span><br>面对几百个财务指标，需花数小时解读。</td>
+              <td><span class="pill pill-red">高成本 (观点冲突)</span><br>看 5 篇文章观点完全矛盾。</td>
+              <td><span class="pill pill-green">极简消化 (机构研报)</span><br>量化双评分、催化剂时间轴，一键导出。</td>
+            </tr>
+            <tr>
+              <td><b>组合动态风控</b></td>
+              <td><b>静态浮盈浮亏</b><br>只显示亏赚，无法做未来情景推演。</td>
+              <td><b>无组合联动</b><br>文章只看单股，不关心的整体持仓。</td>
+              <td><span class="pill pill-green">4 大宏观压力测试引擎</span><br>计算组合在加息/通胀下的跌幅与对冲。</td>
+            </tr>
+            <tr>
+              <td><b>互补关系定位</b></td>
+              <td><b>交易执行端 (解决“怎么买”)</b></td>
+              <td><b>社区舆情端 (解决“别人怎么看”)</b></td>
+              <td><b>AI 决策大脑 (解决“买什么、怎么控风控”)</b></td>
+            </tr>
+          </tbody>
+        </table>
       </div>
 
-      <div class="mermaid-container">
-        <div class="mermaid">
-        graph LR
-            StockA[(:Stock AAPL)] -->|SUPPLIES_TO| StockB[(:Stock TSM)]
-            StockA -->|COMPETES_WITH| StockC[(:Stock GOOGL)]
-            StockA -->|PARTNER_WITH| StockD[(:Stock OpenAI)]
-            
-            StockA -->|HAS_REPORT| Report[(:ResearchReport)]
-            Report -->|HAS_RATIONALE| Rationale[(:InvestmentRationale 投资逻辑)]
-            Report -->|HAS_RISK| Risk[(:RiskFactor 风险因子)]
-            Report -->|HAS_CATALYST| Catalyst[(:MarketCatalyst 催化剂)]
-        </div>
+      <div class="quote-box" style="margin-top: 24px;">
+        <div class="quote-title">🗣️ 通俗比喻 3：【交易武器库 vs 自动驾驶导航仪】</div>
+        <p>富途和嘉信理财是您的<b>交易武器库</b>，负责具体的买卖下单；而 GEMS 和 DailyStock 是您的<b>自动驾驶导航仪与参谋部</b>，负责告诉您战局走势、地形风险和策略路线。两者完美互补，在 DailyStock 完成选股诊断后，直接去富途执行交易。</p>
       </div>
     </section>
 
-    <!-- Section 3: 5 Data Dimensions & Business Logic -->
-    <section class="section">
-      <h2 class="section-title">3. 量化选股与操盘 5 大维度核心数据与业务逻辑</h2>
-      <p class="section-subtitle">基于宏观、定量基本面、技术动量、财报预期差及动态再平衡构筑 5 重筛选防火墙。</p>
+    <!-- Section 3: GEMS 平台核心价值总结 -->
+    <section>
+      <h2 class="section-title">🌟 GEMS 平台给投资者带来的 3 大核心价值</h2>
+      <p class="section-desc">全天候助力美股投资者完成科学决策与风险防范：</p>
 
       <div class="grid-3">
         <div class="card">
-          <div class="card-title">① 宏观经济与流动性</div>
-          <p>对接 FRED API，监控美联储利率 (FFR)、CPI/PCE 通胀、NFP 非农及美债 10Y-2Y 倒挂。倒挂期自动调紧防御风控，降息预告期提高成长股权重。</p>
+          <div class="card-icon">⚡</div>
+          <div class="card-title">1. 0 幻觉精准投研</div>
+          <p>AI 在回答任何估值问题前，都会由后台代码自动演算过去 17 季度的真实财务指标。数据 100% 吻合华尔街官方财报，告别模糊猜测。</p>
         </div>
         <div class="card">
-          <div class="card-title">② 定量基本面评分</div>
-          <p>基于 Profitability (30%) + Growth (40%) + Safety & Cash Flow (30%) 计算 0-100 的 Fundamental Score。强约束 ROE > 20%、PEG < 1.0。</p>
+          <div class="card-icon">🤖</div>
+          <div class="card-title">2. 7×24h 私人 AI 基金经理</div>
+          <p>提供量化双评分（技术面+基本面 0-100）、3-12 个月催化剂时间轴，并支持一键导出机构级 PDF 研报与多端实时打字对话。</p>
         </div>
         <div class="card">
-          <div class="card-title">③ 技术面与动量量化</div>
-          <p>计算 Technical Score：结合 50SMA/200SMA 多头排列、52 周高点偏离度 (Proximity to 52w High)、RSI (14) 与 MACD 金叉，防止触底接刀。</p>
-        </div>
-        <div class="card">
-          <div class="card-title">④ 财报预期差与资金面</div>
-          <p>监控财报超预期幅度 (Earnings Surprise % > 15%)，结合华尔街分析师目标价上修空间 (Analyst Target Upside) 捕捉爆发标的。</p>
-        </div>
-        <div class="card">
-          <div class="card-title">⑤ 战术再平衡与闭环评估</div>
-          <p>基于标的 Beta、波动率及策略权重，计算持仓再平衡优化比例，由后置评估引擎实盘校验。</p>
-        </div>
-      </div>
-    </section>
-
-    <!-- Section 4: Closed-Loop Win Rate & Self-Healing -->
-    <section class="section">
-      <h2 class="section-title">4. 闭环胜率评估算法与 AI 自愈进化机制</h2>
-      <p class="section-subtitle">以后置实盘收益表现为标准，驱动策略门槛参数自动化进化。</p>
-
-      <div class="formula-box">
-        <strong>评估指标计算公式：</strong><br>
-        • T+5 / T+20 胜率 = (成功单数量 / 总推荐标的数量) × 100%<br>
-        • 盈利单平均收益 = ∑(所有盈利单收益率) / 盈利单总数量<br>
-        • 单均期望收益 = (胜率 × 盈利单平均收益) - (败率 × 亏损单平均亏损)<br><br>
-        <em>当前实盘表现：T+20 胜率 <strong>71.4%</strong>，盈利单平均收益 <strong>+8.4%</strong>，数学期望收益率高达 <strong>+4.86%</strong> (盈亏比 2:1 以上)。</em>
-      </div>
-
-      <div class="mermaid-container">
-        <div class="mermaid">
-        graph TD
-            Audit[策略胜率自动审计 Track T+5 / T+20] --> Check{胜率阀门评估}
-            Check -->|Win Rate >= 55%| Optimal[OPTIMAL 优异: 保持当前过滤参数]
-            Check -->|Win Rate < 50%| Warning[WARNING 预警: 触发 AI 自愈调整]
-            
-            Warning --> Heal1[1. 提高 ROE 门槛 15% -> 20%]
-            Warning --> Heal2[2. 调紧负债权益比 Debt/Equity < 0.8]
-            Warning --> Heal3[3. 提升 FCF Yield 权重至 20%]
-            
-            Heal1 & Heal2 & Heal3 --> Verify[新选标的近 3 天胜率修复测试]
-            Verify -->|胜率回升| Restored[成功修复: 记录自愈日志并公开汇报]
+          <div class="card-icon">🛡️</div>
+          <div class="card-title">3. 动态持仓与宏观风控大脑</div>
+          <p>可导入实际持仓计算 Beta 加权，推演鹰派加息、二次通胀或科技股回调下的账户受创程度，提供具体的对冲避险方案。</p>
         </div>
       </div>
     </section>
 
   </main>
 
-  <script>
-    mermaid.initialize({ startOnLoad: true, theme: 'dark' });
-  </script>
+  <footer style="text-align: center; color: var(--text-muted); font-size: 0.9rem; margin-top: 40px;">
+    &copy; 2026 Vanpower AI. All Rights Reserved.
+  </footer>
 </body>
 </html>
