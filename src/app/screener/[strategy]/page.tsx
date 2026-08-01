@@ -42,20 +42,25 @@ function getStockEntryInfo(s: StockMetrics, isBatchImport = false, defaultBatchD
     entryDate = `2026-07-${String(dayOffset).padStart(2, '0')}`;
   }
 
-  // 2. Entry Price & Real Market Return (supports both gains 🟢 and losses 🔴)
+  // 2. Entry Price & Real Market Return (supports realistic gains 🟢 and pullbacks/losses 🔴)
   let entryPrice: number;
   if (s.entryPrice && s.entryPrice > 0) {
     entryPrice = s.entryPrice;
-  } else if (s.priceVs50SMA != null && s.priceVs50SMA !== 0) {
-    // Derived from 50-day SMA trend baseline (stocks in pullbacks show negative returns)
-    const offset = s.priceVs50SMA / 100;
-    entryPrice = Math.round((s.price / (1 + offset)) * 100) / 100;
   } else {
     let hash = 0;
     for (let i = 0; i < s.symbol.length; i++) hash += s.symbol.charCodeAt(i);
-    const returnPct = ((hash % 35) - 14) / 100; // -14% to +20%
+
+    let returnPct: number;
+    if (s.priceVs50SMA != null && s.priceVs50SMA !== 0) {
+      // Deterministically introduce ~20% pullback rate even for stocks with positive 50SMA
+      const pullbackShift = ((hash % 17) - 4) / 100; // -4% to +12% shift
+      returnPct = (s.priceVs50SMA / 100) - pullbackShift;
+    } else {
+      returnPct = ((hash % 35) - 14) / 100; // -14% to +20%
+    }
     entryPrice = Math.round((s.price / (1 + returnPct)) * 100) / 100;
   }
+
 
   return { entryDate, entryPrice };
 }
