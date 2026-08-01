@@ -17,6 +17,8 @@ let cachedSAList: SeekingAlphaList | null = null;
 let saListCacheExpiry = 0;
 const CACHE_TTL_MS = 60 * 1000;
 
+const BLACKLISTED_SYMBOLS = new Set(["APLS", "SGEN"]);
+
 /**
  * Load the Seeking Alpha symbol list from Firestore.
  */
@@ -35,8 +37,11 @@ export async function loadSAList(): Promise<SeekingAlphaList> {
       return cachedSAList;
     }
     const data = doc.data();
+    const rawSymbols = (data?.symbols as string[]) ?? [];
+    const filteredSymbols = rawSymbols.filter((s) => !BLACKLISTED_SYMBOLS.has(s.toUpperCase().trim()));
+
     cachedSAList = {
-      symbols: (data?.symbols as string[]) ?? [],
+      symbols: filteredSymbols,
       updatedAt: (data?.updatedAt as string) ?? new Date().toISOString(),
     };
     saListCacheExpiry = now + CACHE_TTL_MS;
@@ -56,7 +61,7 @@ export async function saveSAList(symbols: string[]): Promise<SeekingAlphaList> {
   saListCacheExpiry = 0;
 
   const db = getDb();
-  const deduped = [...new Set(symbols.map((s) => s.toUpperCase().trim()).filter(Boolean))];
+  const deduped = [...new Set(symbols.map((s) => s.toUpperCase().trim()).filter((s) => Boolean(s) && !BLACKLISTED_SYMBOLS.has(s)))];
   const record: SeekingAlphaList = {
     symbols: deduped,
     updatedAt: new Date().toISOString(),

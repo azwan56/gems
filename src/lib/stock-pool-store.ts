@@ -73,9 +73,15 @@ export async function loadStockPool(): Promise<StockPoolData | null> {
     const data = doc.data();
     if (!data?.stocks || !data?.meta) return null;
 
+    const rawStocks = (data.stocks as StockMetrics[]) || [];
+    const BLACKLISTED = new Set(["APLS", "SGEN"]);
+    const cleanStocks = rawStocks.filter(
+      (s) => !BLACKLISTED.has(s.symbol.toUpperCase()) && (s as any).isActivelyTrading !== false
+    );
+
     cachedPool = {
       meta: data.meta as StockPoolMeta,
-      stocks: data.stocks as StockMetrics[],
+      stocks: cleanStocks,
     };
     cacheExpiry = now + CACHE_TTL_MS;
     return cachedPool;
