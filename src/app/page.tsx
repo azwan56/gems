@@ -216,7 +216,7 @@ export default function Home() {
               className="inline-flex items-center gap-2.5 px-4 py-2.5 rounded-xl bg-slate-900/80 hover:bg-slate-800/90 border border-purple-500/40 text-xs sm:text-sm transition-all hover:scale-[1.02] shadow-lg backdrop-blur-md"
             >
               <Sparkles className="w-4 h-4 text-purple-400 animate-pulse" />
-              <span className="text-purple-400 font-bold">{t("66.7% WIN-RATE", "66.7% 胜率战报")}</span>
+              <span className="text-purple-400 font-bold">{t("LIVE WIN-RATE", "实时胜率战报")}</span>
               <span className="text-slate-300">{t("AI Self-Healing Audit", "AI 策略门槛自愈审计")}</span>
             </Link>
           </div>
