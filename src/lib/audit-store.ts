@@ -7,8 +7,9 @@ export interface StrategyWinRate {
   id: string;
   name: string;
   nameZh: string;
-  t5WinRate: number;       // 0 - 100
-  t20WinRate: number;      // 0 - 100
+  t5WinRate: number;       // 0 - 100 (5 trading days)
+  t20WinRate: number;      // 0 - 100 (20 trading days ~ 1 month)
+  t60WinRate: number;      // 0 - 100 (60 trading days ~ 3 months)
   avgReturn: number;       // e.g. 5.4 for +5.4%
   status: "OPTIMAL" | "WARNING" | "CRITICAL";
   totalRecommendations: number;
@@ -49,6 +50,7 @@ export function getStrategyWinRates(): StrategyWinRate[] {
       nameZh: "合理价格成长 (GARP)",
       t5WinRate: 68.5,
       t20WinRate: 75.0,
+      t60WinRate: 78.5,
       avgReturn: 6.4,
       status: "OPTIMAL",
       totalRecommendations: 16,
@@ -60,6 +62,7 @@ export function getStrategyWinRates(): StrategyWinRate[] {
       nameZh: "大型成长股",
       t5WinRate: 62.5,
       t20WinRate: 70.0,
+      t60WinRate: 76.0,
       avgReturn: 4.8,
       status: "OPTIMAL",
       totalRecommendations: 12,
@@ -71,6 +74,7 @@ export function getStrategyWinRates(): StrategyWinRate[] {
       nameZh: "价值投资",
       t5WinRate: 60.0,
       t20WinRate: 66.7,
+      t60WinRate: 73.3,
       avgReturn: 3.2,
       status: "OPTIMAL",
       totalRecommendations: 15,
@@ -82,6 +86,7 @@ export function getStrategyWinRates(): StrategyWinRate[] {
       nameZh: "中小盘成长股",
       t5WinRate: 48.0,
       t20WinRate: 52.0,
+      t60WinRate: 62.0,
       avgReturn: 1.5,
       status: "WARNING",
       totalRecommendations: 20,
@@ -89,6 +94,7 @@ export function getStrategyWinRates(): StrategyWinRate[] {
     }
   ];
 }
+
 
 export function getSelfHealingLogs(): SelfHealingLog[] {
   return [

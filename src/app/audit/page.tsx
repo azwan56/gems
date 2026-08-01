@@ -192,20 +192,25 @@ export default function AuditDashboardPage() {
                   </span>
                 </div>
 
-                <div className="grid grid-cols-3 gap-3 my-4 p-4 rounded-xl bg-slate-950/60 border border-slate-800/80">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 my-4 p-4 rounded-xl bg-slate-950/60 border border-slate-800/80 text-center sm:text-left">
                   <div>
-                    <div className="text-xs text-slate-400">{t("T+5 Win Rate", "T+5 胜率")}</div>
-                    <div className="text-xl font-bold text-emerald-400 mt-1">{strategy.t5WinRate}%</div>
+                    <div className="text-xs text-slate-400">{t("T+5 Win Rate", "T+5 短线")}</div>
+                    <div className="text-lg font-bold text-emerald-400 mt-1">{strategy.t5WinRate}%</div>
                   </div>
                   <div>
-                    <div className="text-xs text-slate-400">{t("T+20 Win Rate", "T+20 胜率")}</div>
-                    <div className="text-xl font-bold text-blue-400 mt-1">{strategy.t20WinRate}%</div>
+                    <div className="text-xs text-slate-400">{t("T+20 Win Rate", "T+20 月线")}</div>
+                    <div className="text-lg font-bold text-blue-400 mt-1">{strategy.t20WinRate}%</div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-slate-400">{t("T+60 Win Rate", "T+60 季线(3M)")}</div>
+                    <div className="text-lg font-bold text-indigo-400 mt-1">{strategy.t60WinRate}%</div>
                   </div>
                   <div>
                     <div className="text-xs text-slate-400">{t("Avg Return", "平均收益率")}</div>
-                    <div className="text-xl font-bold text-purple-400 mt-1">+{strategy.avgReturn}%</div>
+                    <div className="text-lg font-bold text-purple-400 mt-1">+{strategy.avgReturn}%</div>
                   </div>
                 </div>
+
               </div>
 
               <div className="mt-2 pt-3 border-t border-slate-800/60 flex items-center justify-between text-xs">
