@@ -164,6 +164,8 @@ export async function fetchScreenerStocks(
     for (const r of settled) {
       if (r.status !== "fulfilled" || !r.value) continue;
       const entry = r.value;
+      // Filter out delisted / non-actively trading stocks
+      if (!entry.isActivelyTrading) continue;
       // Apply market cap filters
       if (params.marketCapMoreThan && entry.marketCap < params.marketCapMoreThan) continue;
       if (params.marketCapLessThan && entry.marketCap > params.marketCapLessThan) continue;
