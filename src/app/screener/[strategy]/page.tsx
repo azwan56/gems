@@ -46,25 +46,12 @@ function todayIso(): string {
  */
 function getStockEntryInfo(s: StockMetrics, isBatchImport = false, defaultBatchDate?: string) {
   const batchDate = defaultBatchDate ?? todayIso();
-  let mockFirstDate = batchDate;
-  let mockLatestDate = batchDate;
-
-  // Generate a deterministic past date for demo purposes in standard screeners
-  if (!isBatchImport && !s.firstEntryDate) {
-    const symbol = s.symbol.toUpperCase();
-    let hash = 0;
-    for (let i = 0; i < symbol.length; i++) hash += symbol.charCodeAt(i);
-    // Mock first entry: sometime in early July 2026
-    mockFirstDate = `2026-07-${String(Math.max(1, (hash % 15) + 1)).padStart(2, '0')}`;
-    // Mock latest entry: sometime in late July 2026
-    mockLatestDate = `2026-07-${String((hash % 6) + 21).padStart(2, '0')}`;
-  }
 
   // First Entry Date — prefer the real field written by the backend
-  const firstEntryDate = s.firstEntryDate || (isBatchImport ? batchDate : (s.entryDate || mockFirstDate));
+  const firstEntryDate = s.firstEntryDate || (isBatchImport ? batchDate : (s.entryDate || batchDate));
 
   // Latest Rebalance Date
-  const latestEntryDate = s.latestEntryDate || s.entryDate || (isBatchImport ? batchDate : mockLatestDate);
+  const latestEntryDate = s.latestEntryDate || s.entryDate || batchDate;
 
   // Prices start at 0; the FMP historical-prices fetch will replace them.
   const firstEntryPrice = s.firstEntryPrice || 0;
@@ -99,6 +86,9 @@ export default function FunnelScreenerPage() {
   const [stocks, setStocks] = useState<StockMetrics[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
+  const isSA = strategyId === "seeking_alpha";
+  const [isBacktestMode, setIsBacktestMode] = useState(!isSA); // Default to backtest for quant strategies
 
   const [currentStep, setCurrentStep] = useState<1 | 2 | 3>(1);
   const [selectedInStep1, setSelectedInStep1] = useState<Set<string>>(new Set());
@@ -125,7 +115,6 @@ export default function FunnelScreenerPage() {
   const [saEntryDates, setSaEntryDates] = useState<Record<string, string>>({});
   const [saInput, setSaInput] = useState("");
   const [saLoading, setSaLoading] = useState(false);
-  const isSA = strategyId === "seeking_alpha";
 
   // Exact Historical Prices from FMP API
   const [historicalPrices, setHistoricalPrices] = useState<Record<string, Record<string, number>>>({});
@@ -302,7 +291,8 @@ export default function FunnelScreenerPage() {
     setError(null);
     try {
       const filters = preset?.defaultFilters ?? [];
-      const body = JSON.stringify({ strategy: strategyId, filters, limit: 200 });
+      const mode = (isBacktestMode && !isSA) ? "roster" : "live";
+      const body = JSON.stringify({ strategy: strategyId, filters, limit: 200, mode });
 
       const doFetch = async (token: string | null) => {
         return fetch("/api/screener", {
@@ -376,7 +366,11 @@ export default function FunnelScreenerPage() {
     setRefreshing(false);
   };
 
-  useEffect(() => { if (!authLoading && user) fetchStocks(); }, [fetchStocks, authLoading, user]);
+  useEffect(() => {
+    if (!authLoading) {
+      fetchStocks();
+    }
+  }, [fetchStocks, authLoading, isBacktestMode, user]);
 
   useEffect(() => {
     if (authLoading || !user?.uid) return;
@@ -659,16 +653,43 @@ export default function FunnelScreenerPage() {
 
                   <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 md:gap-0 mb-6">
                     <div>
-                      <h2 className="text-lg sm:text-xl font-bold text-white mb-1">{t("Quantitative Pool", "定量股票池")} ({stocks.length} {t("matches", "只符合条件")})</h2>
-                      <p className="text-xs sm:text-sm text-slate-400">{t("Select candidates that pass the hard financial metrics to advance to deep dive.", "选择通过硬性财务指标筛选的候选股票进入定性深研环节。")}</p>
+                      <h2 className="text-lg sm:text-xl font-bold text-white mb-1 flex items-center gap-3">
+                        {t("Quantitative Pool", "定量股票池")} 
+                        <span className="px-2 py-0.5 rounded bg-slate-800 text-slate-300 text-sm font-mono border border-slate-700">
+                          {stocks.length} {t("matches", "只符合条件")}
+                        </span>
+                      </h2>
+                      <p className="text-xs sm:text-sm text-slate-400">
+                        {t("Select candidates that pass the hard financial metrics to advance to deep dive.", "选择通过硬性财务指标筛选的候选股票进入定性深研环节。")}
+                      </p>
                     </div>
-                    <button
-                      disabled={selectedInStep1.size === 0}
-                      onClick={() => setCurrentStep(2)}
-                      className="w-full md:w-auto px-4 py-2.5 md:py-2 bg-blue-600 hover:bg-blue-500 disabled:bg-slate-800 disabled:text-slate-500 text-white rounded-lg font-semibold flex items-center justify-center gap-2 transition-colors"
-                    >
-                      {t("Run Deep Dive", "进行定性深研")} ({selectedInStep1.size}) <ChevronRight className="w-4 h-4" />
-                    </button>
+                    
+                    <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
+                      {!isSA && (
+                        <div className="flex bg-slate-800/80 p-1 rounded-lg border border-slate-700/50 w-full sm:w-auto">
+                          <button 
+                            onClick={() => setIsBacktestMode(true)}
+                            className={`flex-1 sm:flex-none px-4 py-1.5 text-xs sm:text-sm font-medium rounded-md transition-all ${isBacktestMode ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-700/50'}`}
+                          >
+                            {t("Backtest Mode", "历史回测组合")}
+                          </button>
+                          <button 
+                            onClick={() => setIsBacktestMode(false)}
+                            className={`flex-1 sm:flex-none px-4 py-1.5 text-xs sm:text-sm font-medium rounded-md transition-all ${!isBacktestMode ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-700/50'}`}
+                          >
+                            {t("Live Screener", "实时动态筛选")}
+                          </button>
+                        </div>
+                      )}
+                      
+                      <button
+                        disabled={selectedInStep1.size === 0}
+                        onClick={() => setCurrentStep(2)}
+                        className="w-full sm:w-auto px-4 py-2.5 sm:py-2 bg-blue-600 hover:bg-blue-500 disabled:bg-slate-800 disabled:text-slate-500 text-white rounded-lg font-semibold flex items-center justify-center gap-2 transition-colors"
+                      >
+                        {t("Run Deep Dive", "进行定性深研")} ({selectedInStep1.size}) <ChevronRight className="w-4 h-4" />
+                      </button>
+                    </div>
                   </div>
                   {/* Desktop Table View */}
                   <div className="hidden md:block border border-slate-800 rounded-xl bg-slate-900/50 overflow-x-auto">

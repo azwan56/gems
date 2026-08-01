@@ -17,6 +17,7 @@ import { executeScreener } from "@/lib/screener-engine";
 import { loadStockPool } from "@/lib/stock-pool-store";
 import { generateMockStocks } from "@/lib/mock-data";
 import { loadSAList } from "@/lib/seeking-alpha-store";
+import { getStrategyRoster } from "@/lib/strategy-roster-store";
 import { requirePremium } from "@/lib/auth-middleware";
 
 export async function POST(request: NextRequest) {
@@ -35,7 +36,9 @@ export async function POST(request: NextRequest) {
 
     // Merge with preset defaults if no custom filters provided
     let filters = body.filters;
-    if (filters.length === 0) {
+    const isRosterMode = body.mode === "roster" && body.strategy !== "seeking_alpha";
+
+    if (filters.length === 0 && !isRosterMode) {
       const preset = getStrategyPreset(body.strategy);
       if (preset) {
         filters = preset.defaultFilters;
@@ -43,7 +46,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Try loading from persisted stock pool first
-    let stocks;
+    let stocks: import("@/lib/types").StockMetrics[] = [];
     let dataSource: "fmp" | "mock" = "mock";
 
     const pool = await loadStockPool();
@@ -57,6 +60,37 @@ export async function POST(request: NextRequest) {
       // Fallback to mock data
       stocks = generateMockStocks();
       console.log("[screener] Using mock data fallback");
+    }
+
+    if (isRosterMode) {
+      // ----------------------------------------------------
+      // ROSTER MODE (Backtesting)
+      // Ignore dynamic filters, only use stocks present in the saved roster snapshot.
+      // ----------------------------------------------------
+      const roster = await getStrategyRoster(body.strategy);
+      if (roster && roster.entries.length > 0) {
+        const rosterMap = new Map(roster.entries.map(e => [e.symbol, e]));
+        // Filter pool to only those in roster
+        stocks = stocks.filter(s => rosterMap.has(s.symbol));
+        // Overwrite entry dates and prices with the exact roster snapshot data
+        stocks = stocks.map(s => {
+          const entry = rosterMap.get(s.symbol)!;
+          return {
+            ...s,
+            firstEntryDate: entry.firstEntryDate,
+            firstEntryPrice: entry.firstEntryPrice,
+            latestEntryDate: entry.latestEntryDate,
+            latestEntryPrice: entry.latestEntryPrice
+          };
+        });
+        // Clear filters because roster mode overrides dynamic criteria
+        filters = [];
+      } else {
+        // Fallback: If no roster exists yet, just clear the results or fallback to live?
+        // We will just clear stocks so it correctly shows empty for a backtest without data
+        stocks = [];
+        filters = [];
+      }
     }
 
     // For seeking_alpha strategy: show all SA list symbols without filtering

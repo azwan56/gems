@@ -60,6 +60,8 @@ export interface ScreenerRequest {
   sortOrder?: "asc" | "desc";
   limit?: number;
   offset?: number;
+  /** 'live' (default): runs current filters; 'roster': loads backtested history roster */
+  mode?: "live" | "roster";
 }
 
 /** Screener response with pagination */
