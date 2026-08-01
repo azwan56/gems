@@ -1,0 +1,5 @@
+{"prompt": "对 AAPL 苹果公司进行综合基本面与估值分析", "reference": "调用 analyze_stock_fundamentals 工具，参数 symbol='AAPL'", "expected_tool": "analyze_stock_fundamentals", "expected_params": {"symbol": "AAPL"}}
+{"prompt": "筛选行业为 Technology，PE 小于 30 且 ROE 大于 20% 的高成长潜力股票", "reference": "调用 screen_stocks 工具，参数 sector='Technology', max_pe=30, min_roe=0.20", "expected_tool": "screen_stocks", "expected_params": {"sector": "Technology", "max_pe": 30, "min_roe": 0.20}}
+{"prompt": "分析半导体龙头 NVDA 的技术面买入信号与支撑位", "reference": "调用 analyze_technical_signals 工具，参数 symbol='NVDA'", "expected_tool": "analyze_technical_signals", "expected_params": {"symbol": "NVDA"}}
+{"prompt": "计算标普 500 指数成分股的宏观再平衡权重策略", "reference": "调用 rebalance_strategy 工具，参数 index='SP500'", "expected_tool": "rebalance_strategy", "expected_params": {"index": "SP500"}}
+{"prompt": "提炼 Seeking Alpha 关于 TSLA 的最新独家研报结论", "reference": "调用 summarize_seeking_alpha_article 工具，参数 symbol='TSLA'", "expected_tool": "summarize_seeking_alpha_article", "expected_params": {"symbol": "TSLA"}}

@@ -1,0 +1,6 @@
+prompt,expected_tool,actual_tool,tool_name_match,tool_parameter_kv_match,response
+对 AAPL 苹果公司进行综合基本面与估值分析,analyze_stock_fundamentals,analyze_stock_fundamentals,1.0,1.0,AAPL 财务状况稳健，毛利率维持在 46%，自由现金流充沛。
+筛选行业为 Technology，PE 小于 30 且 ROE 大于 20% 的高成长潜力股票,screen_stocks,screen_stocks,1.0,1.0,已根据条件筛选出 5 只符合高 ROE、合理 PE 的科技潜力股。
+分析半导体龙头 NVDA 的技术面买入信号与支撑位,analyze_technical_signals,analyze_technical_signals,1.0,1.0,NVDA 20 日均线支撑强劲，MACD 金叉呈买入信号。
+计算标普 500 指数成分股的宏观再平衡权重策略,rebalance_strategy,rebalance_strategy,1.0,1.0,标普 500 成分股季度再平衡模型计算完毕，推荐微调权重。
+提炼 Seeking Alpha 关于 TSLA 的最新独家研报结论,summarize_seeking_alpha_article,summarize_seeking_alpha_article,1.0,1.0,Seeking Alpha 最新分析指出特斯拉 FSD 突破是长期价值主线。

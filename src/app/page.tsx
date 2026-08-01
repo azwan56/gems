@@ -1,11 +1,12 @@
 "use client";
 
-import { ShieldCheck, TrendingUp, Activity, Gem, Rocket, Languages, BookOpen, Castle, Zap, ChevronRight } from "lucide-react";
+import { ShieldCheck, TrendingUp, Activity, Gem, Rocket, Languages, BookOpen, Castle, Zap, ChevronRight, Cpu, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { useLanguage } from "@/lib/language-context";
 import { useAuth } from "@/lib/auth-context";
 import UserMenu from "@/components/UserMenu";
 import PremiumGate from "@/components/PremiumGate";
+
 
 const strategies = [
   {
@@ -125,10 +126,15 @@ export default function Home() {
             </span>
           </div>
           <nav className="flex items-center gap-2 sm:gap-4">
+            <Link href="/audit" className="text-sm text-purple-300 hover:text-purple-200 transition-colors flex items-center gap-1.5 px-3 py-1.5 bg-purple-500/10 border border-purple-500/30 rounded-lg font-medium">
+              <Cpu className="w-4 h-4 text-purple-400" />
+              <span>{t("AI Audit & Win Rate", "AI 胜率与自愈")}</span>
+            </Link>
             <a href="/value-proposition.html" target="_blank" rel="noreferrer" className="text-sm text-slate-400 hover:text-cyan-400 transition-colors flex items-center gap-1.5 px-3 py-1.5 bg-slate-800/60 border border-slate-700/50 rounded-lg">
               <BookOpen className="w-4 h-4 text-cyan-400" />
               <span>{t("Value Guide", "价值白皮书")}</span>
             </a>
+
             {user?.isPremium && (
               <Link href="/watchlist" className="text-sm text-slate-400 hover:text-white transition-colors hidden sm:inline">
                 {t("Watchlist", "自选股")}
@@ -184,23 +190,31 @@ export default function Home() {
             )}
           </p>
 
-          <Link
-            href="/updates"
-            className="inline-flex items-center gap-2.5 sm:gap-3.5 px-4 sm:px-6 py-2.5 sm:py-3.5 rounded-2xl bg-gradient-to-r from-emerald-950/80 via-slate-900/90 to-teal-950/80 hover:from-emerald-900/90 hover:to-teal-900/90 border border-emerald-500/50 hover:border-emerald-400 text-sm sm:text-base transition-all duration-300 hover:scale-[1.03] shadow-xl shadow-emerald-950/60 hover:shadow-emerald-500/20 mb-8 cursor-pointer group backdrop-blur-md"
-          >
-            <span className="flex h-3 w-3 relative shrink-0">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]"></span>
-            </span>
-            <span className="px-2.5 py-0.5 rounded-lg bg-emerald-500/25 border border-emerald-400/40 text-emerald-300 font-extrabold tracking-wide text-xs sm:text-sm shrink-0">
-              {t("LIVE UPDATES", "变动动态")}
-            </span>
-            <span className="text-slate-200 group-hover:text-white transition-colors text-xs sm:text-sm md:text-base font-medium">
-              {t("View latest model additions & removals", "查看最新美股策略个股流入/流出更替记录")}
-            </span>
-            <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-400 group-hover:text-emerald-300 group-hover:translate-x-1 transition-all shrink-0 ml-0.5" />
-          </Link>
+          <div className="flex flex-wrap items-center justify-center gap-3 mb-8">
+
+            <Link
+              href="/updates"
+              className="inline-flex items-center gap-2.5 px-4 py-2.5 rounded-xl bg-slate-900/80 hover:bg-slate-800/90 border border-emerald-500/40 text-xs sm:text-sm transition-all hover:scale-[1.02] shadow-lg backdrop-blur-md"
+            >
+              <span className="flex h-2.5 w-2.5 relative shrink-0">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-400"></span>
+              </span>
+              <span className="text-emerald-400 font-bold">{t("LIVE UPDATES", "更替记录")}</span>
+              <span className="text-slate-300">{t("Model Additions & Removals", "最新成分股更替")}</span>
+            </Link>
+
+            <Link
+              href="/audit"
+              className="inline-flex items-center gap-2.5 px-4 py-2.5 rounded-xl bg-slate-900/80 hover:bg-slate-800/90 border border-purple-500/40 text-xs sm:text-sm transition-all hover:scale-[1.02] shadow-lg backdrop-blur-md"
+            >
+              <Sparkles className="w-4 h-4 text-purple-400 animate-pulse" />
+              <span className="text-purple-400 font-bold">{t("66.7% WIN-RATE", "66.7% 胜率战报")}</span>
+              <span className="text-slate-300">{t("AI Self-Healing Audit", "AI 策略门槛自愈审计")}</span>
+            </Link>
+          </div>
         </div>
+
 
         {/* Strategy Cards — Premium Only */}
         <PremiumGate featureName={t("Quantitative Stock Screener", "量化选股系统")}>

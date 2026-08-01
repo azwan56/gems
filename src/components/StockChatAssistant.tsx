@@ -8,6 +8,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Sparkles, Send, X, Loader2, RotateCcw } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
+import { getClientAuth } from "@/lib/firebase-client";
 
 interface Message {
   id: string;
@@ -28,7 +29,7 @@ export default function StockChatAssistant({
   lang = "zh",
   strategy,
 }: StockChatAssistantProps) {
-  const { user, getIdToken } = useAuth();
+  const { user, firebaseUser, getIdToken } = useAuth();
   
   const [isOpen, setIsOpen] = useState(false);
   const [layoutMode, setLayoutMode] = useState<"floating" | "sidebar">("sidebar");
@@ -58,6 +59,22 @@ export default function StockChatAssistant({
   // If user is not logged in or doesn't have a verified session, don't render the chat ball
   if (!user) return null;
 
+  const getFreshToken = async (force: boolean = false): Promise<string | null> => {
+    try {
+      const auth = getClientAuth();
+      if (auth.currentUser) {
+        return await auth.currentUser.getIdToken(force);
+      }
+      if (firebaseUser) {
+        return await firebaseUser.getIdToken(force);
+      }
+      return await getIdToken();
+    } catch (e) {
+      console.warn("[StockChat] Failed to retrieve fresh token:", e);
+      return null;
+    }
+  };
+
   const handleSend = async (textToSend: string) => {
     const trimmed = textToSend.trim();
     if (!trimmed) return;
@@ -81,22 +98,32 @@ export default function StockChatAssistant({
       content: m.content,
     }));
 
-    // 3. Add model placeholder message for streaming
+    // 3. Prepare AI Message ID and helper
     const aiMsgId = Math.random().toString();
-    const newAiMsg: Message = {
-      id: aiMsgId,
-      role: "model",
-      content: "",
+    const appendAiChunk = (chunkText: string) => {
+      if (!chunkText) return;
+      setMessages((prev) => {
+        const existing = prev.find((m) => m.id === aiMsgId);
+        if (existing) {
+          return prev.map((m) =>
+            m.id === aiMsgId ? { ...m, content: m.content + chunkText } : m
+          );
+        } else {
+          return [...prev, { id: aiMsgId, role: "model", content: chunkText }];
+        }
+      });
     };
-    setMessages((prev) => [...prev, newAiMsg]);
 
     try {
-      const token = await getIdToken();
+      let token = await getFreshToken(false);
+      if (!token) {
+        token = await getFreshToken(true);
+      }
       if (!token) {
         throw new Error(t("Authentication expired. Please log in again.", "身份验证过期，请重新登录。"));
       }
 
-      const response = await fetch("/api/stock/chat", {
+      let response = await fetch("/api/stock/chat", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -111,6 +138,28 @@ export default function StockChatAssistant({
         }),
       });
 
+      // 401 Auto-Retry with forced token refresh
+      if (response.status === 401) {
+        console.warn("[StockChat] Received 401, forcing token refresh & retrying...");
+        const freshToken = await getFreshToken(true);
+        if (freshToken) {
+          response = await fetch("/api/stock/chat", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${freshToken}`,
+            },
+            body: JSON.stringify({
+              symbol,
+              message: trimmed,
+              history: historyPayload,
+              strategy,
+              lang,
+            }),
+          });
+        }
+      }
+
       if (!response.ok) {
         const errJson = await response.json().catch(() => ({}));
         throw new Error(errJson.message || `HTTP ${response.status}`);
@@ -123,37 +172,101 @@ export default function StockChatAssistant({
 
       const decoder = new TextDecoder("utf-8");
       let done = false;
+      let buffer = "";
 
       while (!done) {
         const { value, done: doneReading } = await reader.read();
         done = doneReading;
         if (value) {
-          const chunk = decoder.decode(value, { stream: !done });
-          setMessages((prev) =>
-            prev.map((msg) =>
-              msg.id === aiMsgId ? { ...msg, content: msg.content + chunk } : msg
-            )
-          );
+          buffer += decoder.decode(value, { stream: !done });
+          const lines = buffer.split("\n");
+          buffer = lines.pop() || "";
+
+          let accumulatedText = "";
+          for (const line of lines) {
+            const trimmedLine = line.trim();
+            if (!trimmedLine) continue;
+
+            if (trimmedLine.startsWith("data:")) {
+              const dataPayload = trimmedLine.slice(5).trim();
+              if (dataPayload === "[DONE]") {
+                done = true;
+                break;
+              }
+              if (dataPayload.startsWith("{")) {
+                try {
+                  const parsed = JSON.parse(dataPayload);
+                  if (parsed.text) {
+                    accumulatedText += parsed.text;
+                  } else if (parsed.error) {
+                    throw new Error(parsed.error);
+                  }
+                } catch (e) {
+                  if (e instanceof Error && e.message && !e.message.startsWith("Unexpected token")) {
+                    throw e;
+                  }
+                  if (e instanceof SyntaxError) {
+                    accumulatedText += dataPayload;
+                  }
+                }
+              } else {
+                accumulatedText += dataPayload;
+              }
+            } else {
+              accumulatedText += line + "\n";
+            }
+          }
+
+          if (accumulatedText) {
+            appendAiChunk(accumulatedText);
+          }
+        }
+      }
+
+      if (buffer.trim() && buffer.trim().startsWith("data:")) {
+        const dataPayload = buffer.trim().slice(5).trim();
+        if (dataPayload !== "[DONE]") {
+          let extraText = "";
+          if (dataPayload.startsWith("{")) {
+            try {
+              const parsed = JSON.parse(dataPayload);
+              if (parsed.text) extraText = parsed.text;
+            } catch {
+              extraText = dataPayload;
+            }
+          } else {
+            extraText = dataPayload;
+          }
+          if (extraText) {
+            appendAiChunk(extraText);
+          }
         }
       }
     } catch (err) {
       console.error("Chat error:", err);
       const errorMessage = err instanceof Error ? err.message : String(err);
       
-      // Update UI with error
+      // Update UI with error banner
       setErrorMsg(t(`Chat failed: ${errorMessage}`, `对话失败：${errorMessage}`));
       
-      // Clean up placeholder if empty
+      // Display error message directly in AI message bubble
       setMessages((prev) => {
-        const target = prev.find((m) => m.id === aiMsgId);
-        if (target && !target.content) {
-          return prev.filter((m) => m.id !== aiMsgId);
+        const existing = prev.find((m) => m.id === aiMsgId);
+        if (existing && existing.content.trim()) {
+          return prev.map((m) =>
+            m.id === aiMsgId
+              ? { ...m, content: m.content + t("\n\n*(Connection interrupted)*", "\n\n*(连接中断)*") }
+              : m
+          );
         }
-        return prev.map((m) =>
-          m.id === aiMsgId
-            ? { ...m, content: m.content + t("\n\n*(Connection interrupted)*", "\n\n*(连接中断)*") }
-            : m
-        );
+        return [
+          ...prev,
+          {
+            id: aiMsgId,
+            role: "model",
+            content: `❌ ${t(`Chat failed: ${errorMessage}`, `对话失败：${errorMessage}`)}`,
+          },
+        ];
       });
     } finally {
       setIsLoading(false);
@@ -291,16 +404,16 @@ export default function StockChatAssistant({
                   );
                 })}
 
-                {isLoading && messages[messages.length - 1]?.role === "user" && (
+                {isLoading && (messages[messages.length - 1]?.role === "user" || (messages[messages.length - 1]?.role === "model" && !messages[messages.length - 1]?.content)) && (
                   <div className="flex justify-start">
                     <div className="max-w-[85%]">
                       <span className="text-[9px] font-semibold text-slate-500 mb-1 block">
                         GEMS AI
                       </span>
                       <div className="px-4 py-3 bg-slate-900 border border-slate-800/80 rounded-2xl rounded-tl-none flex gap-1 items-center">
-                        <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-bounce delay-100" />
-                        <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-bounce delay-200" />
-                        <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-bounce delay-300" />
+                        <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                        <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                        <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
                       </div>
                     </div>
                   </div>
