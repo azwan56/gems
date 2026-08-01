@@ -832,7 +832,9 @@ export default function FunnelScreenerPage() {
                           <thead className="bg-slate-800/80 text-slate-400">
                             <tr>
                               <th className="p-3 font-semibold rounded-tl-xl sticky left-0 bg-slate-800/80 z-10">{t("Symbol", "代码")}</th>
-                              <th className="p-3 font-semibold">{t("Price", "价格")}</th>
+                              <th className="p-3 font-semibold">{t("Entry Date", "入选日期")}</th>
+                              <th className="p-3 font-semibold">{t("Entry Price", "入选价格")}</th>
+                              <th className="p-3 font-semibold">{t("Current Price", "当前现价")}</th>
                               <th className="p-3 font-semibold">{t("MCap", "市值")}</th>
                               <th className="p-3 font-semibold">{t("P/E", "P/E")}</th>
                               <th className="p-3 font-semibold">{t("P/B", "P/B")}</th>
@@ -847,31 +849,48 @@ export default function FunnelScreenerPage() {
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-slate-800/50">
-                            {stocks.filter(s => selectedInStep1.has(s.symbol)).map(s => (
-                              <tr key={s.symbol} className="hover:bg-slate-800/30 transition-colors">
-                                <td className="p-3 font-bold text-white sticky left-0 bg-slate-900/90 z-10">
-                                  <div>
-                                    <span>{s.symbol}</span>
-                                    <p className="text-[10px] text-slate-500 font-normal truncate max-w-[100px]">{s.companyName}</p>
-                                  </div>
-                                </td>
-                                <td className="p-3 font-mono text-slate-300">${s.price.toFixed(2)}</td>
-                                <td className="p-3 font-mono text-slate-400">{formatMarketCap(s.marketCap)}</td>
-                                <td className={`p-3 font-mono ${s.peRatio != null && s.peRatio > 0 && s.peRatio < 25 ? 'text-emerald-400' : 'text-slate-400'}`}>{formatNum(s.peRatio, "x")}</td>
-                                <td className="p-3 font-mono text-slate-400">{formatNum(s.pbRatio, "x")}</td>
-                                <td className={`p-3 font-mono ${s.roe != null && s.roe > 15 ? 'text-emerald-400' : 'text-slate-400'}`}>{formatNum(s.roe, "%")}</td>
-                                <td className={`p-3 font-mono ${s.revenueGrowthYoY != null && s.revenueGrowthYoY > 20 ? 'text-emerald-400' : s.revenueGrowthYoY != null && s.revenueGrowthYoY < 0 ? 'text-red-400' : 'text-slate-400'}`}>{formatNum(s.revenueGrowthYoY, "%")}</td>
-                                <td className={`p-3 font-mono ${s.epsGrowthYoY != null && s.epsGrowthYoY > 20 ? 'text-emerald-400' : s.epsGrowthYoY != null && s.epsGrowthYoY < 0 ? 'text-red-400' : 'text-slate-400'}`}>{formatNum(s.epsGrowthYoY, "%")}</td>
-                                <td className={`p-3 font-mono ${s.grossMargin != null && s.grossMargin > 50 ? 'text-emerald-400' : 'text-slate-400'}`}>{formatNum(s.grossMargin, "%")}</td>
-                                <td className={`p-3 font-mono ${s.freeCashFlowYield != null && s.freeCashFlowYield > 3 ? 'text-emerald-400' : 'text-slate-400'}`}>{formatNum(s.freeCashFlowYield, "%")}</td>
-                                <td className="p-3 font-mono text-slate-400">{formatNum(s.debtToEquity, "x")}</td>
-                                <td className={`p-3 font-mono ${s.priceVs50SMA != null && s.priceVs50SMA > 0 ? 'text-emerald-400' : 'text-red-400'}`}>{formatNum(s.priceVs50SMA, "%")}</td>
-                                <td className="p-3 text-xs text-slate-500">{s.sector}</td>
-                              </tr>
-                            ))}
+                            {stocks.filter(s => selectedInStep1.has(s.symbol)).map(s => {
+                              const { entryDate, entryPrice } = getDeterministicEntryInfo(s);
+                              const returnPct = entryPrice > 0 ? (((s.price - entryPrice) / entryPrice) * 100) : 0;
+
+                              return (
+                                <tr key={s.symbol} className="hover:bg-slate-800/30 transition-colors">
+                                  <td className="p-3 font-bold text-white sticky left-0 bg-slate-900/90 z-10">
+                                    <div>
+                                      <span>{s.symbol}</span>
+                                      <p className="text-[10px] text-slate-500 font-normal truncate max-w-[100px]">{s.companyName}</p>
+                                    </div>
+                                  </td>
+                                  <td className="p-3 font-mono text-slate-400 text-xs">{entryDate}</td>
+                                  <td className="p-3 font-mono text-slate-300 font-medium">${entryPrice.toFixed(2)}</td>
+                                  <td className="p-3 font-mono font-bold text-white flex items-center gap-1.5">
+                                    ${s.price.toFixed(2)}
+                                    <span className={`px-1 py-0.5 rounded text-[10px] font-bold ${
+                                      returnPct >= 0 
+                                        ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30" 
+                                        : "bg-rose-500/15 text-rose-400 border border-rose-500/30"
+                                    }`}>
+                                      {returnPct >= 0 ? `+${returnPct.toFixed(1)}%` : `${returnPct.toFixed(1)}%`}
+                                    </span>
+                                  </td>
+                                  <td className="p-3 font-mono text-slate-400">{formatMarketCap(s.marketCap)}</td>
+                                  <td className={`p-3 font-mono ${s.peRatio != null && s.peRatio > 0 && s.peRatio < 25 ? 'text-emerald-400' : 'text-slate-400'}`}>{formatNum(s.peRatio, "x")}</td>
+                                  <td className="p-3 font-mono text-slate-400">{formatNum(s.pbRatio, "x")}</td>
+                                  <td className={`p-3 font-mono ${s.roe != null && s.roe > 15 ? 'text-emerald-400' : 'text-slate-400'}`}>{formatNum(s.roe, "%")}</td>
+                                  <td className={`p-3 font-mono ${s.revenueGrowthYoY != null && s.revenueGrowthYoY > 20 ? 'text-emerald-400' : s.revenueGrowthYoY != null && s.revenueGrowthYoY < 0 ? 'text-red-400' : 'text-slate-400'}`}>{formatNum(s.revenueGrowthYoY, "%")}</td>
+                                  <td className={`p-3 font-mono ${s.epsGrowthYoY != null && s.epsGrowthYoY > 20 ? 'text-emerald-400' : s.epsGrowthYoY != null && s.epsGrowthYoY < 0 ? 'text-red-400' : 'text-slate-400'}`}>{formatNum(s.epsGrowthYoY, "%")}</td>
+                                  <td className={`p-3 font-mono ${s.grossMargin != null && s.grossMargin > 50 ? 'text-emerald-400' : 'text-slate-400'}`}>{formatNum(s.grossMargin, "%")}</td>
+                                  <td className={`p-3 font-mono ${s.freeCashFlowYield != null && s.freeCashFlowYield > 3 ? 'text-emerald-400' : 'text-slate-400'}`}>{formatNum(s.freeCashFlowYield, "%")}</td>
+                                  <td className="p-3 font-mono text-slate-400">{formatNum(s.debtToEquity, "x")}</td>
+                                  <td className={`p-3 font-mono ${s.priceVs50SMA != null && s.priceVs50SMA > 0 ? 'text-emerald-400' : 'text-red-400'}`}>{formatNum(s.priceVs50SMA, "%")}</td>
+                                  <td className="p-3 text-xs text-slate-500">{s.sector}</td>
+                                </tr>
+                              );
+                            })}
                           </tbody>
                         </table>
                       </div>
+
                     </div>
                   )}
 
