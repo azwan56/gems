@@ -38,6 +38,7 @@ export interface StockMetrics {
   fiftyTwoWeekHigh: number | null;
   fiftyTwoWeekLow: number | null;
   beta?: number | null;
+  isActivelyTrading?: boolean;
 }
 
 /** The strategy types supported by the MVP */

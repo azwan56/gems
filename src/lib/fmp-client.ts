@@ -331,6 +331,7 @@ export function buildStockMetrics(
     fiftyTwoWeekHigh: numOrNull(quote?.yearHigh),
     fiftyTwoWeekLow: numOrNull(quote?.yearLow),
     beta: numOrNull(screener.beta),
+    isActivelyTrading: screener.isActivelyTrading,
   };
 }
 
