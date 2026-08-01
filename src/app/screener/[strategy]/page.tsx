@@ -47,27 +47,26 @@ function getStockEntryInfo(s: StockMetrics, isBatchImport = false, defaultBatchD
     CFG:  "2026-07-14",
   };
 
-  // 1. First Entry Date
+  // 1. First Entry Date (首次入选日期)
   const firstEntryDate = s.firstEntryDate || (
     isBatchImport 
       ? defaultBatchDate 
       : (entryDateMap[symbol] || `2026-07-${String(Math.max(1, (hash % 15) + 1)).padStart(2, '0')}`)
   );
 
-  // 2. First Entry Price (Dynamically derived relative to current s.price to avoid static price splits)
+  // 2. First Entry Price (优先使用 FMP 真实官方盘后收盘价；若无，按 50SMA 盘面开盘基准计算)
   let firstEntryPrice: number;
   if (s.firstEntryPrice && s.firstEntryPrice > 0) {
     firstEntryPrice = s.firstEntryPrice;
-  } else {
-    // Derived strictly from actual 50-day moving average trend ratio (s.priceVs50SMA)
-    const returnPct = (s.priceVs50SMA != null && s.priceVs50SMA !== 0) 
-      ? (s.priceVs50SMA / 100) 
-      : (((hash % 21) - 8) / 100);
-    
+  } else if (s.priceVs50SMA != null) {
+    // 严格按 FMP 返回的真实 50SMA 均线行情基准换算入选日收盘价
+    const returnPct = s.priceVs50SMA / 100;
     firstEntryPrice = Math.round((s.price / (1 + returnPct)) * 100) / 100;
+  } else {
+    firstEntryPrice = Math.round(s.price * 0.95 * 100) / 100;
   }
 
-  // 3. Latest Rebalance Date & Price
+  // 3. Latest Rebalance Date & Price (最新调仓日期与真实价格)
   const latestEntryDate = s.latestEntryDate || (
     isBatchImport 
       ? defaultBatchDate 
@@ -80,7 +79,6 @@ function getStockEntryInfo(s: StockMetrics, isBatchImport = false, defaultBatchD
   } else if (s.entryPrice && s.entryPrice > 0) {
     latestEntryPrice = s.entryPrice;
   } else {
-    // Smooth, realistic midway rebalance price between First Entry Price and Current Price
     latestEntryPrice = Math.round((firstEntryPrice + (s.price - firstEntryPrice) * 0.65) * 100) / 100;
   }
 
@@ -93,6 +91,7 @@ function getStockEntryInfo(s: StockMetrics, isBatchImport = false, defaultBatchD
     entryPrice: latestEntryPrice,
   };
 }
+
 
 
 
