@@ -67,7 +67,8 @@ export async function POST(request: NextRequest) {
       // ROSTER MODE (Backtesting)
       // Ignore dynamic filters, only use stocks present in the saved roster snapshot.
       // ----------------------------------------------------
-      const roster = await getStrategyRoster(body.strategy);
+      const rosterYear = body.year || new Date().getFullYear();
+      const roster = await getStrategyRoster(body.strategy, rosterYear);
       if (roster && roster.entries.length > 0) {
         const rosterMap = new Map(roster.entries.map(e => [e.symbol, e]));
         // Filter pool to only those in roster

@@ -62,6 +62,8 @@ export interface ScreenerRequest {
   offset?: number;
   /** 'live' (default): runs current filters; 'roster': loads backtested history roster */
   mode?: "live" | "roster";
+  /** Filter the backtest roster by a specific calendar year (e.g. 2026). Defaults to current year if omitted. */
+  year?: number;
 }
 
 /** Screener response with pagination */

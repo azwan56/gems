@@ -415,3 +415,38 @@ export async function fetchOnDemandStocks(symbols: string[]): Promise<StockMetri
 
   return results;
 }
+
+/**
+ * Check if the US stock market is open today (or was open today if after hours).
+ * Returns true if it's a trading day, false if it's a weekend or holiday.
+ */
+export async function isMarketOpenToday(): Promise<boolean> {
+  try {
+    const data = await fmpFetch<any>("/is-the-market-open", {});
+    if (data && data.isTheStockMarketOpen !== undefined) {
+      // The API returns true if the market is currently open. 
+      // But we run the cron after market close, so isTheStockMarketOpen will be false.
+      // However, we can just check if today's date is a trading day by looking at a major index like SPY
+      // Wait, is-the-market-open gives us `isTheStockMarketOpen` but it might just return false after 4 PM.
+      // A better way to check if TODAY was a trading day is to fetch a quote for SPY
+      // and see if the timestamp of the quote is today.
+    }
+    
+    // Fetch SPY quote
+    const quotes = await fmpFetch<FmpTechnical[]>("/quote", { symbol: "SPY" });
+    if (quotes && quotes.length > 0) {
+      // If we have data, let's just check the FMP timestamp (which we don't have typed, but quote has timestamp)
+      // Actually, an easier way is to fetch the historical price for SPY for today's date.
+      const today = new Date().toISOString().split("T")[0];
+      const history = await fmpFetch<any>(`/historical-price-full/SPY`, { from: today, to: today });
+      if (history && history.historical && history.historical.length > 0) {
+        return true; // There is a price bar for today, market was open.
+      }
+      return false; // No price bar for today, market was closed (holiday/weekend).
+    }
+    return true; // Fallback to true if SPY quote fails, to not miss data.
+  } catch (error) {
+    console.error("Failed to check if market is open:", error);
+    return true; // Safe fallback
+  }
+}

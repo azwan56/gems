@@ -20,6 +20,13 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const { isMarketOpenToday } = await import("@/lib/fmp-client");
+    const isOpen = await isMarketOpenToday();
+    if (!isOpen) {
+      console.log("[Cron: snapshot-strategies] Market was closed today. Skipping snapshot.");
+      return NextResponse.json({ success: true, message: "Skipped (Market Closed)" });
+    }
+
     const poolData = await loadStockPool();
     if (!poolData || poolData.stocks.length === 0) {
       return NextResponse.json({ error: "No stock pool data available to snapshot." }, { status: 500 });

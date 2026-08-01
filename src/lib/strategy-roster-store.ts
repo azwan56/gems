@@ -24,27 +24,29 @@ export interface StrategyRoster {
 }
 
 /**
- * Load the roster for a specific strategy from Firestore.
+ * Load the roster for a specific strategy and year from Firestore.
  */
-export async function getStrategyRoster(strategyId: string): Promise<StrategyRoster | null> {
+export async function getStrategyRoster(strategyId: string, year: number): Promise<StrategyRoster | null> {
   try {
     const db = getDb();
-    const doc = await db.collection(COLLECTION).doc(strategyId).get();
+    const docId = `${strategyId}_${year}`;
+    const doc = await db.collection(COLLECTION).doc(docId).get();
     if (!doc.exists) {
       return null;
     }
     const data = doc.data() as StrategyRoster;
     return data;
   } catch (e) {
-    console.error(`Failed to load strategy roster for ${strategyId}:`, e);
+    console.error(`Failed to load strategy roster for ${strategyId}_${year}:`, e);
     return null;
   }
 }
 
 /**
  * Update a strategy's roster by comparing new screener results against the existing roster.
+ * - Annual Segmentation: Roster is isolated by current year.
  * - New stocks: Added with today's date and current price.
- * - Existing stocks: Preserved with their original entry dates/prices, but latest entry updated if rebalanced.
+ * - Existing stocks (in this year's roster): Preserved with their original entry dates/prices in this year.
  * - Dropped stocks: Removed from the active roster.
  */
 export async function updateStrategyRoster(
@@ -52,9 +54,12 @@ export async function updateStrategyRoster(
   newStocks: StockMetrics[]
 ): Promise<StrategyRoster> {
   const db = getDb();
-  const today = new Date().toISOString().split("T")[0];
+  const now = new Date();
+  const today = now.toISOString().split("T")[0];
+  const currentYear = now.getFullYear();
+  const docId = `${strategyId}_${currentYear}`;
   
-  const existingRoster = await getStrategyRoster(strategyId);
+  const existingRoster = await getStrategyRoster(strategyId, currentYear);
   const existingMap = new Map<string, RosterEntry>();
   
   if (existingRoster?.entries) {
@@ -71,15 +76,14 @@ export async function updateStrategyRoster(
     const existing = existingMap.get(symbol);
 
     if (existing) {
-      // Keep existing first entry data, but update latest entry to today if needed 
-      // (For now, we just keep the existing data intact to track the original entry)
+      // Keep existing first entry data from THIS YEAR
       updatedEntries.push({
         ...existing,
-        // We could optionally update latestEntryDate/Price here if we define a rebalance logic,
-        // but for simple hold tracking, keeping the original is best.
       });
     } else {
-      // Brand new entry to the strategy
+      // Brand new entry to the strategy IN THIS YEAR
+      // Even if it existed in last year's roster, it is treated as a new entry
+      // on the first trading day it passes the filter this year.
       updatedEntries.push({
         symbol,
         firstEntryDate: today,
@@ -91,12 +95,12 @@ export async function updateStrategyRoster(
   }
 
   const newRoster: StrategyRoster = {
-    strategyId,
+    strategyId, // Keep original strategyId for client reference
     entries: updatedEntries,
-    updatedAt: new Date().toISOString(),
+    updatedAt: now.toISOString(),
   };
 
-  await db.collection(COLLECTION).doc(strategyId).set(newRoster);
+  await db.collection(COLLECTION).doc(docId).set(newRoster);
   
   return newRoster;
 }

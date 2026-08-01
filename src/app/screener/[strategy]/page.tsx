@@ -89,6 +89,7 @@ export default function FunnelScreenerPage() {
   
   const isSA = strategyId === "seeking_alpha";
   const [isBacktestMode, setIsBacktestMode] = useState(!isSA); // Default to backtest for quant strategies
+  const [rosterYear, setRosterYear] = useState(new Date().getFullYear());
 
   const [currentStep, setCurrentStep] = useState<1 | 2 | 3>(1);
   const [selectedInStep1, setSelectedInStep1] = useState<Set<string>>(new Set());
@@ -292,7 +293,7 @@ export default function FunnelScreenerPage() {
     try {
       const filters = preset?.defaultFilters ?? [];
       const mode = (isBacktestMode && !isSA) ? "roster" : "live";
-      const body = JSON.stringify({ strategy: strategyId, filters, limit: 200, mode });
+      const body = JSON.stringify({ strategy: strategyId, filters, limit: 200, mode, year: rosterYear });
 
       const doFetch = async (token: string | null) => {
         return fetch("/api/screener", {
@@ -370,7 +371,7 @@ export default function FunnelScreenerPage() {
     if (!authLoading) {
       fetchStocks();
     }
-  }, [fetchStocks, authLoading, isBacktestMode, user]);
+  }, [fetchStocks, authLoading, isBacktestMode, rosterYear, user]);
 
   useEffect(() => {
     if (authLoading || !user?.uid) return;
@@ -666,19 +667,34 @@ export default function FunnelScreenerPage() {
                     
                     <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
                       {!isSA && (
-                        <div className="flex bg-slate-800/80 p-1 rounded-lg border border-slate-700/50 w-full sm:w-auto">
-                          <button 
-                            onClick={() => setIsBacktestMode(true)}
-                            className={`flex-1 sm:flex-none px-4 py-1.5 text-xs sm:text-sm font-medium rounded-md transition-all ${isBacktestMode ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-700/50'}`}
-                          >
-                            {t("Backtest Mode", "历史回测组合")}
-                          </button>
-                          <button 
-                            onClick={() => setIsBacktestMode(false)}
-                            className={`flex-1 sm:flex-none px-4 py-1.5 text-xs sm:text-sm font-medium rounded-md transition-all ${!isBacktestMode ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-700/50'}`}
-                          >
-                            {t("Live Screener", "实时动态筛选")}
-                          </button>
+                        <div className="flex flex-col sm:flex-row items-center gap-2">
+                          <div className="flex bg-slate-800/80 p-1 rounded-lg border border-slate-700/50 w-full sm:w-auto">
+                            <button 
+                              onClick={() => setIsBacktestMode(true)}
+                              className={`flex-1 sm:flex-none px-4 py-1.5 text-xs sm:text-sm font-medium rounded-md transition-all ${isBacktestMode ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-700/50'}`}
+                            >
+                              {t("Backtest Mode", "历史回测组合")}
+                            </button>
+                            <button 
+                              onClick={() => setIsBacktestMode(false)}
+                              className={`flex-1 sm:flex-none px-4 py-1.5 text-xs sm:text-sm font-medium rounded-md transition-all ${!isBacktestMode ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-700/50'}`}
+                            >
+                              {t("Live Screener", "实时动态筛选")}
+                            </button>
+                          </div>
+                          
+                          {isBacktestMode && (
+                            <select 
+                              value={rosterYear}
+                              onChange={(e) => setRosterYear(Number(e.target.value))}
+                              className="px-3 py-1.5 bg-slate-800 text-slate-300 text-sm font-medium rounded-lg border border-slate-700 focus:outline-none focus:border-indigo-500 w-full sm:w-auto"
+                            >
+                              {[...Array(5)].map((_, i) => {
+                                const y = new Date().getFullYear() - i;
+                                return <option key={y} value={y}>{y}</option>;
+                              })}
+                            </select>
+                          )}
                         </div>
                       )}
                       
