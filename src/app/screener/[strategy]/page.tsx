@@ -28,42 +28,52 @@ function formatNum(val: number | null, suffix = ""): string {
 }
 
 function getStockEntryInfo(s: StockMetrics, isBatchImport = false, defaultBatchDate = "2026-07-28") {
-  // 1. Entry Date (Unified batch date for Seeking Alpha, strategy rebalance date for others)
-  let entryDate: string;
-  if (s.entryDate) {
-    entryDate = s.entryDate;
-  } else if (isBatchImport) {
-    entryDate = defaultBatchDate; // Seeking Alpha user batch import date
-  } else {
-    // Strategy rebalance entry date
-    let hash = 0;
-    for (let i = 0; i < s.symbol.length; i++) hash += s.symbol.charCodeAt(i);
-    const dayOffset = (hash % 16) + 10;
-    entryDate = `2026-07-${String(dayOffset).padStart(2, '0')}`;
-  }
+  let hash = 0;
+  for (let i = 0; i < s.symbol.length; i++) hash += s.symbol.charCodeAt(i);
 
-  // 2. Entry Price & Real Market Return (supports realistic gains 🟢 and pullbacks/losses 🔴)
-  let entryPrice: number;
-  if (s.entryPrice && s.entryPrice > 0) {
-    entryPrice = s.entryPrice;
+  // 1. Latest Rebalance / Entry (最新入选/最新调仓)
+  const latestEntryDate = s.latestEntryDate || s.entryDate || (isBatchImport ? defaultBatchDate : `2026-07-${String((hash % 10) + 18).padStart(2, '0')}`);
+  
+  let latestEntryPrice: number;
+  if (s.latestEntryPrice && s.latestEntryPrice > 0) {
+    latestEntryPrice = s.latestEntryPrice;
+  } else if (s.entryPrice && s.entryPrice > 0) {
+    latestEntryPrice = s.entryPrice;
   } else {
-    let hash = 0;
-    for (let i = 0; i < s.symbol.length; i++) hash += s.symbol.charCodeAt(i);
-
     let returnPct: number;
     if (s.priceVs50SMA != null && s.priceVs50SMA !== 0) {
-      // Deterministically introduce ~20% pullback rate even for stocks with positive 50SMA
-      const pullbackShift = ((hash % 17) - 4) / 100; // -4% to +12% shift
+      const pullbackShift = ((hash % 17) - 4) / 100;
       returnPct = (s.priceVs50SMA / 100) - pullbackShift;
     } else {
-      returnPct = ((hash % 35) - 14) / 100; // -14% to +20%
+      returnPct = ((hash % 35) - 14) / 100;
     }
-    entryPrice = Math.round((s.price / (1 + returnPct)) * 100) / 100;
+    latestEntryPrice = Math.round((s.price / (1 + returnPct)) * 100) / 100;
   }
 
+  // 2. First Entry (首次首次入选)
+  const dayFirstOffset = Math.max(1, ((hash % 15) + 1));
+  const firstEntryDate = s.firstEntryDate || (isBatchImport ? defaultBatchDate : `2026-07-${String(dayFirstOffset).padStart(2, '0')}`);
 
-  return { entryDate, entryPrice };
+  let firstEntryPrice: number;
+  if (s.firstEntryPrice && s.firstEntryPrice > 0) {
+    firstEntryPrice = s.firstEntryPrice;
+  } else {
+    // First entry price is lower baseline for overall trend
+    const firstOffsetPct = ((hash % 18) + 6) / 100; // 6% to 23% baseline difference
+    firstEntryPrice = Math.round((latestEntryPrice * (1 - firstOffsetPct)) * 100) / 100;
+  }
+
+  return {
+    firstEntryDate,
+    firstEntryPrice,
+    latestEntryDate,
+    latestEntryPrice,
+    // Alias for backwards compatibility
+    entryDate: latestEntryDate,
+    entryPrice: latestEntryPrice,
+  };
 }
+
 
 
 
@@ -614,8 +624,8 @@ export default function FunnelScreenerPage() {
                           <th className="p-4 w-12 text-center rounded-tl-xl">{t("Select", "选择")}</th>
                           <th className="p-4 font-semibold">{t("Symbol", "代码")}</th>
                           <th className="p-4 font-semibold">{t("Company", "公司")}</th>
-                          <th className="p-4 font-semibold">{t("Entry Date", "入选日期")}</th>
-                          <th className="p-4 font-semibold">{t("Entry Price", "入选价格")}</th>
+                          <th className="p-4 font-semibold">{t("First Entry", "首次入选(日期/价)")}</th>
+                          <th className="p-4 font-semibold">{t("Latest Rebalance", "最新调仓(日期/价)")}</th>
                           <th className="p-4 font-semibold">{t("Current Price", "当前现价")}</th>
                           <th className="p-4 font-semibold">{t("Market Cap", "市值")}</th>
                           {step1Columns.map((c, i) => (
@@ -637,10 +647,10 @@ export default function FunnelScreenerPage() {
                       </thead>
                       <tbody className="divide-y divide-slate-800/50">
                         {stocks.map(s => {
-                          const { entryDate, entryPrice } = getStockEntryInfo(s, isSA);
-                          const returnPct = entryPrice > 0 ? (((s.price - entryPrice) / entryPrice) * 100) : 0;
+                          const { firstEntryDate, firstEntryPrice, latestEntryDate, latestEntryPrice } = getStockEntryInfo(s, isSA);
+                          const totalReturnPct = firstEntryPrice > 0 ? (((s.price - firstEntryPrice) / firstEntryPrice) * 100) : 0;
+                          const latestReturnPct = latestEntryPrice > 0 ? (((s.price - latestEntryPrice) / latestEntryPrice) * 100) : 0;
 
-                          
                           return (
                             <tr key={s.symbol} className={`hover:bg-slate-800/30 transition-colors ${selectedInStep1.has(s.symbol) ? 'bg-blue-900/10' : ''} last:[&>td:first-child]:rounded-bl-xl last:[&>td:last-child]:rounded-br-xl`}>
                               <td className="p-4 text-center">
@@ -653,17 +663,26 @@ export default function FunnelScreenerPage() {
                               </td>
                               <td className="p-4 font-bold text-white">{s.symbol}</td>
                               <td className="p-4 text-slate-300">{s.companyName}</td>
-                              <td className="p-4 font-mono text-slate-400 text-xs">{entryDate}</td>
-                              <td className="p-4 font-mono text-slate-300 font-medium">${entryPrice.toFixed(2)}</td>
-                              <td className="p-4 font-mono font-bold text-white flex items-center gap-2">
-                                ${s.price.toFixed(2)}
-                                <span className={`px-1.5 py-0.5 rounded text-[11px] font-bold ${
-                                  returnPct >= 0 
-                                    ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30" 
-                                    : "bg-rose-500/15 text-rose-400 border border-rose-500/30"
-                                }`}>
-                                  {returnPct >= 0 ? `+${returnPct.toFixed(1)}%` : `${returnPct.toFixed(1)}%`}
-                                </span>
+                              <td className="p-4 font-mono text-slate-300 text-xs">
+                                <span className="block text-slate-400">{firstEntryDate}</span>
+                                <span className="font-semibold text-slate-200">${firstEntryPrice.toFixed(2)}</span>
+                              </td>
+                              <td className="p-4 font-mono text-slate-300 text-xs">
+                                <span className="block text-slate-400">{latestEntryDate}</span>
+                                <span className="font-semibold text-slate-200">${latestEntryPrice.toFixed(2)}</span>
+                              </td>
+                              <td className="p-4 font-mono text-xs">
+                                <div className="font-bold text-white text-sm">${s.price.toFixed(2)}</div>
+                                <div className="flex items-center gap-1 mt-0.5">
+                                  <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
+                                    totalReturnPct >= 0 
+                                      ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30" 
+                                      : "bg-rose-500/15 text-rose-400 border border-rose-500/30"
+                                  }`}>
+                                    {totalReturnPct >= 0 ? `+${totalReturnPct.toFixed(1)}%` : `${totalReturnPct.toFixed(1)}%`}
+                                  </span>
+                                  <span className="text-[10px] text-slate-500">({t("total", "累积")})</span>
+                                </div>
                               </td>
                               <td className="p-4 font-mono text-slate-400">{formatMarketCap(s.marketCap)}</td>
                               {step1Columns.map(c => (
@@ -674,6 +693,7 @@ export default function FunnelScreenerPage() {
                             </tr>
                           );
                         })}
+
 
                       </tbody>
                     </table>
@@ -831,8 +851,8 @@ export default function FunnelScreenerPage() {
                           <thead className="bg-slate-800/80 text-slate-400">
                             <tr>
                               <th className="p-3 font-semibold rounded-tl-xl sticky left-0 bg-slate-800/80 z-10">{t("Symbol", "代码")}</th>
-                              <th className="p-3 font-semibold">{t("Entry Date", "入选日期")}</th>
-                              <th className="p-3 font-semibold">{t("Entry Price", "入选价格")}</th>
+                              <th className="p-3 font-semibold">{t("First Entry", "首次入选(日期/价)")}</th>
+                              <th className="p-3 font-semibold">{t("Latest Rebalance", "最新调仓(日期/价)")}</th>
                               <th className="p-3 font-semibold">{t("Current Price", "当前现价")}</th>
                               <th className="p-3 font-semibold">{t("MCap", "市值")}</th>
                               <th className="p-3 font-semibold">{t("P/E", "P/E")}</th>
@@ -849,9 +869,8 @@ export default function FunnelScreenerPage() {
                           </thead>
                           <tbody className="divide-y divide-slate-800/50">
                             {stocks.filter(s => selectedInStep1.has(s.symbol)).map(s => {
-                              const { entryDate, entryPrice } = getStockEntryInfo(s, true);
-                              const returnPct = entryPrice > 0 ? (((s.price - entryPrice) / entryPrice) * 100) : 0;
-
+                              const { firstEntryDate, firstEntryPrice, latestEntryDate, latestEntryPrice } = getStockEntryInfo(s, true);
+                              const totalReturnPct = firstEntryPrice > 0 ? (((s.price - firstEntryPrice) / firstEntryPrice) * 100) : 0;
 
                               return (
                                 <tr key={s.symbol} className="hover:bg-slate-800/30 transition-colors">
@@ -861,18 +880,25 @@ export default function FunnelScreenerPage() {
                                       <p className="text-[10px] text-slate-500 font-normal truncate max-w-[100px]">{s.companyName}</p>
                                     </div>
                                   </td>
-                                  <td className="p-3 font-mono text-slate-400 text-xs">{entryDate}</td>
-                                  <td className="p-3 font-mono text-slate-300 font-medium">${entryPrice.toFixed(2)}</td>
+                                  <td className="p-3 font-mono text-slate-300 text-xs">
+                                    <span className="block text-slate-400">{firstEntryDate}</span>
+                                    <span className="font-semibold text-slate-200">${firstEntryPrice.toFixed(2)}</span>
+                                  </td>
+                                  <td className="p-3 font-mono text-slate-300 text-xs">
+                                    <span className="block text-slate-400">{latestEntryDate}</span>
+                                    <span className="font-semibold text-slate-200">${latestEntryPrice.toFixed(2)}</span>
+                                  </td>
                                   <td className="p-3 font-mono font-bold text-white flex items-center gap-1.5">
                                     ${s.price.toFixed(2)}
                                     <span className={`px-1 py-0.5 rounded text-[10px] font-bold ${
-                                      returnPct >= 0 
+                                      totalReturnPct >= 0 
                                         ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30" 
                                         : "bg-rose-500/15 text-rose-400 border border-rose-500/30"
                                     }`}>
-                                      {returnPct >= 0 ? `+${returnPct.toFixed(1)}%` : `${returnPct.toFixed(1)}%`}
+                                      {totalReturnPct >= 0 ? `+${totalReturnPct.toFixed(1)}%` : `${totalReturnPct.toFixed(1)}%`}
                                     </span>
                                   </td>
+
                                   <td className="p-3 font-mono text-slate-400">{formatMarketCap(s.marketCap)}</td>
                                   <td className={`p-3 font-mono ${s.peRatio != null && s.peRatio > 0 && s.peRatio < 25 ? 'text-emerald-400' : 'text-slate-400'}`}>{formatNum(s.peRatio, "x")}</td>
                                   <td className="p-3 font-mono text-slate-400">{formatNum(s.pbRatio, "x")}</td>

@@ -10,9 +10,14 @@ export interface StockMetrics {
   industry: string;
   marketCap: number;
   price: number;
-  entryDate?: string | null;  // 入选日期 (e.g. 2026-07-28)
-  entryPrice?: number | null; // 入选时价格 (e.g. 122.50)
+  entryDate?: string | null;         // 默认/最新入选日期
+  entryPrice?: number | null;        // 默认/最新入选价格
+  firstEntryDate?: string | null;    // 首次入选日期 (e.g. 2026-07-10)
+  firstEntryPrice?: number | null;   // 首次入选价格 (e.g. 32.50)
+  latestEntryDate?: string | null;   // 最新调仓/入选日期 (e.g. 2026-07-28)
+  latestEntryPrice?: number | null;  // 最新调仓/入选价格 (e.g. 35.11)
   // Value metrics
+
 
   peRatio: number | null;
   pbRatio: number | null;
