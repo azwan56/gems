@@ -21,22 +21,73 @@ import {
 } from "lucide-react";
 import { useLanguage } from "@/lib/language-context";
 import UserMenu from "@/components/UserMenu";
-import { 
-  getStrategyWinRates, 
-  getSelfHealingLogs, 
-  getPerformanceShowcase 
-} from "@/lib/audit-store";
+import { StrategyWinRate, SelfHealingLog, PerformanceShowcaseStock } from "@/lib/audit-store";
+import { useEffect, useMemo } from "react";
 
 export default function AuditDashboardPage() {
   const { t, lang } = useLanguage();
   const isZh = lang === "zh";
 
-  const winRates = getStrategyWinRates();
+  const [winRates, setWinRates] = useState<StrategyWinRate[]>([]);
+  const [selfHealingLogs, setSelfHealingLogs] = useState<SelfHealingLog[]>([]);
+  const [showcaseStocks, setShowcaseStocks] = useState<PerformanceShowcaseStock[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const selfHealingLogs = getSelfHealingLogs();
-  const showcaseStocks = getPerformanceShowcase();
+  useEffect(() => {
+    fetch("/api/audit")
+      .then(res => res.json())
+      .then(data => {
+        if (data.success && data.data) {
+          setWinRates(data.data.winRates || []);
+          setSelfHealingLogs(data.data.selfHealingLogs || []);
+          setShowcaseStocks(data.data.showcase || []);
+        } else {
+          setError(data.message || "Failed to load audit metrics");
+        }
+      })
+      .catch(err => {
+        setError(err.message);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  }, []);
 
   const [activeTab, setActiveTab] = useState<"overview" | "timeline" | "showcase">("overview");
+
+  const { avgT5, avgT20, avgT60 } = useMemo(() => {
+    if (winRates.length === 0) return { avgT5: "0.0", avgT20: "0.0", avgT60: "0.0" };
+    return {
+      avgT5: (winRates.reduce((acc, w) => acc + w.t5WinRate, 0) / winRates.length).toFixed(1),
+      avgT20: (winRates.reduce((acc, w) => acc + w.t20WinRate, 0) / winRates.length).toFixed(1),
+      avgT60: (winRates.reduce((acc, w) => acc + w.t60WinRate, 0) / winRates.length).toFixed(1),
+    };
+  }, [winRates]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center text-slate-400">
+        <div className="flex flex-col items-center gap-4">
+          <Activity className="w-8 h-8 animate-pulse text-blue-500" />
+          <p>{t("Loading live audit metrics...", "正在加载实时评估数据...")}</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center text-slate-400 p-6">
+        <AlertTriangle className="w-12 h-12 text-amber-500 mb-4" />
+        <h2 className="text-xl font-bold text-white mb-2">{t("Audit Data Unavailable", "评估数据暂未生成")}</h2>
+        <p className="text-center max-w-md mb-6">{error}</p>
+        <Link href="/" className="px-6 py-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors font-medium">
+          {t("Return Home", "返回主页")}
+        </Link>
+      </div>
+    );
+  }
 
   return (
     <main className="min-h-screen bg-slate-950 text-slate-100 py-8 px-4 sm:px-6 max-w-[1280px] mx-auto w-full">
@@ -74,11 +125,11 @@ export default function AuditDashboardPage() {
             {t("T+5 Short-Term Win Rate", "总体 T+5 短线胜率")}
           </div>
           <div className="text-2xl font-extrabold text-emerald-400 flex items-baseline gap-1.5">
-            66.7%
-            <span className="text-[11px] font-normal text-slate-400">(30D)</span>
+            {avgT5}%
+            <span className="text-[11px] font-normal text-slate-400">(Live)</span>
           </div>
           <div className="mt-2 flex items-center gap-1 text-xs text-emerald-400/90 font-medium">
-            <TrendingUp className="w-3.5 h-3.5" /> +4.2% {t("vs S&P 500", "超越标普 500")}
+            <TrendingUp className="w-3.5 h-3.5" /> {t("Live Snapshot Data", "实时快照统计")}
           </div>
         </div>
 
@@ -87,10 +138,10 @@ export default function AuditDashboardPage() {
             {t("T+20 Mid-Term Win Rate", "T+20 月线胜率")}
           </div>
           <div className="text-2xl font-extrabold text-blue-400">
-            71.4%
+            {avgT20}%
           </div>
           <div className="mt-2 text-xs text-slate-400">
-            {t("Average Win: +8.4%", "盈利单平均收益: +8.4%")}
+            {t("Calculated across active portfolios", "跨组合聚合计算")}
           </div>
         </div>
 
@@ -99,7 +150,7 @@ export default function AuditDashboardPage() {
             {t("T+60 Quarterly Win Rate", "T+60 季线胜率(3M)")}
           </div>
           <div className="text-2xl font-extrabold text-indigo-400">
-            76.5%
+            {avgT60}%
           </div>
           <div className="mt-2 text-xs text-indigo-300 font-medium">
             {t("Quarterly Holding Win Rate", "季度持仓胜率高企")}
