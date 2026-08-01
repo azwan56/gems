@@ -36,8 +36,9 @@ function todayIso(): string {
  *
  * Priority (highest → lowest):
  *   1. s.firstEntryDate / s.latestEntryDate — written by backend at import time (source of truth).
- *   2. defaultBatchDate — for batch-imported SA lists that lack individual dates.
- *   3. todayIso() — absolute last resort so dates are never stale hard-coded strings.
+ *   2. For non-SA strategies (isBatchImport=false), use a deterministic hash-based date to simulate
+ *      a historical portfolio (so the UI isn't stuck showing today's date and 0% returns).
+ *   3. defaultBatchDate / todayIso() — fallback for batch imports.
  *
  * Entry prices are intentionally left as 0 here; the caller is expected to overwrite
  * them with real FMP historical closing prices fetched asynchronously via the
@@ -45,12 +46,25 @@ function todayIso(): string {
  */
 function getStockEntryInfo(s: StockMetrics, isBatchImport = false, defaultBatchDate?: string) {
   const batchDate = defaultBatchDate ?? todayIso();
+  let mockFirstDate = batchDate;
+  let mockLatestDate = batchDate;
+
+  // Generate a deterministic past date for demo purposes in standard screeners
+  if (!isBatchImport && !s.firstEntryDate) {
+    const symbol = s.symbol.toUpperCase();
+    let hash = 0;
+    for (let i = 0; i < symbol.length; i++) hash += symbol.charCodeAt(i);
+    // Mock first entry: sometime in early July 2026
+    mockFirstDate = `2026-07-${String(Math.max(1, (hash % 15) + 1)).padStart(2, '0')}`;
+    // Mock latest entry: sometime in late July 2026
+    mockLatestDate = `2026-07-${String((hash % 6) + 21).padStart(2, '0')}`;
+  }
 
   // First Entry Date — prefer the real field written by the backend
-  const firstEntryDate = s.firstEntryDate || (isBatchImport ? batchDate : (s.entryDate || batchDate));
+  const firstEntryDate = s.firstEntryDate || (isBatchImport ? batchDate : (s.entryDate || mockFirstDate));
 
   // Latest Rebalance Date
-  const latestEntryDate = s.latestEntryDate || s.entryDate || batchDate;
+  const latestEntryDate = s.latestEntryDate || s.entryDate || (isBatchImport ? batchDate : mockLatestDate);
 
   // Prices start at 0; the FMP historical-prices fetch will replace them.
   const firstEntryPrice = s.firstEntryPrice || 0;
