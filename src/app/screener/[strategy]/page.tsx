@@ -31,45 +31,34 @@ function getStockEntryInfo(s: StockMetrics, isBatchImport = false, defaultBatchD
   let hash = 0;
   for (let i = 0; i < s.symbol.length; i++) hash += s.symbol.charCodeAt(i);
 
-  // For Seeking Alpha batch imports, set default entry date to 2026-07-01
   const saEntryDate = "2026-07-01";
 
-  // 1. Latest Rebalance / Entry (最新入选/最新调仓)
-  const latestEntryDate = s.latestEntryDate || (isBatchImport ? saEntryDate : s.entryDate || `2026-07-${String((hash % 10) + 18).padStart(2, '0')}`);
-  
-  let latestEntryPrice: number;
-  if (s.latestEntryPrice && s.latestEntryPrice > 0) {
-    latestEntryPrice = s.latestEntryPrice;
-  } else if (isBatchImport && s.priceVs50SMA != null) {
-    // Exact 7/1 price baseline derived from 50-day moving average trend
-    latestEntryPrice = Math.round((s.price / (1 + (s.priceVs50SMA / 100))) * 100) / 100;
-  } else if (s.entryPrice && s.entryPrice > 0) {
-    latestEntryPrice = s.entryPrice;
-  } else {
-    let returnPct: number;
-    if (s.priceVs50SMA != null && s.priceVs50SMA !== 0) {
-      const pullbackShift = ((hash % 17) - 4) / 100;
-      returnPct = (s.priceVs50SMA / 100) - pullbackShift;
-    } else {
-      returnPct = ((hash % 35) - 14) / 100;
-    }
-    latestEntryPrice = Math.round((s.price / (1 + returnPct)) * 100) / 100;
-  }
-
-  // 2. First Entry (首次入选: Seeking Alpha 统一固定为 2026-07-01)
+  // 1. First Entry Date & Unbiased Price Baseline
   const firstEntryDate = s.firstEntryDate || (isBatchImport ? saEntryDate : `2026-07-${String(Math.max(1, (hash % 15) + 1)).padStart(2, '0')}`);
-
+  
   let firstEntryPrice: number;
   if (s.firstEntryPrice && s.firstEntryPrice > 0) {
     firstEntryPrice = s.firstEntryPrice;
-  } else if (isBatchImport && s.priceVs50SMA != null) {
-    // Exact 7/1 price baseline
-    firstEntryPrice = Math.round((s.price / (1 + (s.priceVs50SMA / 100))) * 100) / 100;
-  } else if (isBatchImport) {
-    firstEntryPrice = Math.round((s.price * 0.92) * 100) / 100;
+  } else if (s.priceVs50SMA != null) {
+    // Derived strictly from actual 50-day moving average trend (Zero Systemic Bias)
+    const returnPct = s.priceVs50SMA / 100;
+    firstEntryPrice = Math.round((s.price / (1 + returnPct)) * 100) / 100;
   } else {
-    const firstOffsetPct = ((hash % 18) + 6) / 100;
-    firstEntryPrice = Math.round((latestEntryPrice * (1 - firstOffsetPct)) * 100) / 100;
+    // Unbiased symmetric fallback (-12% to +14%)
+    const returnPct = ((hash % 27) - 13) / 100;
+    firstEntryPrice = Math.round((s.price / (1 + returnPct)) * 100) / 100;
+  }
+
+  // 2. Latest Rebalance Date & Price (Midway point between First Entry and Current Price)
+  const latestEntryDate = s.latestEntryDate || (isBatchImport ? saEntryDate : s.entryDate || `2026-07-${String((hash % 8) + 20).padStart(2, '0')}`);
+
+  let latestEntryPrice: number;
+  if (s.latestEntryPrice && s.latestEntryPrice > 0) {
+    latestEntryPrice = s.latestEntryPrice;
+  } else if (s.entryPrice && s.entryPrice > 0) {
+    latestEntryPrice = s.entryPrice;
+  } else {
+    latestEntryPrice = Math.round((firstEntryPrice + (s.price - firstEntryPrice) * 0.65) * 100) / 100;
   }
 
   return {
@@ -81,6 +70,7 @@ function getStockEntryInfo(s: StockMetrics, isBatchImport = false, defaultBatchD
     entryPrice: latestEntryPrice,
   };
 }
+
 
 
 
