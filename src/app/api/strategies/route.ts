@@ -4,7 +4,7 @@ import { saveStrategy } from "@/lib/user-store";
 import { requirePremium } from "@/lib/auth-middleware";
 
 export async function GET() {
-  const presets = getAllStrategyPresets();
+  const presets = await getAllStrategyPresets();
   return NextResponse.json({ strategies: presets });
 }
 

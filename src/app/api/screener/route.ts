@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
     const isRosterMode = body.mode === "roster" && body.strategy !== "seeking_alpha";
 
     if (filters.length === 0 && !isRosterMode) {
-      const preset = getStrategyPreset(body.strategy);
+      const preset = await getStrategyPreset(body.strategy);
       if (preset) {
         filters = preset.defaultFilters;
       }

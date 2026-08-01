@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getStrategyRoster } from "@/lib/strategy-roster-store";
-import { STRATEGY_PRESETS } from "@/lib/strategies";
+import { getAllStrategyPresets } from "@/lib/strategies";
 import { loadStockPool } from "@/lib/stock-pool-store";
 import { saveAuditMetrics, AuditMetricsData } from "@/lib/audit-metrics-store";
 import { getSelfHealingLogs, StrategyWinRate, PerformanceShowcaseStock } from "@/lib/audit-store";
@@ -38,7 +38,9 @@ export async function GET(request: NextRequest) {
     const uniqueSymbols = new Set<string>();
     const rostersByStrategy = new Map<string, any[]>();
 
-    for (const [strategyId, preset] of Object.entries(STRATEGY_PRESETS)) {
+    const allPresets = await getAllStrategyPresets();
+    for (const preset of allPresets) {
+      const strategyId = preset.id;
       if (strategyId === "seeking_alpha") continue;
       const roster = await getStrategyRoster(strategyId, year);
       if (roster && roster.entries.length > 0) {
@@ -84,7 +86,8 @@ export async function GET(request: NextRequest) {
     };
 
     // Calculate metrics per strategy
-    for (const [strategyId, preset] of Object.entries(STRATEGY_PRESETS)) {
+    for (const preset of allPresets) {
+      const strategyId = preset.id;
       if (strategyId === "seeking_alpha") continue;
 
       const entries = rostersByStrategy.get(strategyId) || [];

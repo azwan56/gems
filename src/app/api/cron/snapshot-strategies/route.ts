@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { loadStockPool } from "@/lib/stock-pool-store";
-import { STRATEGY_PRESETS } from "@/lib/strategies";
+import { getAllStrategyPresets } from "@/lib/strategies";
 import { executeScreener } from "@/lib/screener-engine";
 import { updateStrategyRoster } from "@/lib/strategy-roster-store";
 
@@ -34,7 +34,9 @@ export async function GET(request: NextRequest) {
 
     const results: Record<string, number> = {};
 
-    for (const [strategyId, preset] of Object.entries(STRATEGY_PRESETS)) {
+    const allPresets = await getAllStrategyPresets();
+    for (const preset of allPresets) {
+      const strategyId = preset.id;
       // Seeking Alpha is a manual list, not a quantitative screener.
       if (strategyId === "seeking_alpha") continue;
 

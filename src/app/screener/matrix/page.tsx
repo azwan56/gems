@@ -3,8 +3,7 @@
 import React, { useMemo, useState, useEffect, useCallback } from "react";
 import { useLanguage } from "@/lib/language-context";
 import { useAuth } from "@/lib/auth-context";
-import { StockMetrics } from "@/lib/types";
-import { getAllStrategyPresets } from "@/lib/strategies";
+import { StockMetrics, StrategyPreset } from "@/lib/types";
 import { applyFilters } from "@/lib/screener-engine";
 import {
   ShieldCheck, TrendingUp, Rocket, Castle, Zap, ChevronRight,
@@ -54,6 +53,7 @@ export default function SuperScreenerMatrix() {
   const [watchlist, setWatchlist] = useState<Set<string>>(new Set());
   const [saList, setSaList] = useState<Set<string>>(new Set());
   const [addingSymbol, setAddingSymbol] = useState<string | null>(null);
+  const [presets, setPresets] = useState<StrategyPreset[]>([]);
 
   // Load full stock pool + existing watchlist in parallel
   useEffect(() => {
@@ -64,12 +64,20 @@ export default function SuperScreenerMatrix() {
         const token = await getIdToken();
         const headers: HeadersInit = token ? { Authorization: `Bearer ${token}` } : {};
 
-        // Fetch stock pool, watchlist and Seeking Alpha list in parallel
-        const [poolRes, wlRes, saRes] = await Promise.all([
+        // Fetch stock pool, watchlist, SA list, and presets in parallel
+        const [poolRes, wlRes, saRes, presetsRes] = await Promise.all([
           fetch("/api/stock-pool?include=stocks", { headers }),
           fetch("/api/watchlist", { headers }),
           fetch("/api/seeking-alpha", { headers }),
+          fetch("/api/strategies", { headers })
         ]);
+
+        if (presetsRes.ok) {
+          const presetsData = await presetsRes.json();
+          if (presetsData && Array.isArray(presetsData.strategies)) {
+            setPresets(presetsData.strategies);
+          }
+        }
 
         if (poolRes.ok) {
           const poolData = await poolRes.json();
@@ -103,9 +111,8 @@ export default function SuperScreenerMatrix() {
 
   // Compute matrix
   const matrixStocks = useMemo(() => {
-    if (stocks.length === 0) return [];
+    if (stocks.length === 0 || presets.length === 0) return [];
 
-    const presets = getAllStrategyPresets();
     const stockMap = new Map<string, MultiStrategyStock>();
 
     // Apply each strategy and accumulate matches

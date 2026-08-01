@@ -14,7 +14,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { loadStockPool } from "@/lib/stock-pool-store";
 import { applyFilters } from "@/lib/screener-engine";
-import { STRATEGY_PRESETS } from "@/lib/strategies";
+import { getStrategyPreset } from "@/lib/strategies";
 import { loadSAList } from "@/lib/seeking-alpha-store";
 import { StockMetrics } from "@/lib/types";
 import {
@@ -99,7 +99,7 @@ export async function GET(request: NextRequest) {
     let totalRemoved = 0;
 
     for (const strategyId of MONITORED_STRATEGIES) {
-      const preset = STRATEGY_PRESETS[strategyId];
+      const preset = await getStrategyPreset(strategyId);
       if (!preset) continue;
 
       let filtered: StockMetrics[];

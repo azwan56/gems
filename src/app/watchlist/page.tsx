@@ -6,7 +6,6 @@ import { Gem, ArrowLeft, StarOff, Trash2, Shield, Sword, Rocket, CircleDollarSig
 import type { WatchlistItem, StockMetrics } from "@/lib/types";
 import { useLanguage } from "@/lib/language-context";
 import { useAuth } from "@/lib/auth-context";
-import { getAllStrategyPresets } from "@/lib/strategies";
 import { applyFilters } from "@/lib/screener-engine";
 import UserMenu from "@/components/UserMenu";
 import PremiumGate from "@/components/PremiumGate";
@@ -42,6 +41,7 @@ export default function WatchlistPage() {
 
   const [watchlist, setWatchlist] = useState<WatchlistItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [presets, setPresets] = useState<any[]>([]);
   // Track sync state per symbol: 'syncing' | 'synced' | 'already_exists' | 'error' | 'limit'
   const [syncState, setSyncState] = useState<Record<string, string>>({});
 
@@ -89,16 +89,17 @@ export default function WatchlistPage() {
   }
   const [confirmModal, setConfirmModal] = useState<{ loading: boolean; data: SyncPreview | null; error: string | null }>({ loading: false, data: null, error: null });
 
-  // Load stock pool for strategy matching
+  // Load stock pool and strategies for matching
   useEffect(() => {
     if (!user?.uid) return;
-    async function loadPool() {
+    async function loadData() {
       try {
         const token = await getIdToken();
         const headers: HeadersInit = token ? { Authorization: `Bearer ${token}` } : {};
-        const [poolRes, saRes] = await Promise.all([
+        const [poolRes, saRes, presetsRes] = await Promise.all([
           fetch("/api/stock-pool?include=stocks", { headers }),
           fetch("/api/seeking-alpha", { headers }),
+          fetch("/api/strategies", { headers })
         ]);
 
         if (poolRes.ok) {
@@ -113,15 +114,19 @@ export default function WatchlistPage() {
             setSaList(new Set(data.symbols.map((s: string) => s.toUpperCase())));
           }
         }
+
+        if (presetsRes.ok) {
+          const data = await presetsRes.json();
+          if (data?.strategies) setPresets(data.strategies);
+        }
       } catch { /* non-critical */ }
     }
-    loadPool();
+    loadData();
   }, [user?.uid, getIdToken]);
 
   // Compute which strategies each watchlist stock matches
   const matchedStrategiesMap = useMemo(() => {
-    if (stockPool.length === 0) return {} as Record<string, { id: string; name: string; nameZh: string; color: string }[]>;
-    const presets = getAllStrategyPresets();
+    if (stockPool.length === 0 || presets.length === 0) return {} as Record<string, { id: string; name: string; nameZh: string; color: string }[]>;
     const map: Record<string, { id: string; name: string; nameZh: string; color: string }[]> = {};
     presets.forEach(preset => {
       const passed = preset.id === "seeking_alpha"

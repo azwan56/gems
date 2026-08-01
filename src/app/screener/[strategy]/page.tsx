@@ -9,9 +9,8 @@ import {
   FileText, X, Target, ShieldAlert, Zap, TrendingUp, Users, Languages,
   RefreshCw, Database, Cloud, BookOpen, Plus, Trash2, HelpCircle, Download, ExternalLink, ActivitySquare, Rocket
 } from "lucide-react";
-import type { StockMetrics, FilterCriterion, ScreenerResponse, StrategyType } from "@/lib/types";
+import type { StockMetrics, FilterCriterion, ScreenerResponse, StrategyType, StrategyPreset } from "@/lib/types";
 import type { StockAnalysisReport } from "@/lib/analysis-engine";
-import { STRATEGY_PRESETS } from "@/lib/strategies";
 import { useLanguage } from "@/lib/language-context";
 import { useAuth } from "@/lib/auth-context";
 import UserMenu from "@/components/UserMenu";
@@ -78,14 +77,26 @@ function getStockEntryInfo(s: StockMetrics, isBatchImport = false, defaultBatchD
 export default function FunnelScreenerPage() {
   const params = useParams();
   const strategyId = params.strategy as StrategyType;
-  const preset = STRATEGY_PRESETS[strategyId];
 
   const { lang, setLang, t } = useLanguage();
   const { user, firebaseUser, getIdToken, loading: authLoading } = useAuth();
 
+  const [preset, setPreset] = useState<StrategyPreset | null>(null);
   const [stocks, setStocks] = useState<StockMetrics[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch("/api/strategies")
+      .then(res => res.json())
+      .then(data => {
+        if (data && data.strategies) {
+          const found = data.strategies.find((p: StrategyPreset) => p.id === strategyId);
+          setPreset(found || null);
+        }
+      })
+      .catch(console.error);
+  }, [strategyId]);
   
   const isSA = strategyId === "seeking_alpha";
   const [isBacktestMode, setIsBacktestMode] = useState(!isSA); // Default to backtest for quant strategies
@@ -249,6 +260,7 @@ export default function FunnelScreenerPage() {
     const generateCard = async () => {
       setIsGeneratingCard(true);
       try {
+        if (!preset) return;
         const strategyName = lang === "en" ? preset.name : preset.nameZh;
         let shareId = "";
         
@@ -1102,7 +1114,9 @@ export default function FunnelScreenerPage() {
                                   {isUp ? t('Bull Trend', '多头趋势') : t('Bear Trend', '空头趋势')}
                                 </span>
                               </h3>
-                              <p className="text-xs text-slate-400 mt-1">{s.companyName}</p>
+                              <p className="text-sm text-slate-400 mt-1 max-w-xl">
+                                {preset?.descriptionZh || preset?.description || ""}
+                              </p>
                             </div>
                           </div>
 
