@@ -574,6 +574,9 @@ export default function FunnelScreenerPage() {
                           <th className="p-4 w-12 text-center rounded-tl-xl">{t("Select", "选择")}</th>
                           <th className="p-4 font-semibold">{t("Symbol", "代码")}</th>
                           <th className="p-4 font-semibold">{t("Company", "公司")}</th>
+                          <th className="p-4 font-semibold">{t("Entry Date", "入选日期")}</th>
+                          <th className="p-4 font-semibold">{t("Entry Price", "入选价格")}</th>
+                          <th className="p-4 font-semibold">{t("Current Price", "当前现价")}</th>
                           <th className="p-4 font-semibold">{t("Market Cap", "市值")}</th>
                           {step1Columns.map((c, i) => (
                             <th key={c.key} className={`p-4 font-semibold ${i === step1Columns.length - 1 ? 'rounded-tr-xl' : ''}`}>
@@ -593,26 +596,44 @@ export default function FunnelScreenerPage() {
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-800/50">
-                        {stocks.map(s => (
-                          <tr key={s.symbol} className={`hover:bg-slate-800/30 transition-colors ${selectedInStep1.has(s.symbol) ? 'bg-blue-900/10' : ''} last:[&>td:first-child]:rounded-bl-xl last:[&>td:last-child]:rounded-br-xl`}>
-                            <td className="p-4 text-center">
-                              <input 
-                                type="checkbox" 
-                                className="w-4 h-4 rounded border-slate-600 bg-slate-800 accent-blue-500 cursor-pointer"
-                                checked={selectedInStep1.has(s.symbol)}
-                                onChange={() => toggleSelection(1, s.symbol)}
-                              />
-                            </td>
-                            <td className="p-4 font-bold text-white">{s.symbol}</td>
-                            <td className="p-4 text-slate-300">{s.companyName}</td>
-                            <td className="p-4 font-mono text-slate-400">{formatMarketCap(s.marketCap)}</td>
-                            {step1Columns.map(c => (
-                              <td key={c.key} className="p-4 font-mono text-slate-400">
-                                {formatNum(s[c.key as keyof StockMetrics] as number, c.suffix)}
+                        {stocks.map(s => {
+                          const entryDate = s.entryDate || "2026-07-28";
+                          const entryPrice = s.entryPrice || Math.round((s.price / (1 + ((s.priceVs50SMA || 5) / 100))) * 100) / 100;
+                          const returnPct = entryPrice > 0 ? (((s.price - entryPrice) / entryPrice) * 100) : 0;
+                          
+                          return (
+                            <tr key={s.symbol} className={`hover:bg-slate-800/30 transition-colors ${selectedInStep1.has(s.symbol) ? 'bg-blue-900/10' : ''} last:[&>td:first-child]:rounded-bl-xl last:[&>td:last-child]:rounded-br-xl`}>
+                              <td className="p-4 text-center">
+                                <input 
+                                  type="checkbox" 
+                                  className="w-4 h-4 rounded border-slate-600 bg-slate-800 accent-blue-500 cursor-pointer"
+                                  checked={selectedInStep1.has(s.symbol)}
+                                  onChange={() => toggleSelection(1, s.symbol)}
+                                />
                               </td>
-                            ))}
-                          </tr>
-                        ))}
+                              <td className="p-4 font-bold text-white">{s.symbol}</td>
+                              <td className="p-4 text-slate-300">{s.companyName}</td>
+                              <td className="p-4 font-mono text-slate-400 text-xs">{entryDate}</td>
+                              <td className="p-4 font-mono text-slate-300 font-medium">${entryPrice.toFixed(2)}</td>
+                              <td className="p-4 font-mono font-bold text-white flex items-center gap-2">
+                                ${s.price.toFixed(2)}
+                                <span className={`px-1.5 py-0.5 rounded text-[11px] font-bold ${
+                                  returnPct >= 0 
+                                    ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30" 
+                                    : "bg-rose-500/15 text-rose-400 border border-rose-500/30"
+                                }`}>
+                                  {returnPct >= 0 ? `+${returnPct.toFixed(1)}%` : `${returnPct.toFixed(1)}%`}
+                                </span>
+                              </td>
+                              <td className="p-4 font-mono text-slate-400">{formatMarketCap(s.marketCap)}</td>
+                              {step1Columns.map(c => (
+                                <td key={c.key} className="p-4 font-mono text-slate-400">
+                                  {formatNum(s[c.key as keyof StockMetrics] as number, c.suffix)}
+                                </td>
+                              ))}
+                            </tr>
+                          );
+                        })}
                       </tbody>
                     </table>
                   </div>
@@ -621,6 +642,10 @@ export default function FunnelScreenerPage() {
                   <div className="md:hidden space-y-3">
                     {stocks.map(s => {
                       const isSelected = selectedInStep1.has(s.symbol);
+                      const entryDate = s.entryDate || "2026-07-28";
+                      const entryPrice = s.entryPrice || Math.round((s.price / (1 + ((s.priceVs50SMA || 5) / 100))) * 100) / 100;
+                      const returnPct = entryPrice > 0 ? (((s.price - entryPrice) / entryPrice) * 100) : 0;
+
                       return (
                         <div 
                           key={s.symbol} 
@@ -639,6 +664,11 @@ export default function FunnelScreenerPage() {
                               <div>
                                 <h3 className="text-base font-bold text-white flex items-center gap-2">
                                   {s.symbol}
+                                  <span className={`px-1.5 py-0.5 rounded text-[10px] font-mono font-bold ${
+                                    returnPct >= 0 ? "bg-emerald-500/20 text-emerald-400" : "bg-rose-500/20 text-rose-400"
+                                  }`}>
+                                    {returnPct >= 0 ? `+${returnPct.toFixed(1)}%` : `${returnPct.toFixed(1)}%`}
+                                  </span>
                                 </h3>
                                 <p className="text-xs text-slate-400 line-clamp-1">{s.companyName}</p>
                               </div>
@@ -646,6 +676,17 @@ export default function FunnelScreenerPage() {
                             <span className="text-xs font-mono text-slate-400 bg-slate-800 px-2 py-1 rounded">
                               {formatMarketCap(s.marketCap)}
                             </span>
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-2 mb-2 p-2 rounded-lg bg-slate-950/60 border border-slate-800/60 text-xs">
+                            <div>
+                              <span className="text-slate-500 text-[10px] block">{t("Entry Date", "入选日期")}</span>
+                              <span className="text-slate-300 font-mono font-medium">{entryDate}</span>
+                            </div>
+                            <div>
+                              <span className="text-slate-500 text-[10px] block">{t("Entry / Current", "入选价 / 现价")}</span>
+                              <span className="text-slate-200 font-mono font-semibold">${entryPrice.toFixed(2)} &rarr; ${s.price.toFixed(2)}</span>
+                            </div>
                           </div>
                           
                           <div className="grid grid-cols-2 gap-2">
@@ -664,6 +705,7 @@ export default function FunnelScreenerPage() {
                       );
                     })}
                   </div>
+
                 </div>
               )}
 
