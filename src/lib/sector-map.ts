@@ -165,6 +165,18 @@ const SECTOR_MAP: Record<string, { sector: string; industry: string }> = {
   RIVN: { sector: "Consumer Cyclical", industry: "Auto Manufacturers" },
   LCID: { sector: "Consumer Cyclical", industry: "Auto Manufacturers" },
   RBLX: { sector: "Technology", industry: "Electronic Gaming" },
+  ANET: { sector: "Technology", industry: "Computer Hardware & Networking" },
+  CFG: { sector: "Financial Services", industry: "Banks—Regional" },
+  STX: { sector: "Technology", industry: "Computer Hardware & Storage" },
+  WDC: { sector: "Technology", industry: "Computer Hardware & Storage" },
+  DELL: { sector: "Technology", industry: "Computer Hardware" },
+  HPE: { sector: "Technology", industry: "Computer Hardware" },
+  NTNX: { sector: "Technology", industry: "Software—Infrastructure" },
+  PSTG: { sector: "Technology", industry: "Computer Hardware & Storage" },
+  VRT: { sector: "Industrials", industry: "Specialty Industrial Machinery" },
+  MNSO: { sector: "Consumer Cyclical", industry: "Specialty Retail" },
+  ASML: { sector: "Technology", industry: "Semiconductor Equipment" },
+  TSM: { sector: "Technology", industry: "Semiconductors" },
 
   // ---- Media / Communication / Other ----
   DIS: { sector: "Communication Services", industry: "Entertainment" },

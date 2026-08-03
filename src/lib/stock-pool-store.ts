@@ -6,6 +6,7 @@
 
 import { getDb } from "./firebase";
 import { StockMetrics } from "./types";
+import { getSectorInfo } from "./sector-map";
 
 const COLLECTION = "stock_pools";
 const DOC_ID = "latest";
@@ -77,9 +78,19 @@ export async function loadStockPool(): Promise<StockPoolData | null> {
     // Filter out any stocks FMP reports as no longer actively trading.
     // This handles delisted, acquired, or suspended stocks automatically,
     // without requiring a hardcoded symbol blacklist.
-    const cleanStocks = rawStocks.filter(
-      (s) => (s as StockMetrics & { isActivelyTrading?: boolean }).isActivelyTrading !== false
-    );
+    const cleanStocks = rawStocks
+      .filter((s) => (s as StockMetrics & { isActivelyTrading?: boolean }).isActivelyTrading !== false)
+      .map((s) => {
+        if (!s.sector || s.sector === "Unknown" || !s.industry || s.industry === "Unknown") {
+          const info = getSectorInfo(s.symbol);
+          return {
+            ...s,
+            sector: (!s.sector || s.sector === "Unknown") ? info.sector : s.sector,
+            industry: (!s.industry || s.industry === "Unknown") ? info.industry : s.industry,
+          };
+        }
+        return s;
+      });
 
     cachedPool = {
       meta: data.meta as StockPoolMeta,

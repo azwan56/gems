@@ -310,8 +310,8 @@ export function buildStockMetrics(
   return {
     symbol: screener.symbol,
     companyName: screener.companyName,
-    sector: screener.sector || "Unknown",
-    industry: screener.industry || "Unknown",
+    sector: (screener.sector && screener.sector !== "Unknown" ? screener.sector : getSectorInfo(screener.symbol).sector) || "Unknown",
+    industry: (screener.industry && screener.industry !== "Unknown" ? screener.industry : getSectorInfo(screener.symbol).industry) || "Unknown",
     marketCap: screener.marketCap,
     price,
     peRatio: pe,
