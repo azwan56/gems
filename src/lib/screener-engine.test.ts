@@ -230,14 +230,14 @@ describe("executeScreener", () => {
     expect(page1.stocks[0].symbol).not.toBe(page2.stocks[0].symbol);
   });
 
-  it("should default to marketCap desc sorting when no sortBy given", () => {
+  it("should default to totalScore desc sorting when no sortBy given", () => {
     const request: ScreenerRequest = {
       strategy: "value",
       filters: [],
     };
     const result = executeScreener(stockPool, request);
     for (let i = 0; i < result.stocks.length - 1; i++) {
-      expect(result.stocks[i].marketCap).toBeGreaterThanOrEqual(result.stocks[i + 1].marketCap);
+      expect(result.stocks[i].totalScore!).toBeGreaterThanOrEqual(result.stocks[i + 1].totalScore!);
     }
   });
 });

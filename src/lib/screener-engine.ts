@@ -57,6 +57,58 @@ export function applyFilters(
   );
 }
 
+function clamp(val: number, min = 0, max = 100): number {
+  return Math.max(min, Math.min(max, val));
+}
+
+/**
+ * Calculate quantitative scores for a stock (Fundamental Score, Technical Score, Total Combined Score).
+ */
+export function enrichStockScores(stock: StockMetrics): StockMetrics {
+  const price = stock.price || 0;
+  const p50 = stock.priceVs50SMA ?? 0;
+  const p200 = stock.priceVs200SMA ?? 0;
+  const h52 = stock.fiftyTwoWeekHigh || 0;
+  const l52 = stock.fiftyTwoWeekLow || 0;
+
+  // Technical Sub-scores (0-100)
+  let h52Pos = 50.0;
+  if (price > 0 && h52 > l52 && h52 > 0) {
+    h52Pos = clamp(((price - l52) / (h52 - l52)) * 100);
+  }
+  const sma50Score = clamp(((p50 - (-20)) / 40) * 100);
+  const sma200Score = p200 < -20 ? 0 : clamp(((p200 - (-20)) / 40) * 100);
+  const computedTech = Math.round(sma50Score * 0.40 + sma200Score * 0.30 + h52Pos * 0.30);
+  const technicalScore = stock.technicalScore ?? computedTech;
+
+  // Fundamental Sub-scores (0-100)
+  const roe = stock.roe ?? 15;
+  const gm = stock.grossMargin ?? 40;
+  const revG = stock.revenueGrowthYoY ?? 20;
+  const epsG = stock.epsGrowthYoY ?? 20;
+  const fcfY = stock.freeCashFlowYield ?? 5;
+  const cr = stock.currentRatio ?? 1.5;
+
+  const fRoe = clamp((roe / 30) * 100);
+  const fGm = clamp(((gm - 10) / 70) * 100);
+  const fRev = clamp((revG / 40) * 100);
+  const fEps = clamp((epsG / 40) * 100);
+  const fFcf = clamp((fcfY / 10) * 100);
+  const fCr = clamp(((cr - 0.5) / 2.5) * 100);
+  const computedFund = Math.round(fRoe * 0.15 + fGm * 0.15 + fRev * 0.20 + fEps * 0.20 + fFcf * 0.20 + fCr * 0.10);
+  const fundamentalScore = stock.fundamentalScore ?? computedFund;
+
+  // Total Score = Fundamental Score + Technical Score
+  const totalScore = stock.totalScore ?? (fundamentalScore + technicalScore);
+
+  return {
+    ...stock,
+    technicalScore,
+    fundamentalScore,
+    totalScore,
+  };
+}
+
 /**
  * Sort stocks by a given field and direction.
  */
@@ -65,14 +117,14 @@ export function sortStocks(
   sortBy: keyof StockMetrics,
   sortOrder: "asc" | "desc" = "desc"
 ): StockMetrics[] {
-  return [...stocks].sort((a, b) => {
+  const enriched = stocks.map(enrichStockScores);
+  return [...enriched].sort((a, b) => {
     const aVal = a[sortBy];
     const bVal = b[sortBy];
 
     // Nulls go to the end
-    if (aVal === null && bVal === null) return 0;
-    if (aVal === null) return 1;
-    if (bVal === null) return -1;
+    if (aVal === null || aVal === undefined) return 1;
+    if (bVal === null || bVal === undefined) return -1;
 
     if (typeof aVal === "number" && typeof bVal === "number") {
       return sortOrder === "asc" ? aVal - bVal : bVal - aVal;
@@ -97,8 +149,8 @@ export function executeScreener(
   // 1. Apply filters
   const filtered = applyFilters(allStocks, request.filters);
 
-  // 2. Sort
-  const sortBy = request.sortBy ?? "marketCap";
+  // 2. Enrich & Sort by totalScore (SUM of Fundamental + Technical Score) by default
+  const sortBy = request.sortBy ?? "totalScore";
   const sortOrder = request.sortOrder ?? "desc";
   const sorted = sortStocks(filtered, sortBy, sortOrder);
 

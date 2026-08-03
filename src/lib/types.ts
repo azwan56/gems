@@ -39,6 +39,10 @@ export interface StockMetrics {
   fiftyTwoWeekLow: number | null;
   beta?: number | null;
   isActivelyTrading?: boolean;
+  // Quantitative Scores
+  technicalScore?: number | null;
+  fundamentalScore?: number | null;
+  totalScore?: number | null;
 }
 
 /** The strategy types supported by the MVP */
