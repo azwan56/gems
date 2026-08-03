@@ -21,6 +21,7 @@ interface StockChatAssistantProps {
   companyName: string;
   lang?: "en" | "zh";
   strategy?: string;
+  initialOpen?: boolean;
 }
 
 export default function StockChatAssistant({
@@ -28,11 +29,18 @@ export default function StockChatAssistant({
   companyName,
   lang = "zh",
   strategy,
+  initialOpen = false,
 }: StockChatAssistantProps) {
   const { user, firebaseUser, getIdToken } = useAuth();
   
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(initialOpen);
   const [layoutMode, setLayoutMode] = useState<"floating" | "sidebar">("sidebar");
+
+  useEffect(() => {
+    if (initialOpen) {
+      setIsOpen(true);
+    }
+  }, [initialOpen, symbol]);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -274,7 +282,7 @@ export default function StockChatAssistant({
   };
 
   return (
-    <div className="fixed bottom-6 right-6 z-50 print:hidden">
+    <div className="fixed bottom-6 right-6 z-[10000] print:hidden">
       {/* Floating Action Button */}
       {!isOpen && (
         <button

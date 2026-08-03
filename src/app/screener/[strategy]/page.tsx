@@ -5,7 +5,7 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import {
   Gem, ArrowLeft, Star, Activity, BrainCircuit, LineChart, 
-  ChevronRight, CheckCircle2, AlertCircle, Loader2, Play,
+  ChevronRight, CheckCircle2, AlertCircle, Loader2, Play, Sparkles,
   FileText, X, Target, ShieldAlert, Zap, TrendingUp, Users, Languages,
   RefreshCw, Database, Cloud, BookOpen, Plus, Trash2, HelpCircle, Download, ExternalLink, ActivitySquare, Rocket
 } from "lucide-react";
@@ -123,6 +123,7 @@ export default function FunnelScreenerPage() {
   const [analysisLoading, setAnalysisLoading] = useState(false);
   const [shareCardUrl, setShareCardUrl] = useState<string | null>(null);
   const [isGeneratingCard, setIsGeneratingCard] = useState(false);
+  const [chatOpenKey, setChatOpenKey] = useState<number>(0);
 
   // Seeking Alpha custom list management
   const [saSymbols, setSaSymbols] = useState<string[]>([]);
@@ -239,6 +240,7 @@ export default function FunnelScreenerPage() {
 
   const openAnalysis = async (stock: StockMetrics) => {
     setAnalyzingStock(stock);
+    setChatOpenKey((prev) => prev + 1);
     setAnalysisReport(null);
     setAnalysisLoading(true);
     try {
@@ -1200,6 +1202,14 @@ export default function FunnelScreenerPage() {
                 <p className="text-xs sm:text-sm text-slate-400 line-clamp-1">{analyzingStock.companyName}</p>
               </div>
               <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setChatOpenKey((prev) => prev + 1)}
+                  className="px-3 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-lg text-sm font-semibold flex items-center gap-1.5 transition-all shadow-md shadow-emerald-500/20"
+                  title={t("Ask AI Assistant about " + analyzingStock.symbol, "向 AI 选股助手提问关于 " + analyzingStock.symbol)}
+                >
+                  <Sparkles className="w-4 h-4 text-emerald-200" />
+                  <span>{t("AI Assistant", "AI 选股助手")}</span>
+                </button>
                 {analysisReport && (
                   <button
                     onClick={async () => {
@@ -1414,10 +1424,12 @@ export default function FunnelScreenerPage() {
       )}
       {analyzingStock && (
         <StockChatAssistant
+          key={`${analyzingStock.symbol}-${chatOpenKey}`}
           symbol={analyzingStock.symbol}
           companyName={analyzingStock.companyName || analyzingStock.symbol}
           lang={lang}
           strategy={strategyId}
+          initialOpen={true}
         />
       )}
       </PremiumGate>
