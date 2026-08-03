@@ -16,6 +16,8 @@ import { useAuth } from "@/lib/auth-context";
 import UserMenu from "@/components/UserMenu";
 import PremiumGate from "@/components/PremiumGate";
 
+import { DEFAULT_STRATEGY_PRESETS } from "@/lib/strategy-constants";
+
 function formatMarketCap(val: number): string {
   if (val >= 1e12) return `$${(val / 1e12).toFixed(2)}T`;
   if (val >= 1e9) return `$${(val / 1e9).toFixed(1)}B`;
@@ -81,7 +83,7 @@ export default function FunnelScreenerPage() {
   const { lang, setLang, t } = useLanguage();
   const { user, firebaseUser, getIdToken, loading: authLoading } = useAuth();
 
-  const [preset, setPreset] = useState<StrategyPreset | null>(null);
+  const [preset, setPreset] = useState<StrategyPreset | null>(() => DEFAULT_STRATEGY_PRESETS[strategyId] || null);
   const [stocks, setStocks] = useState<StockMetrics[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -92,7 +94,7 @@ export default function FunnelScreenerPage() {
       .then(data => {
         if (data && data.strategies) {
           const found = data.strategies.find((p: StrategyPreset) => p.id === strategyId);
-          setPreset(found || null);
+          if (found) setPreset(found);
         }
       })
       .catch(console.error);
@@ -261,7 +263,7 @@ export default function FunnelScreenerPage() {
       setIsGeneratingCard(true);
       try {
         if (!preset) return;
-        const strategyName = lang === "en" ? preset.name : preset.nameZh;
+        const strategyName = preset ? (lang === "en" ? preset.name : preset.nameZh) : strategyId;
         let shareId = "";
         
         // 1. Create share link in Firestore
@@ -496,10 +498,10 @@ export default function FunnelScreenerPage() {
           <div className="h-5 w-px bg-slate-700 hidden sm:block" />
           <div className="flex flex-col min-w-0">
             <h1 className="text-xs sm:text-sm font-bold text-white truncate">
-              {lang === "en" ? `${preset.name} Funnel` : `${preset.nameZh} 选股漏斗`}
+              {preset ? (lang === "en" ? `${preset.name} Funnel` : `${preset.nameZh} 选股漏斗`) : strategyId}
             </h1>
             <p className="text-xs text-slate-500 hidden sm:block">
-              {lang === "en" ? preset.nameZh : preset.name}
+              {preset ? (lang === "en" ? preset.nameZh : preset.name) : ""}
             </p>
           </div>
           <div className="ml-auto flex items-center gap-2 sm:gap-3 flex-shrink-0">
@@ -529,7 +531,7 @@ export default function FunnelScreenerPage() {
               <div className={`flex items-center gap-2 sm:gap-3 min-w-0 ${currentStep === s.step ? "opacity-100" : currentStep > s.step || (isSA && s.step === 1) ? "opacity-60" : "opacity-30 grayscale"}`}>
                 <div className={`p-1.5 sm:p-2.5 rounded-lg border flex-shrink-0 ${
                   currentStep === s.step 
-                    ? stepColorClasses[preset.color] || "bg-blue-500/20 border-blue-500/50 text-blue-400"
+                    ? stepColorClasses[preset?.color || "blue"] || "bg-blue-500/20 border-blue-500/50 text-blue-400"
                     : "bg-slate-800 border-slate-700 text-slate-400"
                 }`}>
                   <s.icon className="w-4 h-4 sm:w-5 sm:h-5" />
