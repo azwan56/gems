@@ -15,6 +15,7 @@ import { useLanguage } from "@/lib/language-context";
 import { useAuth } from "@/lib/auth-context";
 import UserMenu from "@/components/UserMenu";
 import PremiumGate from "@/components/PremiumGate";
+import StockChatAssistant from "@/components/StockChatAssistant";
 
 import { DEFAULT_STRATEGY_PRESETS } from "@/lib/strategy-constants";
 
@@ -1410,6 +1411,14 @@ export default function FunnelScreenerPage() {
             </div>
           </div>
         </div>
+      )}
+      {analyzingStock && (
+        <StockChatAssistant
+          symbol={analyzingStock.symbol}
+          companyName={analyzingStock.companyName || analyzingStock.symbol}
+          lang={lang}
+          strategy={strategyId}
+        />
       )}
       </PremiumGate>
 
