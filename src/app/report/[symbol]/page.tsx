@@ -35,20 +35,30 @@ export default function ReportPage() {
     try {
       setIsGeneratingPDF(true);
       const element = document.getElementById("report-content");
-      if (!element) return;
-      const html2pdf = (await import("html2pdf.js")).default;
+      if (!element) {
+        window.print();
+        return;
+      }
       
-      const opt = {
-        margin:       10,
-        filename:     `${report?.symbol || "GEMS_QUANT"}_report.pdf`,
-        image:        { type: 'jpeg', quality: 0.98 },
-        html2canvas:  { scale: 2, useCORS: true },
-        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
-      };
+      const html2pdfModule = await import("html2pdf.js");
+      const html2pdf = (html2pdfModule as any).default?.default || html2pdfModule.default || (html2pdfModule as any);
 
-      await html2pdf().set(opt as any).from(element).save();
+      if (typeof html2pdf === "function") {
+        const opt = {
+          margin:       10,
+          filename:     `${report?.symbol || symbol || "GEMS_QUANT"}_report.pdf`,
+          image:        { type: 'jpeg', quality: 0.98 },
+          html2canvas:  { scale: 2, useCORS: true, logging: false },
+          jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
+
+        await html2pdf().set(opt as any).from(element).save();
+      } else {
+        window.print();
+      }
     } catch (error) {
-      console.error("Error generating PDF", error);
+      console.warn("html2pdf generation failed, falling back to window.print()", error);
+      window.print();
     } finally {
       setIsGeneratingPDF(false);
     }
