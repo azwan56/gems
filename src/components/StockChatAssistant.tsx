@@ -6,7 +6,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { Sparkles, Send, X, Loader2, RotateCcw } from "lucide-react";
+import { Sparkles, Send, X, Loader2, RotateCcw, GripVertical, Move } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { getClientAuth } from "@/lib/firebase-client";
 
@@ -35,6 +35,54 @@ export default function StockChatAssistant({
   
   const [isOpen, setIsOpen] = useState(initialOpen);
   const [layoutMode, setLayoutMode] = useState<"floating" | "sidebar">("sidebar");
+
+  // Drag-and-drop window positioning
+  const [position, setPosition] = useState<{ x: number; y: number } | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const dragRef = useRef<{ startX: number; startY: number; initialX: number; initialY: number } | null>(null);
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if ((e.target as HTMLElement).closest("button") || (e.target as HTMLElement).closest("input")) {
+      return;
+    }
+    const panelEl = (e.currentTarget as HTMLElement).closest(".ai-assistant-panel") as HTMLElement | null;
+    const rect = panelEl?.getBoundingClientRect();
+    const currentX = position?.x ?? (rect?.left ?? Math.max(20, window.innerWidth - 420));
+    const currentY = position?.y ?? (rect?.top ?? Math.max(20, window.innerHeight - 620));
+
+    dragRef.current = {
+      startX: e.clientX,
+      startY: e.clientY,
+      initialX: currentX,
+      initialY: currentY,
+    };
+    setIsDragging(true);
+  };
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!dragRef.current) return;
+      const deltaX = e.clientX - dragRef.current.startX;
+      const deltaY = e.clientY - dragRef.current.startY;
+      const newX = Math.max(10, Math.min(window.innerWidth - 250, dragRef.current.initialX + deltaX));
+      const newY = Math.max(10, Math.min(window.innerHeight - 150, dragRef.current.initialY + deltaY));
+      setPosition({ x: newX, y: newY });
+    };
+
+    const handleMouseUp = () => {
+      dragRef.current = null;
+      setIsDragging(false);
+    };
+
+    if (isDragging) {
+      window.addEventListener("mousemove", handleMouseMove);
+      window.addEventListener("mouseup", handleMouseUp);
+    }
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, [isDragging]);
 
   useEffect(() => {
     if (initialOpen) {
@@ -301,21 +349,55 @@ export default function StockChatAssistant({
       {isOpen && (
         <div
           className={
-            layoutMode === "sidebar"
-              ? "fixed top-0 right-0 bottom-0 z-[999999] w-full sm:w-[380px] md:w-[25vw] min-w-[320px] h-screen bg-slate-950/98 backdrop-blur-2xl border-l border-emerald-500/30 shadow-2xl flex flex-col animate-in slide-in-from-right duration-200"
-              : "fixed bottom-6 right-6 z-[999999] w-[400px] max-w-[calc(100vw-32px)] h-[600px] max-h-[85vh] bg-slate-950/95 border border-slate-800/80 rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in fade-in slide-in-from-bottom-5 duration-200"
+            `ai-assistant-panel ${
+              position
+                ? "fixed z-[10000] w-[420px] max-w-[calc(100vw-32px)] h-[620px] max-h-[85vh] bg-slate-950/98 border border-emerald-500/40 rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in fade-in duration-200"
+                : layoutMode === "sidebar"
+                ? "fixed top-0 right-0 bottom-0 z-[10000] w-full sm:w-[380px] md:w-[25vw] min-w-[320px] h-screen bg-slate-950/98 backdrop-blur-2xl border-l border-emerald-500/30 shadow-2xl flex flex-col animate-in slide-in-from-right duration-200"
+                : "fixed bottom-6 right-6 z-[10000] w-[400px] max-w-[calc(100vw-32px)] h-[600px] max-h-[85vh] bg-slate-950/95 border border-slate-800/80 rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in fade-in slide-in-from-bottom-5 duration-200"
+            }`
+          }
+          style={
+            position
+              ? {
+                  position: "fixed",
+                  left: `${position.x}px`,
+                  top: `${position.y}px`,
+                  right: "auto",
+                  bottom: "auto",
+                }
+              : undefined
           }
         >
-          {/* Header */}
-          <div className="px-4 py-3 bg-slate-900 border-b border-slate-800/50 flex justify-between items-center flex-shrink-0">
+          {/* Header (Draggable Handle) */}
+          <div
+            onMouseDown={handleMouseDown}
+            className={`px-4 py-3 bg-slate-900 border-b border-slate-800/50 flex justify-between items-center flex-shrink-0 cursor-grab active:cursor-grabbing select-none transition-colors ${
+              isDragging ? "bg-slate-850 border-emerald-500/50" : ""
+            }`}
+            title={t("Hold header to drag window anywhere", "按住标题栏拖拽可自由移动窗口位置")}
+          >
             <div className="flex items-center gap-2">
-              <Sparkles className="w-5 h-5 text-emerald-400" />
+              <GripVertical className="w-4 h-4 text-slate-500 hover:text-slate-300 shrink-0" />
+              <Sparkles className="w-5 h-5 text-emerald-400 shrink-0" />
               <div>
                 <h3 className="text-sm font-bold text-white font-sans">{symbol} AI {t("Assistant", "选股助手")}</h3>
                 <p className="text-[10px] text-slate-500">{companyName}</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
+              {/* Reset Dragged Position */}
+              {position && (
+                <button
+                  type="button"
+                  onClick={() => setPosition(null)}
+                  title={t("Reset Window Position", "重置窗口位置")}
+                  className="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-xs text-amber-400 border border-slate-700 rounded-lg transition-all flex items-center gap-1 shadow-sm"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" />
+                  <span>{t("Reset", "重置")}</span>
+                </button>
+              )}
               {/* Clear History Button */}
               {messages.length > 0 && (
                 <button
@@ -328,10 +410,13 @@ export default function StockChatAssistant({
                   <span>{t("Clear", "清空")}</span>
                 </button>
               )}
-              {/* Desktop 1/4 Split-Screen Mode Toggle */}
+              {/* Desktop 1/4 Split-Screen / Floating Mode Toggle */}
               <button
                 type="button"
-                onClick={() => setLayoutMode(layoutMode === "sidebar" ? "floating" : "sidebar")}
+                onClick={() => {
+                  setPosition(null);
+                  setLayoutMode(layoutMode === "sidebar" ? "floating" : "sidebar");
+                }}
                 title={layoutMode === "sidebar" ? t("Switch to floating window", "切回浮窗模式") : t("Switch to 1/4 sidebar mode", "切到右侧 1/4 分屏模式")}
                 className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-xs text-emerald-400 border border-slate-700 rounded-lg transition-all flex items-center gap-1 font-mono shadow-sm"
               >

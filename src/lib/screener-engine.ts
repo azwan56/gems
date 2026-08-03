@@ -13,7 +13,10 @@ export function evaluateFilter(
   stock: StockMetrics,
   filter: FilterCriterion
 ): boolean {
-  const rawValue = stock[filter.field];
+  const fieldKey = filter.field || (filter as any).metric;
+  if (!fieldKey) return false;
+
+  const rawValue = stock[fieldKey as keyof StockMetrics];
 
   // If the metric is null/undefined, the stock does not pass the filter
   if (rawValue === null || rawValue === undefined) {
@@ -25,16 +28,24 @@ export function evaluateFilter(
     return false;
   }
 
-  switch (filter.operator) {
+  const op = String(filter.operator).trim();
+
+  switch (op) {
     case "gt":
+    case ">":
       return rawValue > filter.value;
     case "lt":
+    case "<":
       return rawValue < filter.value;
     case "gte":
+    case ">=":
       return rawValue >= filter.value;
     case "lte":
+    case "<=":
       return rawValue <= filter.value;
     case "eq":
+    case "==":
+    case "=":
       return rawValue === filter.value;
     case "between":
       return rawValue >= filter.value && rawValue <= (filter.valueTo ?? filter.value);
