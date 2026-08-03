@@ -138,7 +138,7 @@ export default function WatchlistPage() {
       });
     });
     return map;
-  }, [stockPool, saList]);
+  }, [stockPool, presets, saList]);
 
   useEffect(() => {
     if (user?.uid) fetchWatchlist();

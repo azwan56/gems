@@ -143,7 +143,7 @@ export default function SuperScreenerMatrix() {
         if (a.matchCount !== b.matchCount) return b.matchCount - a.matchCount;
         return (b.marketCap || 0) - (a.marketCap || 0);
       });
-  }, [stocks]);
+  }, [stocks, presets, saList]);
 
   const handleAnalyze = (stock: MultiStrategyStock) => {
     window.open(`/report/${stock.symbol}?strategy=multi_strategy`, '_blank');
