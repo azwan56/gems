@@ -75,13 +75,22 @@ export async function loadSAEntries(): Promise<SASymbolEntry[]> {
     const doc = await db.collection(COLLECTION).doc(DOC_ID).get();
     if (!doc.exists) return [];
     const data = doc.data();
-    if (data?.entries && Array.isArray(data.entries)) {
+    if (data?.entries && Array.isArray(data.entries) && data.entries.length > 0) {
       return data.entries as SASymbolEntry[];
     }
-    // Migrate from flat list: backfill with today's date
-    const today = new Date().toISOString().split("T")[0];
+    // Migrate from flat list: backfill with document updatedAt date (or fallback to today)
+    const docDate = data?.updatedAt ? String(data.updatedAt).split("T")[0] : new Date().toISOString().split("T")[0];
     const symbols: string[] = (data?.symbols as string[]) ?? [];
-    return symbols.map((s) => ({ symbol: s.toUpperCase(), entryDate: today }));
+    const entries = symbols.map((s) => ({ symbol: s.toUpperCase(), entryDate: docDate }));
+    
+    // Automatically persist back to Firestore so entry dates are permanently locked
+    if (entries.length > 0) {
+      await db.collection(COLLECTION).doc(DOC_ID).set(
+        { entries },
+        { merge: true }
+      ).catch(() => {/* ignore */});
+    }
+    return entries;
   } catch {
     return [];
   }

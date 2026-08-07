@@ -46,14 +46,20 @@ function todayIso(): string {
  * them with real FMP historical closing prices fetched asynchronously via the
  * /api/historical-prices endpoint (historicalPrices state).
  */
-function getStockEntryInfo(s: StockMetrics, isBatchImport = false, defaultBatchDate?: string) {
+function getStockEntryInfo(
+  s: StockMetrics,
+  isBatchImport = false,
+  defaultBatchDate?: string,
+  saEntryDateMap?: Record<string, string>
+) {
   const batchDate = defaultBatchDate ?? todayIso();
+  const saDate = saEntryDateMap?.[s.symbol.toUpperCase()];
 
-  // First Entry Date — prefer the real field written by the backend
-  const firstEntryDate = s.firstEntryDate || (isBatchImport ? batchDate : (s.entryDate || batchDate));
+  // First Entry Date — prefer saDate, real field written by backend, or fallback to batchDate
+  const firstEntryDate = saDate || s.firstEntryDate || (isBatchImport ? batchDate : (s.entryDate || batchDate));
 
   // Latest Rebalance Date
-  const latestEntryDate = s.latestEntryDate || s.entryDate || batchDate;
+  const latestEntryDate = s.latestEntryDate || saDate || s.entryDate || batchDate;
 
   // Prices start at 0; the FMP historical-prices fetch will replace them.
   const firstEntryPrice = s.firstEntryPrice || 0;
@@ -143,7 +149,7 @@ export default function FunnelScreenerPage() {
       // For SA stocks, use the real import date stored in saEntryDates
       const saDate = isSA ? saEntryDates[s.symbol.toUpperCase()] : undefined;
       const enriched = saDate ? { ...s, firstEntryDate: s.firstEntryDate || saDate } : s;
-      const { firstEntryDate, latestEntryDate } = getStockEntryInfo(enriched, isSA);
+      const { firstEntryDate, latestEntryDate } = getStockEntryInfo(enriched, isSA, undefined, saEntryDates);
       queries.push({ symbol: s.symbol, date: firstEntryDate });
       queries.push({ symbol: s.symbol, date: latestEntryDate });
     });
@@ -984,7 +990,7 @@ export default function FunnelScreenerPage() {
                           </thead>
                           <tbody className="divide-y divide-slate-800/50">
                             {stocks.filter(s => selectedInStep1.has(s.symbol)).map(s => {
-                              const entryInfo = getStockEntryInfo(s, true);
+                              const entryInfo = getStockEntryInfo(s, true, undefined, saEntryDates);
                               const firstEntryDate = entryInfo.firstEntryDate;
                               const latestEntryDate = entryInfo.latestEntryDate;
                               const firstEntryPrice = historicalPrices[s.symbol]?.[firstEntryDate] || entryInfo.firstEntryPrice;
