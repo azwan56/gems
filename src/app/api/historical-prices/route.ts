@@ -52,27 +52,29 @@ export async function POST(request: NextRequest) {
 
         const toDate = dates[dates.length - 1];
 
-        // Fetch from FMP: /historical-price-full/{symbol}?from={paddedFromDate}&to={toDate}
+        // Fetch from FMP: /historical-price-eod/full?symbol={symbol}&from={paddedFromDate}&to={toDate}
         // Cache heavily for 24 hours (86400s) because historical prices don't change
-        const data = await fmpFetch<{ historical: Array<{ date: string; close: number; adjClose?: number }> }>(
-          `/historical-price-full/${symbol}`, 
-          { from: paddedFromDate, to: toDate }, 
+        const data = await fmpFetch<Array<{ date: string; close: number; adjClose?: number }>>(
+          `/historical-price-eod/full`, 
+          { symbol, from: paddedFromDate, to: toDate }, 
           { revalidate: 86400 }
         );
         
         const symbolResults: Record<string, number> = {};
+        interface HistItem { date: string; close: number; adjClose?: number }
+        const historicalArray: HistItem[] = Array.isArray(data) ? data : ((data as any)?.historical || []);
         
-        if (data && data.historical && Array.isArray(data.historical)) {
+        if (historicalArray.length > 0) {
           for (const date of dates) {
             // Find exact match first
-            const exactMatch = data.historical.find(h => h.date === date);
+            const exactMatch = historicalArray.find((h: HistItem) => h.date === date);
             if (exactMatch) {
               symbolResults[date] = exactMatch.adjClose ?? exactMatch.close;
             } else {
               // If exact date not found (e.g., weekend or holiday), find closest preceding trading day
-              const preceding = data.historical
-                .filter(h => h.date <= date)
-                .sort((a, b) => b.date.localeCompare(a.date)); // Descending order
+              const preceding = historicalArray
+                .filter((h: HistItem) => h.date <= date)
+                .sort((a: HistItem, b: HistItem) => b.date.localeCompare(a.date)); // Descending order
                 
               if (preceding.length > 0) {
                  symbolResults[date] = preceding[0].adjClose ?? preceding[0].close;
