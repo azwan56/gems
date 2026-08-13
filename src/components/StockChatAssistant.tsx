@@ -47,7 +47,7 @@ export default function StockChatAssistant({
     }
     const panelEl = (e.currentTarget as HTMLElement).closest(".ai-assistant-panel") as HTMLElement | null;
     const rect = panelEl?.getBoundingClientRect();
-    const currentX = position?.x ?? (rect?.left ?? Math.max(20, window.innerWidth - 420));
+    const currentX = position?.x ?? (rect?.left ?? 20);
     const currentY = position?.y ?? (rect?.top ?? Math.max(20, window.innerHeight - 620));
 
     dragRef.current = {
@@ -330,7 +330,7 @@ export default function StockChatAssistant({
   };
 
   return (
-    <div className="fixed bottom-6 right-6 z-[10000] print:hidden">
+    <div className="fixed bottom-6 left-6 z-[10000] print:hidden">
       {/* Floating Action Button */}
       {!isOpen && (
         <button
@@ -353,8 +353,8 @@ export default function StockChatAssistant({
               position
                 ? "fixed z-[10000] w-[420px] max-w-[calc(100vw-32px)] h-[620px] max-h-[85vh] bg-slate-950/98 border border-emerald-500/40 rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in fade-in duration-200"
                 : layoutMode === "sidebar"
-                ? "fixed top-0 right-0 bottom-0 z-[10000] w-full sm:w-[380px] md:w-[25vw] min-w-[320px] h-screen bg-slate-950/98 backdrop-blur-2xl border-l border-emerald-500/30 shadow-2xl flex flex-col animate-in slide-in-from-right duration-200"
-                : "fixed bottom-6 right-6 z-[10000] w-[400px] max-w-[calc(100vw-32px)] h-[600px] max-h-[85vh] bg-slate-950/95 border border-slate-800/80 rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in fade-in slide-in-from-bottom-5 duration-200"
+                ? "fixed top-0 left-0 bottom-0 z-[10000] w-full sm:w-[380px] md:w-[25vw] min-w-[320px] h-screen bg-slate-950/98 backdrop-blur-2xl border-r border-emerald-500/30 shadow-2xl flex flex-col animate-in slide-in-from-left duration-200"
+                : "fixed bottom-6 left-6 z-[10000] w-[400px] max-w-[calc(100vw-32px)] h-[600px] max-h-[85vh] bg-slate-950/95 border border-slate-800/80 rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in fade-in slide-in-from-bottom-5 duration-200"
             }`
           }
           style={
@@ -417,7 +417,7 @@ export default function StockChatAssistant({
                   setPosition(null);
                   setLayoutMode(layoutMode === "sidebar" ? "floating" : "sidebar");
                 }}
-                title={layoutMode === "sidebar" ? t("Switch to floating window", "切回浮窗模式") : t("Switch to 1/4 sidebar mode", "切到右侧 1/4 分屏模式")}
+                title={layoutMode === "sidebar" ? t("Switch to floating window", "切回浮窗模式") : t("Switch to 1/4 sidebar mode", "切到左侧 1/4 分屏模式")}
                 className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-xs text-emerald-400 border border-slate-700 rounded-lg transition-all flex items-center gap-1 font-mono shadow-sm"
               >
                 {layoutMode === "sidebar" ? t("🔲 Float", "🔲 浮窗") : t("📐 1/4 Split", "📐 1/4分屏")}
