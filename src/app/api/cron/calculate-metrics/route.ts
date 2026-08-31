@@ -173,12 +173,21 @@ export async function GET(request: NextRequest) {
       }
     }
 
+    // Deduplicate by symbol (keep the entry with the highest absolute return)
+    const uniqueShowcaseMap = new Map<string, PerformanceShowcaseStock>();
+    for (const item of allStocksShowcase) {
+      if (!uniqueShowcaseMap.has(item.symbol)) {
+        uniqueShowcaseMap.set(item.symbol, item);
+      }
+    }
+    const uniqueShowcase = Array.from(uniqueShowcaseMap.values());
+
     // Sort showcase by returnPct
-    allStocksShowcase.sort((a, b) => b.returnPct - a.returnPct);
+    uniqueShowcase.sort((a, b) => b.returnPct - a.returnPct);
     
-    // Pick top 3 winners and bottom 3 losers
-    const winners = allStocksShowcase.filter(s => s.returnPct > 0).slice(0, 3);
-    const losers = allStocksShowcase.filter(s => s.returnPct <= 0).reverse().slice(0, 3);
+    // Pick top 3 unique winners and bottom 3 unique losers
+    const winners = uniqueShowcase.filter(s => s.returnPct > 0).slice(0, 3);
+    const losers = uniqueShowcase.filter(s => s.returnPct <= 0).reverse().slice(0, 3);
     const showcase = [...winners, ...losers];
 
     // Read self-healing logs (currently migrating the old mock data)

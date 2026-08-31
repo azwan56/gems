@@ -157,15 +157,18 @@ export function executeScreener(
   allStocks: StockMetrics[],
   request: ScreenerRequest
 ): ScreenerResponse {
-  // 1. Apply filters
-  const filtered = applyFilters(allStocks, request.filters);
+  // 1. Enrich scores first so computed fields (fundamentalScore, technicalScore, totalScore) are available to filters
+  const enriched = allStocks.map(enrichStockScores);
 
-  // 2. Enrich & Sort by totalScore (SUM of Fundamental + Technical Score) by default
+  // 2. Apply filters
+  const filtered = applyFilters(enriched, request.filters);
+
+  // 3. Sort by totalScore by default
   const sortBy = request.sortBy ?? "totalScore";
   const sortOrder = request.sortOrder ?? "desc";
   const sorted = sortStocks(filtered, sortBy, sortOrder);
 
-  // 3. Paginate
+  // 4. Paginate
   const limit = request.limit ?? 20;
   const offset = request.offset ?? 0;
   const paginated = sorted.slice(offset, offset + limit);
