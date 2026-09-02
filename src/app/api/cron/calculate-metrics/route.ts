@@ -49,19 +49,22 @@ export async function GET(request: NextRequest) {
       }
     }
 
+    interface HistoricalPriceItem { date: string; close: number; adjClose?: number }
+
     // Fetch last 90 calendar days of prices for all unique symbols to cover T+60 trading days
-    const { map: historicalMap } = await parallelBatchFetch(
+    const { map: historicalMap } = await parallelBatchFetch<HistoricalPriceItem[]>(
       Array.from(uniqueSymbols),
       async (symbol) => {
-        // Fetch up to 90 trading days to be safe
-        const data = await fmpFetch<{ historical: Array<{ date: string; close: number; adjClose?: number }> }>(
-          `/historical-price-full/${symbol}`,
-          { timeseries: "90" },
+        // Fetch up to 90 trading days via stable /historical-price-eod/full
+        const data = await fmpFetch<HistoricalPriceItem[]>(
+          `/historical-price-eod/full`,
+          { symbol, timeseries: "90" },
           { revalidate: 86400 } // Cache for 24h
         );
-        return { key: symbol, value: data?.historical || [] };
+        const list: HistoricalPriceItem[] = Array.isArray(data) ? data : ((data as any)?.historical || []);
+        return { key: symbol, value: list };
       },
-      { batchSize: 5, delayMs: 1000 }
+      { batchSize: 10, delayMs: 500 }
     );
 
     // Helper to get price N trading days after entryDate
@@ -71,7 +74,7 @@ export async function GET(request: NextRequest) {
       
       // History is returned newest-first (descending date).
       // Find the index of the entry date.
-      const entryIdx = history.findIndex(h => h.date <= entryDate);
+      const entryIdx = history.findIndex((h: HistoricalPriceItem) => h.date <= entryDate);
       if (entryIdx === -1) return fallbackPrice; // Entry date too old or not found
       
       // Because array is newest-first, T+N is at index (entryIdx - N).
