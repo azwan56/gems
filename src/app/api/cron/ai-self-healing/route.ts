@@ -58,7 +58,7 @@ Current Filters: ${JSON.stringify(preset.defaultFilters, null, 2)}
 Provide the updated filters that will improve the win rate.`;
 
         const response = await ai.models.generateContent({
-          model: "gemini-3.6-flash",
+          model: "gemini-2.5-flash",
           contents: userPrompt,
           config: {
             systemInstruction,
