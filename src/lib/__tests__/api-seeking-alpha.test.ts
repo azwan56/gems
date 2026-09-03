@@ -25,6 +25,10 @@ vi.mock("@/lib/seeking-alpha-store", () => ({
     symbols: ["AAPL", "TSLA"],
     updatedAt: "2026-01-01T00:00:00.000Z",
   }),
+  loadSAEntries: vi.fn().mockResolvedValue([
+    { symbol: "AAPL", entryDate: "2026-01-01" },
+    { symbol: "TSLA", entryDate: "2026-01-01" },
+  ]),
   addToSAList: vi.fn().mockImplementation(async (symbols: string[]) => ({
     symbols: ["AAPL", "TSLA", ...symbols.map((s: string) => s.toUpperCase())],
     updatedAt: new Date().toISOString(),
