@@ -18,6 +18,8 @@ export interface SASymbolEntry {
   symbol: string;
   /** ISO date when first added to the SA list (used as firstEntryDate) */
   entryDate: string;
+  /** Historical stock price on the entry date */
+  entryPrice?: number;
 }
 
 export interface SeekingAlphaListV2 {
@@ -112,16 +114,19 @@ export async function saveSAList(
   const today = new Date().toISOString().split("T")[0];
   const deduped = [...new Set(symbols.map((s) => s.toUpperCase().trim()).filter(Boolean))];
 
-  // Load existing entries to preserve original entry dates
+  // Load existing entries to preserve original entry dates and prices
   const existingEntries = await loadSAEntries();
   const existingDateMap: Record<string, string> = {};
+  const existingPriceMap: Record<string, number | undefined> = {};
   for (const e of existingEntries) {
     existingDateMap[e.symbol] = e.entryDate;
+    if (e.entryPrice !== undefined) existingPriceMap[e.symbol] = e.entryPrice;
   }
 
   const entries: SASymbolEntry[] = deduped.map((symbol) => ({
     symbol,
     entryDate: entryDateOverrides?.[symbol] ?? existingDateMap[symbol] ?? today,
+    ...(existingPriceMap[symbol] !== undefined ? { entryPrice: existingPriceMap[symbol] } : {}),
   }));
 
   const record = {

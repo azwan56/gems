@@ -1,14 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { fmpFetch, parallelBatchFetch } from "@/lib/fmp-fetch";
 import { hasApiKey } from "@/lib/fmp-config";
-import { requirePremium } from "@/lib/auth-middleware";
+import { verifyAuth } from "@/lib/auth-middleware";
 
 export interface HistoricalPricesRequest {
   queries: { symbol: string; date: string }[];
 }
 
 export async function POST(request: NextRequest) {
-  const authResult = await requirePremium(request);
+  const authResult = await verifyAuth(request);
   if (!authResult.success) return authResult.response;
 
   if (!hasApiKey()) {

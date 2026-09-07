@@ -50,10 +50,12 @@ function getStockEntryInfo(
   s: StockMetrics,
   isBatchImport = false,
   defaultBatchDate?: string,
-  saEntryDateMap?: Record<string, string>
+  saEntryDateMap?: Record<string, string>,
+  saEntryPriceMap?: Record<string, number>
 ) {
   const batchDate = defaultBatchDate ?? todayIso();
   const saDate = saEntryDateMap?.[s.symbol.toUpperCase()];
+  const saPrice = saEntryPriceMap?.[s.symbol.toUpperCase()];
 
   // First Entry Date — prefer saDate, real field written by backend, or fallback to batchDate
   const firstEntryDate = saDate || s.firstEntryDate || (isBatchImport ? batchDate : (s.entryDate || batchDate));
@@ -61,9 +63,9 @@ function getStockEntryInfo(
   // Latest Rebalance Date
   const latestEntryDate = s.latestEntryDate || saDate || s.entryDate || batchDate;
 
-  // Prices start at 0; the FMP historical-prices fetch will replace them.
-  const firstEntryPrice = s.firstEntryPrice || 0;
-  const latestEntryPrice = s.latestEntryPrice || s.entryPrice || 0;
+  // Prices: prefer saPrice, then s.firstEntryPrice, fallback to 0
+  const firstEntryPrice = saPrice || s.firstEntryPrice || 0;
+  const latestEntryPrice = saPrice || s.latestEntryPrice || s.entryPrice || 0;
 
   return {
     firstEntryDate,
@@ -135,6 +137,8 @@ export default function FunnelScreenerPage() {
   const [saSymbols, setSaSymbols] = useState<string[]>([]);
   // Per-symbol entry dates from SA import (populated from /api/seeking-alpha GET entries field)
   const [saEntryDates, setSaEntryDates] = useState<Record<string, string>>({});
+  // Per-symbol entry prices from SA import (populated from /api/seeking-alpha GET entries field)
+  const [saEntryPrices, setSaEntryPrices] = useState<Record<string, number>>({});
   const [saInput, setSaInput] = useState("");
   const [saLoading, setSaLoading] = useState(false);
 
@@ -144,32 +148,45 @@ export default function FunnelScreenerPage() {
   useEffect(() => {
     if (stocks.length === 0) return;
     
-    const queries: { symbol: string; date: string }[] = [];
-    stocks.forEach(s => {
-      // For SA stocks, use the real import date stored in saEntryDates
-      const saDate = isSA ? saEntryDates[s.symbol.toUpperCase()] : undefined;
-      const enriched = saDate ? { ...s, firstEntryDate: s.firstEntryDate || saDate } : s;
-      const { firstEntryDate, latestEntryDate } = getStockEntryInfo(enriched, isSA, undefined, saEntryDates);
-      queries.push({ symbol: s.symbol, date: firstEntryDate });
-      queries.push({ symbol: s.symbol, date: latestEntryDate });
-    });
-    
-    // De-duplicate queries
-    const uniqueQueries = Array.from(new Set(queries.map(q => JSON.stringify(q)))).map(q => JSON.parse(q));
+    let isCancelled = false;
+    const fetchHistorical = async () => {
+      const queries: { symbol: string; date: string }[] = [];
+      stocks.forEach(s => {
+        // For SA stocks, use the real import date stored in saEntryDates
+        const saDate = isSA ? saEntryDates[s.symbol.toUpperCase()] : undefined;
+        const enriched = saDate ? { ...s, firstEntryDate: s.firstEntryDate || saDate } : s;
+        const { firstEntryDate, latestEntryDate } = getStockEntryInfo(enriched, isSA, undefined, saEntryDates, saEntryPrices);
+        queries.push({ symbol: s.symbol, date: firstEntryDate });
+        queries.push({ symbol: s.symbol, date: latestEntryDate });
+      });
+      
+      // De-duplicate queries
+      const uniqueQueries = Array.from(new Set(queries.map(q => JSON.stringify(q)))).map(q => JSON.parse(q));
 
-    fetch("/api/historical-prices", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ queries: uniqueQueries })
-    })
-    .then(res => res.json())
-    .then(data => {
-      if (data.results) {
-        setHistoricalPrices(data.results);
+      try {
+        const token = await getIdToken();
+        const res = await fetch("/api/historical-prices", {
+          method: "POST",
+          headers: { 
+            "Content-Type": "application/json",
+            ...(token ? { Authorization: `Bearer ${token}` } : {})
+          },
+          body: JSON.stringify({ queries: uniqueQueries })
+        });
+        if (res.ok && !isCancelled) {
+          const data = await res.json();
+          if (data.results) {
+            setHistoricalPrices(data.results);
+          }
+        }
+      } catch (err) {
+        console.error("[Screener] Failed to fetch historical prices:", err);
       }
-    })
-    .catch(err => console.error("[Screener] Failed to fetch historical prices:", err));
-  }, [stocks, isSA, saEntryDates]);
+    };
+
+    fetchHistorical();
+    return () => { isCancelled = true; };
+  }, [stocks, isSA, saEntryDates, saEntryPrices, getIdToken]);
 
   // Load SA list on mount if strategy is seeking_alpha
   useEffect(() => {
@@ -183,13 +200,18 @@ export default function FunnelScreenerPage() {
         if (res.ok) {
           const data = await res.json();
           setSaSymbols(data.symbols || []);
-          // Build a per-symbol entry date map from the entries array
+          // Build per-symbol entry date & price maps from the entries array
           if (Array.isArray(data.entries)) {
             const dateMap: Record<string, string> = {};
-            for (const e of data.entries as { symbol: string; entryDate: string }[]) {
+            const priceMap: Record<string, number> = {};
+            for (const e of data.entries as { symbol: string; entryDate: string; entryPrice?: number }[]) {
               dateMap[e.symbol.toUpperCase()] = e.entryDate;
+              if (e.entryPrice !== undefined) {
+                priceMap[e.symbol.toUpperCase()] = e.entryPrice;
+              }
             }
             setSaEntryDates(dateMap);
+            setSaEntryPrices(priceMap);
           }
         }
       } catch {}
@@ -738,8 +760,8 @@ export default function FunnelScreenerPage() {
                           <th className="p-4 w-12 text-center rounded-tl-xl">{t("Select", "选择")}</th>
                           <th className="p-4 font-semibold">{t("Symbol", "代码")}</th>
                           <th className="p-4 font-semibold">{t("Company", "公司")}</th>
-                          <th className="p-4 font-semibold">{t("First Entry", "首次入选(日期/价)")}</th>
-                          <th className="p-4 font-semibold">{t("Latest Rebalance", "最新调仓(日期/价)")}</th>
+                          <th className="p-4 font-semibold">{isSA ? t("Entry Date", "入选(日期/价)") : t("First Entry", "首次入选(日期/价)")}</th>
+                          {!isSA && <th className="p-4 font-semibold">{t("Latest Rebalance", "最新调仓(日期/价)")}</th>}
                           <th className="p-4 font-semibold">{t("Current Price", "当前现价")}</th>
                           <th className="p-4 font-semibold">{t("Market Cap", "市值")}</th>
                           {step1Columns.map((c, i) => (
@@ -761,11 +783,11 @@ export default function FunnelScreenerPage() {
                       </thead>
                       <tbody className="divide-y divide-slate-800/50">
                         {stocks.map(s => {
-                          const entryInfo = getStockEntryInfo(s, isSA);
+                          const entryInfo = getStockEntryInfo(s, isSA, undefined, saEntryDates, saEntryPrices);
                           const firstEntryDate = entryInfo.firstEntryDate;
                           const latestEntryDate = entryInfo.latestEntryDate;
-                          const firstEntryPrice = historicalPrices[s.symbol]?.[firstEntryDate] || entryInfo.firstEntryPrice;
-                          const latestEntryPrice = historicalPrices[s.symbol]?.[latestEntryDate] || entryInfo.latestEntryPrice;
+                          const firstEntryPrice = saEntryPrices[s.symbol.toUpperCase()] || historicalPrices[s.symbol]?.[firstEntryDate] || entryInfo.firstEntryPrice;
+                          const latestEntryPrice = saEntryPrices[s.symbol.toUpperCase()] || historicalPrices[s.symbol]?.[latestEntryDate] || entryInfo.latestEntryPrice;
                           
                           const totalReturnPct = firstEntryPrice > 0 ? (((s.price - firstEntryPrice) / firstEntryPrice) * 100) : 0;
                           const latestReturnPct = latestEntryPrice > 0 ? (((s.price - latestEntryPrice) / latestEntryPrice) * 100) : 0;
@@ -786,10 +808,12 @@ export default function FunnelScreenerPage() {
                                 <span className="block text-slate-400">{firstEntryDate}</span>
                                 <span className="font-semibold text-slate-200">${firstEntryPrice.toFixed(2)}</span>
                               </td>
-                              <td className="p-4 font-mono text-slate-300 text-xs">
-                                <span className="block text-slate-400">{latestEntryDate}</span>
-                                <span className="font-semibold text-slate-200">${latestEntryPrice.toFixed(2)}</span>
-                              </td>
+                              {!isSA && (
+                                <td className="p-4 font-mono text-slate-300 text-xs">
+                                  <span className="block text-slate-400">{latestEntryDate}</span>
+                                  <span className="font-semibold text-slate-200">${latestEntryPrice.toFixed(2)}</span>
+                                </td>
+                              )}
                               <td className="p-4 font-mono text-xs">
                                 <div className="font-bold text-white text-sm">${s.price.toFixed(2)}</div>
                                 <div className="flex items-center gap-1 mt-0.5">
@@ -822,9 +846,9 @@ export default function FunnelScreenerPage() {
                   <div className="md:hidden space-y-3">
                     {stocks.map(s => {
                       const isSelected = selectedInStep1.has(s.symbol);
-                      const entryInfo = getStockEntryInfo(s, isSA);
-                      const entryDate = entryInfo.entryDate;
-                      const entryPrice = historicalPrices[s.symbol]?.[entryDate] || entryInfo.entryPrice;
+                      const entryInfo = getStockEntryInfo(s, isSA, undefined, saEntryDates, saEntryPrices);
+                      const entryDate = entryInfo.firstEntryDate;
+                      const entryPrice = saEntryPrices[s.symbol.toUpperCase()] || historicalPrices[s.symbol]?.[entryDate] || entryInfo.entryPrice;
                       const returnPct = entryPrice > 0 ? (((s.price - entryPrice) / entryPrice) * 100) : 0;
 
 
@@ -972,8 +996,7 @@ export default function FunnelScreenerPage() {
                           <thead className="bg-slate-800/80 text-slate-400">
                             <tr>
                               <th className="p-3 font-semibold rounded-tl-xl sticky left-0 bg-slate-800/80 z-10">{t("Symbol", "代码")}</th>
-                              <th className="p-3 font-semibold">{t("First Entry", "首次入选(日期/价)")}</th>
-                              <th className="p-3 font-semibold">{t("Latest Rebalance", "最新调仓(日期/价)")}</th>
+                              <th className="p-3 font-semibold">{t("Entry Date", "入选(日期/价)")}</th>
                               <th className="p-3 font-semibold">{t("Current Price", "当前现价")}</th>
                               <th className="p-3 font-semibold">{t("MCap", "市值")}</th>
                               <th className="p-3 font-semibold">{t("P/E", "P/E")}</th>
@@ -990,13 +1013,11 @@ export default function FunnelScreenerPage() {
                           </thead>
                           <tbody className="divide-y divide-slate-800/50">
                             {stocks.filter(s => selectedInStep1.has(s.symbol)).map(s => {
-                              const entryInfo = getStockEntryInfo(s, true, undefined, saEntryDates);
-                              const firstEntryDate = entryInfo.firstEntryDate;
-                              const latestEntryDate = entryInfo.latestEntryDate;
-                              const firstEntryPrice = historicalPrices[s.symbol]?.[firstEntryDate] || entryInfo.firstEntryPrice;
-                              const latestEntryPrice = historicalPrices[s.symbol]?.[latestEntryDate] || entryInfo.latestEntryPrice;
+                              const entryInfo = getStockEntryInfo(s, true, undefined, saEntryDates, saEntryPrices);
+                              const entryDate = entryInfo.firstEntryDate;
+                              const entryPrice = saEntryPrices[s.symbol.toUpperCase()] || historicalPrices[s.symbol]?.[entryDate] || entryInfo.firstEntryPrice;
 
-                              const totalReturnPct = firstEntryPrice > 0 ? (((s.price - firstEntryPrice) / firstEntryPrice) * 100) : 0;
+                              const totalReturnPct = entryPrice > 0 ? (((s.price - entryPrice) / entryPrice) * 100) : 0;
 
                               return (
                                 <tr key={s.symbol} className="hover:bg-slate-800/30 transition-colors">
@@ -1007,12 +1028,8 @@ export default function FunnelScreenerPage() {
                                     </div>
                                   </td>
                                   <td className="p-3 font-mono text-slate-300 text-xs">
-                                    <span className="block text-slate-400">{firstEntryDate}</span>
-                                    <span className="font-semibold text-slate-200">${firstEntryPrice.toFixed(2)}</span>
-                                  </td>
-                                  <td className="p-3 font-mono text-slate-300 text-xs">
-                                    <span className="block text-slate-400">{latestEntryDate}</span>
-                                    <span className="font-semibold text-slate-200">${latestEntryPrice.toFixed(2)}</span>
+                                    <span className="block text-slate-400">{entryDate}</span>
+                                    <span className="font-semibold text-slate-200">${entryPrice.toFixed(2)}</span>
                                   </td>
                                   <td className="p-3 font-mono font-bold text-white flex items-center gap-1.5">
                                     ${s.price.toFixed(2)}
