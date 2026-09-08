@@ -7,7 +7,7 @@ import {
   Gem, ArrowLeft, Star, Activity, BrainCircuit, LineChart, 
   ChevronRight, CheckCircle2, AlertCircle, Loader2, Play, Sparkles,
   FileText, X, Target, ShieldAlert, Zap, TrendingUp, Users, Languages,
-  RefreshCw, Database, Cloud, BookOpen, Plus, Trash2, HelpCircle, Download, ExternalLink, ActivitySquare, Rocket
+  RefreshCw, Database, Cloud, BookOpen, Plus, Trash2, HelpCircle, Download, ExternalLink, ActivitySquare, Rocket, Compass
 } from "lucide-react";
 import type { StockMetrics, FilterCriterion, ScreenerResponse, StrategyType, StrategyPreset } from "@/lib/types";
 import type { StockAnalysisReport } from "@/lib/analysis-engine";
@@ -16,6 +16,7 @@ import { useAuth } from "@/lib/auth-context";
 import UserMenu from "@/components/UserMenu";
 import PremiumGate from "@/components/PremiumGate";
 import StockChatAssistant from "@/components/StockChatAssistant";
+import { SectorWindBadge } from "@/components/SectorWindBadge";
 
 import { DEFAULT_STRATEGY_PRESETS } from "@/lib/strategy-constants";
 
@@ -802,7 +803,16 @@ export default function FunnelScreenerPage() {
                                   onChange={() => toggleSelection(1, s.symbol)}
                                 />
                               </td>
-                              <td className="p-4 font-bold text-white">{s.symbol}</td>
+                              <td className="p-4 font-bold text-white">
+                                <div className="flex items-center gap-2">
+                                  <span>{s.symbol}</span>
+                                  <SectorWindBadge
+                                    wind={s.sectorWind}
+                                    quadrant={s.sectorQuadrant}
+                                    etf={s.sectorETF}
+                                  />
+                                </div>
+                              </td>
                               <td className="p-4 text-slate-300">{s.companyName}</td>
                               <td className="p-4 font-mono text-slate-300 text-xs">
                                 <span className="block text-slate-400">{firstEntryDate}</span>
@@ -869,8 +879,13 @@ export default function FunnelScreenerPage() {
                                 </div>
                               </div>
                               <div>
-                                <h3 className="text-base font-bold text-white flex items-center gap-2">
+                                <h3 className="text-base font-bold text-white flex flex-wrap items-center gap-2">
                                   {s.symbol}
+                                  <SectorWindBadge
+                                    wind={s.sectorWind}
+                                    quadrant={s.sectorQuadrant}
+                                    etf={s.sectorETF}
+                                  />
                                   <span className={`px-1.5 py-0.5 rounded text-[10px] font-mono font-bold ${
                                     returnPct >= 0 ? "bg-emerald-500/20 text-emerald-400" : "bg-rose-500/20 text-rose-400"
                                   }`}>
@@ -1290,7 +1305,7 @@ export default function FunnelScreenerPage() {
                   </div>
 
                   {/* Quantitative Scores */}
-                  <div className="grid grid-cols-2 gap-3 sm:gap-4 mt-3 sm:mt-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mt-3 sm:mt-4">
                     <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-4">
                       <div className="flex items-center gap-1.5 text-purple-400 mb-2">
                         <ActivitySquare className="w-3.5 h-3.5 shrink-0" />
@@ -1318,6 +1333,29 @@ export default function FunnelScreenerPage() {
                         <div className="bg-amber-500 h-full rounded-full" style={{ width: `${analysisReport.fundamentalScore}%` }} />
                       </div>
                     </div>
+
+                    <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-1.5 text-blue-400">
+                          <Compass className="w-3.5 h-3.5 shrink-0" />
+                          <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider">{t("Sector Rotation", "板块动能评分")}</span>
+                        </div>
+                        {analysisReport.sectorRotation && (
+                          <SectorWindBadge
+                            wind={analysisReport.sectorRotation.windStatus}
+                            quadrant={analysisReport.sectorRotation.quadrant}
+                            etf={analysisReport.sectorRotation.etf}
+                          />
+                        )}
+                      </div>
+                      <div className="flex items-baseline gap-1.5">
+                        <span className="text-xl sm:text-2xl font-bold text-white">{analysisReport.sectorScore ?? 50}</span>
+                        <span className="text-[10px] text-slate-500">/ 100</span>
+                      </div>
+                      <div className="w-full bg-slate-900 h-1.5 mt-2 rounded-full overflow-hidden">
+                        <div className="bg-blue-500 h-full rounded-full" style={{ width: `${analysisReport.sectorScore ?? 50}%` }} />
+                      </div>
+                    </div>
                   </div>
 
                   {/* Overview */}
@@ -1343,6 +1381,44 @@ export default function FunnelScreenerPage() {
                     </h3>
                     <p className="text-slate-400 text-sm leading-relaxed">{analysisReport.products}</p>
                   </section>
+
+                  {/* Top-Down Sector Rotation Validation */}
+                  {analysisReport.sectorRotation && (
+                    <section className="bg-blue-500/5 border border-blue-500/15 rounded-xl p-4 sm:p-5">
+                      <div className="flex flex-wrap items-center justify-between gap-2 mb-2.5">
+                        <h3 className="text-sm font-bold text-blue-400 uppercase tracking-widest flex items-center gap-2">
+                          <Compass className="w-4 h-4" /> {t("Sector Rotation Context", "自上而下板块大势与宏观契合度")}
+                        </h3>
+                        <SectorWindBadge
+                          wind={analysisReport.sectorRotation.windStatus}
+                          quadrant={analysisReport.sectorRotation.quadrant}
+                          etf={analysisReport.sectorRotation.etf}
+                          size="md"
+                        />
+                      </div>
+                      <p className="text-slate-300 text-sm leading-relaxed mb-3">
+                        {analysisReport.sectorRotation.advice}
+                      </p>
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs pt-2 border-t border-slate-800/80">
+                        <div>
+                          <span className="text-slate-500 block text-[10px]">{t("Sector", "所属板块")}</span>
+                          <strong className="text-slate-200">{analysisReport.sectorRotation.sectorName}</strong>
+                        </div>
+                        <div>
+                          <span className="text-slate-500 block text-[10px]">{t("Benchmark ETF", "基准行业 ETF")}</span>
+                          <strong className="text-blue-400 font-mono">{analysisReport.sectorRotation.etf}</strong>
+                        </div>
+                        <div>
+                          <span className="text-slate-500 block text-[10px]">{t("RRG Quadrant", "RRG 轮动象限")}</span>
+                          <strong className="text-slate-200">{analysisReport.sectorRotation.quadrant}</strong>
+                        </div>
+                        <div>
+                          <span className="text-slate-500 block text-[10px]">{t("Tactical Posture", "战术姿态")}</span>
+                          <strong className="text-slate-200">{analysisReport.sectorRotation.action}</strong>
+                        </div>
+                      </div>
+                    </section>
+                  )}
 
                   <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 pt-2 sm:pt-4">
                     {/* Rationale */}

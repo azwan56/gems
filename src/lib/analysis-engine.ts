@@ -5,6 +5,7 @@
 
 import { StockMetrics } from "./types";
 import { calculateFundamentalScore, calculateTechnicalScore } from "./scoring-engine";
+import { getSectorRotationForStockSync, type SectorRotationData } from "./sector-rotation";
 
 /** Analyst consensus breakdown */
 export interface AnalystConsensus {
@@ -27,6 +28,15 @@ export interface StockAnalysisReport {
   analyst: AnalystConsensus;
   technicalScore: number;
   fundamentalScore: number;
+  sectorScore?: number;
+  sectorRotation?: {
+    sectorName: string;
+    etf: string;
+    quadrant: string;
+    windStatus: "tailwind" | "neutral" | "headwind";
+    action: string;
+    advice: string;
+  };
 }
 
 /** Portfolio role assigned during the final funnel step */
@@ -39,7 +49,8 @@ export type PortfolioRole =
   | "special_situation"  // Value: event-driven
   | "equal_weight";     // Small-cap: VC-style equal allocation
 
-function formatMarketCap(val: number): string {
+function formatMarketCap(val: number | null | undefined): string {
+  if (val === null || val === undefined || isNaN(val) || val <= 0) return "N/A";
   if (val >= 1e12) return `$${(val / 1e12).toFixed(2)}T`;
   if (val >= 1e9) return `$${(val / 1e9).toFixed(1)}B`;
   if (val >= 1e6) return `$${(val / 1e6).toFixed(0)}M`;
@@ -66,7 +77,8 @@ function seedFromSymbol(symbol: string): number {
  */
 export function generateAnalysis(
   stock: StockMetrics,
-  strategyType: "value" | "large_growth" | "small_growth" | "multi_strategy"
+  strategyType: "value" | "large_growth" | "small_growth" | "multi_strategy",
+  rotationData?: SectorRotationData | null
 ): StockAnalysisReport {
   const seed = seedFromSymbol(stock.symbol);
   const upside = ((seed % 200) / 10 + 5).toFixed(1); // 5.0 – 25.0
@@ -160,6 +172,20 @@ export function generateAnalysis(
     ],
   };
 
+  const windInfo = getSectorRotationForStockSync(stock.symbol, stock.sector, rotationData);
+
+  let baseRationale = [...(rationaleMap[strategyType] ?? rationaleMap.large_growth)];
+  let baseRisks = [...(risksMap[strategyType] ?? risksMap.large_growth)];
+  let posSuggestion = positionSuggestionMap[strategyType] ?? positionSuggestionMap.large_growth;
+
+  if (windInfo.windStatus === "tailwind") {
+    baseRationale.unshift(`【板块顺风红利】: 所属 ${windInfo.sectorName} (${windInfo.sectorETF}) 正处于 RRG ${windInfo.quadrant} 象限，主力资金加速流入，享有行业级 Beta 扩张顺风。`);
+    posSuggestion += ` 【大势加成】: 板块处于顺风领涨期，可逢均线回踩积极建仓。`;
+  } else if (windInfo.windStatus === "headwind") {
+    baseRisks.unshift(`【板块逆风预警】: 所属 ${windInfo.sectorName} (${windInfo.sectorETF}) 处于 RRG ${windInfo.quadrant} 象限，行业动能滞后或失血，需防范行业集体杀估值风险。`);
+    posSuggestion += ` 【大势风控】: 鉴于板块处于 ${windInfo.quadrant} 逆风退潮期，建议控制单仓比例，分批吸纳或逢高锁利，切忌盲目急躁重仓。`;
+  }
+
   const consensusOptions: AnalystConsensus["consensus"][] = ["Strong Buy", "Buy", "Hold"];
 
   return {
@@ -167,12 +193,21 @@ export function generateAnalysis(
     overview: overviewMap[strategyType] ?? overviewMap.large_growth,
     fundamentals: fundamentalsMap[strategyType] ?? fundamentalsMap.large_growth,
     products: productsMap[strategyType] ?? productsMap.large_growth,
-    rationale: rationaleMap[strategyType] ?? rationaleMap.large_growth,
-    risks: risksMap[strategyType] ?? risksMap.large_growth,
+    rationale: baseRationale,
+    risks: baseRisks,
     catalysts: catalystsMap[strategyType] ?? catalystsMap.large_growth,
-    positionSuggestion: positionSuggestionMap[strategyType] ?? positionSuggestionMap.large_growth,
+    positionSuggestion: posSuggestion,
     technicalScore: calculateTechnicalScore(stock),
     fundamentalScore: calculateFundamentalScore(stock),
+    sectorScore: windInfo.sectorScore,
+    sectorRotation: {
+      sectorName: windInfo.sectorName,
+      etf: windInfo.sectorETF,
+      quadrant: windInfo.quadrant,
+      windStatus: windInfo.windStatus,
+      action: windInfo.action,
+      advice: windInfo.advice,
+    },
     analyst: {
       consensus: consensusOptions[seed % consensusOptions.length],
       targetPrice: `$${targetPrice}`,
@@ -187,7 +222,8 @@ export function generateAnalysis(
  */
 export function generateAnalysisBatch(
   stocks: StockMetrics[],
-  strategyType: "value" | "large_growth" | "small_growth" | "multi_strategy"
+  strategyType: "value" | "large_growth" | "small_growth" | "multi_strategy",
+  rotationData?: SectorRotationData | null
 ): StockAnalysisReport[] {
-  return stocks.map((s) => generateAnalysis(s, strategyType));
+  return stocks.map((s) => generateAnalysis(s, strategyType, rotationData));
 }

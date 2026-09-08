@@ -4,6 +4,7 @@
 // ============================================================
 
 import { StockMetrics, FilterCriterion, ScreenerRequest, ScreenerResponse } from "./types";
+import { getSectorRotationForStockSync, type SectorRotationData } from "./sector-rotation";
 
 /**
  * Evaluate a single filter criterion against a stock's metrics.
@@ -75,7 +76,10 @@ function clamp(val: number, min = 0, max = 100): number {
 /**
  * Calculate quantitative scores for a stock (Fundamental Score, Technical Score, Total Combined Score).
  */
-export function enrichStockScores(stock: StockMetrics): StockMetrics {
+export function enrichStockScores(
+  stock: StockMetrics,
+  rotationData?: SectorRotationData | null
+): StockMetrics {
   const price = stock.price || 0;
   const p50 = stock.priceVs50SMA ?? 0;
   const p200 = stock.priceVs200SMA ?? 0;
@@ -109,13 +113,27 @@ export function enrichStockScores(stock: StockMetrics): StockMetrics {
   const computedFund = Math.round(fRoe * 0.15 + fGm * 0.15 + fRev * 0.20 + fEps * 0.20 + fFcf * 0.20 + fCr * 0.10);
   const fundamentalScore = stock.fundamentalScore ?? computedFund;
 
-  // Total Score = Fundamental Score + Technical Score
-  const totalScore = stock.totalScore ?? (fundamentalScore + technicalScore);
+  // Sector Rotation Sub-score & Wind Attribution (0-100)
+  const windInfo = getSectorRotationForStockSync(stock.symbol, stock.sector, rotationData);
+  const sectorETF = stock.sectorETF ?? windInfo.sectorETF;
+  const sectorQuadrant = stock.sectorQuadrant ?? windInfo.quadrant;
+  const sectorWind = stock.sectorWind ?? windInfo.windStatus;
+  const sectorAction = stock.sectorAction ?? windInfo.action;
+  const sectorScore = stock.sectorScore ?? windInfo.sectorScore;
+
+  // 3D Composite Total Score (40% Fundamental + 30% Technical + 30% Sector Rotation)
+  const composite = Math.round(fundamentalScore * 0.40 + technicalScore * 0.30 + sectorScore * 0.30);
+  const totalScore = stock.totalScore ?? composite;
 
   return {
     ...stock,
     technicalScore,
     fundamentalScore,
+    sectorScore,
+    sectorETF,
+    sectorQuadrant,
+    sectorWind,
+    sectorAction,
     totalScore,
   };
 }
@@ -126,9 +144,10 @@ export function enrichStockScores(stock: StockMetrics): StockMetrics {
 export function sortStocks(
   stocks: StockMetrics[],
   sortBy: keyof StockMetrics,
-  sortOrder: "asc" | "desc" = "desc"
+  sortOrder: "asc" | "desc" = "desc",
+  rotationData?: SectorRotationData | null
 ): StockMetrics[] {
-  const enriched = stocks.map(enrichStockScores);
+  const enriched = stocks.map((s) => enrichStockScores(s, rotationData));
   return [...enriched].sort((a, b) => {
     const aVal = a[sortBy];
     const bVal = b[sortBy];
@@ -155,10 +174,11 @@ export function sortStocks(
  */
 export function executeScreener(
   allStocks: StockMetrics[],
-  request: ScreenerRequest
+  request: ScreenerRequest,
+  rotationData?: SectorRotationData | null
 ): ScreenerResponse {
   // 1. Enrich scores first so computed fields (fundamentalScore, technicalScore, totalScore) are available to filters
-  const enriched = allStocks.map(enrichStockScores);
+  const enriched = allStocks.map((s) => enrichStockScores(s, rotationData));
 
   // 2. Apply filters
   const filtered = applyFilters(enriched, request.filters);
@@ -166,7 +186,7 @@ export function executeScreener(
   // 3. Sort by totalScore by default
   const sortBy = request.sortBy ?? "totalScore";
   const sortOrder = request.sortOrder ?? "desc";
-  const sorted = sortStocks(filtered, sortBy, sortOrder);
+  const sorted = sortStocks(filtered, sortBy, sortOrder, rotationData);
 
   // 4. Paginate
   const limit = request.limit ?? 20;

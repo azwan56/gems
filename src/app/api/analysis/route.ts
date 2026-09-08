@@ -9,6 +9,7 @@ import { generateGeminiAnalysis } from "@/lib/gemini-client";
 import { resolveStock } from "@/lib/stock-resolver";
 import type { StockMetrics } from "@/lib/types";
 import { requirePremium } from "@/lib/auth-middleware";
+import { getLatestSectorRotation } from "@/lib/sector-rotation-store";
 
 const VALID_STRATEGIES = ["value", "large_growth", "small_growth", "multi_strategy"] as const;
 const ACCEPTED_STRATEGIES = ["value", "large_growth", "small_growth", "seeking_alpha", "garp", "wide_moat", "short_term_catalyst", "multi_strategy"] as const;
@@ -66,10 +67,11 @@ export async function GET(request: NextRequest) {
 
   try {
     let report;
+    const rotationData = await getLatestSectorRotation();
     if (process.env.GEMINI_API_KEY) {
       report = await generateGeminiAnalysis(stock, strategy, lang);
     } else {
-      report = generateAnalysis(stock, strategy);
+      report = generateAnalysis(stock, strategy, rotationData);
     }
     return NextResponse.json({ report });
   } catch (error) {
@@ -120,12 +122,13 @@ export async function POST(request: NextRequest) {
     }
 
     let reports;
+    const rotationData = await getLatestSectorRotation();
     if (process.env.GEMINI_API_KEY) {
       reports = await Promise.all(
         resolved.map((stock) => generateGeminiAnalysis(stock, strat, lang))
       );
     } else {
-      reports = generateAnalysisBatch(resolved, strat);
+      reports = generateAnalysisBatch(resolved, strat, rotationData);
     }
 
     return NextResponse.json({

@@ -43,6 +43,12 @@ export interface StockMetrics {
   technicalScore?: number | null;
   fundamentalScore?: number | null;
   totalScore?: number | null;
+  // Sector Rotation & Momentum (Top-Down Wind)
+  sectorETF?: string | null;
+  sectorQuadrant?: "Leading" | "Weakening" | "Lagging" | "Improving" | "Unknown" | null;
+  sectorWind?: "tailwind" | "neutral" | "headwind" | null;
+  sectorScore?: number | null;
+  sectorAction?: string | null;
 }
 
 /** The strategy types supported by the MVP */

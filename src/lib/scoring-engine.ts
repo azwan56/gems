@@ -73,3 +73,49 @@ export function calculateTechnicalScore(stock: StockMetrics): number {
   
   return Math.round(score);
 }
+
+/**
+ * Generates a deterministic Sector Rotation Score (0-100) based on RRG quadrant & wind status.
+ */
+export function calculateSectorScore(stock: StockMetrics): number {
+  if (stock.sectorScore !== undefined && stock.sectorScore !== null) {
+    return Math.round(stock.sectorScore);
+  }
+
+  const quad = stock.sectorQuadrant;
+  const wind = stock.sectorWind;
+
+  if (wind === "tailwind" || quad === "Leading") return 90;
+  if (quad === "Improving") return 78;
+  if (quad === "Weakening") return 45;
+  if (wind === "headwind" || quad === "Lagging") return 25;
+
+  return 50; // default neutral
+}
+
+/**
+ * Generates a 3D Composite Score (0-100) balancing:
+ * - Fundamental Score (40%)
+ * - Technical Score (30%)
+ * - Sector Rotation / RRG Score (30%)
+ */
+export function calculateCompositeScore(stock: StockMetrics): {
+  compositeScore: number;
+  fundamentalScore: number;
+  technicalScore: number;
+  sectorScore: number;
+} {
+  const fund = calculateFundamentalScore(stock);
+  const tech = calculateTechnicalScore(stock);
+  const sector = calculateSectorScore(stock);
+
+  const composite = Math.round(fund * 0.40 + tech * 0.30 + sector * 0.30);
+
+  return {
+    compositeScore: composite,
+    fundamentalScore: fund,
+    technicalScore: tech,
+    sectorScore: sector,
+  };
+}
+

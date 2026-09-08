@@ -193,3 +193,35 @@ const SECTOR_MAP: Record<string, { sector: string; industry: string }> = {
 export function getSectorInfo(symbol: string): { sector: string; industry: string } {
   return SECTOR_MAP[symbol.toUpperCase()] ?? { sector: "Unknown", industry: "Unknown" };
 }
+
+/**
+ * Standard SPDR Sector ETF mapping for 11 GICS sectors.
+ */
+export const SECTOR_TO_ETF: Record<string, string> = {
+  Technology: "XLK",
+  "Information Technology": "XLK",
+  "Financial Services": "XLF",
+  Financials: "XLF",
+  Healthcare: "XLV",
+  "Health Care": "XLV",
+  "Consumer Cyclical": "XLY",
+  "Consumer Discretionary": "XLY",
+  "Consumer Defensive": "XLP",
+  "Consumer Staples": "XLP",
+  Energy: "XLE",
+  "Basic Materials": "XLB",
+  Materials: "XLB",
+  Industrials: "XLI",
+  Utilities: "XLU",
+  "Real Estate": "XLRE",
+  "Communication Services": "XLC",
+};
+
+/**
+ * Look up the primary SPDR Sector ETF ticker for a given sector name.
+ */
+export function getSectorETF(sector: string): string {
+  if (!sector) return "SPY";
+  return SECTOR_TO_ETF[sector] || "SPY";
+}
+

@@ -19,6 +19,7 @@ import { generateMockStocks } from "@/lib/mock-data";
 import { loadSAList } from "@/lib/seeking-alpha-store";
 import { getStrategyRoster } from "@/lib/strategy-roster-store";
 import { requirePremium } from "@/lib/auth-middleware";
+import { getLatestSectorRotation } from "@/lib/sector-rotation-store";
 
 export async function POST(request: NextRequest) {
   const authResult = await requirePremium(request);
@@ -136,11 +137,13 @@ export async function POST(request: NextRequest) {
       filters,
     };
 
-    const result = executeScreener(stocks, screenerRequest);
+    const rotationData = await getLatestSectorRotation();
+    const result = executeScreener(stocks, screenerRequest, rotationData);
     return NextResponse.json({
       ...result,
       dataSource,
       poolUpdatedAt: pool?.meta.updatedAt ?? null,
+      sectorRotationMeta: rotationData ? { date: rotationData.date, macroPhase: rotationData.macroPhase } : null,
       ...(saListSymbols !== null ? { saListCount: saListSymbols.length } : {}),
     });
   } catch (err) {
