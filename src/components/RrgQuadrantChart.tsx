@@ -33,6 +33,7 @@ interface RrgQuadrantChartProps {
 
 type FilterScope = "all" | "sectors" | "sub_industries";
 type QuadrantFilter = "all" | "Leading" | "Improving" | "Weakening" | "Lagging";
+type ActionFilter = "all" | "ACCUMULATE" | "HOLD" | "REDUCE" | "AVOID" | "NEUTRAL";
 
 interface ChartNode {
   symbol: string;
@@ -65,6 +66,7 @@ export const RrgQuadrantChart: React.FC<RrgQuadrantChartProps> = ({
   const [loading, setLoading] = useState<boolean>(!initialData);
   const [scope, setScope] = useState<FilterScope>("all");
   const [quadrantFilter, setQuadrantFilter] = useState<QuadrantFilter>("all");
+  const [actionFilter, setActionFilter] = useState<ActionFilter>("all");
   const [hoveredNode, setHoveredNode] = useState<ChartNode | null>(null);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
@@ -153,6 +155,27 @@ export const RrgQuadrantChart: React.FC<RrgQuadrantChartProps> = ({
     return list;
   }, [data]);
 
+  // Calculate counts for each tactical action based on current scope
+  const actionCounts = useMemo(() => {
+    const counts = {
+      all: 0,
+      ACCUMULATE: 0,
+      HOLD: 0,
+      REDUCE: 0,
+      AVOID: 0,
+      NEUTRAL: 0,
+    };
+    for (const n of allNodes) {
+      if (scope === "sectors" && n.isSubIndustry) continue;
+      if (scope === "sub_industries" && !n.isSubIndustry) continue;
+      counts.all++;
+      if (n.action in counts) {
+        counts[n.action as keyof typeof counts]++;
+      }
+    }
+    return counts;
+  }, [allNodes, scope]);
+
   // Filtered nodes
   const filteredNodes = useMemo(() => {
     return allNodes.filter((n) => {
@@ -162,6 +185,9 @@ export const RrgQuadrantChart: React.FC<RrgQuadrantChartProps> = ({
 
       // Quadrant filter
       if (quadrantFilter !== "all" && n.quadrant !== quadrantFilter) return false;
+
+      // Tactical Action Posture filter
+      if (actionFilter !== "all" && n.action !== actionFilter) return false;
 
       // Search query
       if (searchQuery.trim()) {
@@ -175,7 +201,7 @@ export const RrgQuadrantChart: React.FC<RrgQuadrantChartProps> = ({
 
       return true;
     });
-  }, [allNodes, scope, quadrantFilter, searchQuery]);
+  }, [allNodes, scope, quadrantFilter, actionFilter, searchQuery]);
 
   // Calculate dynamic axis ranges with padding
   const { minX, maxX, minY, maxY } = useMemo(() => {
@@ -392,6 +418,88 @@ export const RrgQuadrantChart: React.FC<RrgQuadrantChartProps> = ({
           落后 Lagging
         </button>
       </div>
+
+      {/* Tactical Posture Quick Tabs */}
+      <div className="flex flex-wrap items-center gap-1.5 pb-2.5 text-xs border-b border-slate-800/80 mb-3">
+        <span className="text-slate-500 mr-1 text-[11px]">操作姿态:</span>
+        <button
+          onClick={() => setActionFilter("all")}
+          className={`px-2 py-0.5 rounded-full border text-[11px] transition-all ${
+            actionFilter === "all"
+              ? "bg-slate-700 border-slate-500 text-white font-medium"
+              : "border-slate-800 text-slate-400 hover:bg-slate-800"
+          }`}
+        >
+          全部姿态 ({actionCounts.all})
+        </button>
+        <button
+          onClick={() => setActionFilter("ACCUMULATE")}
+          className={`px-2 py-0.5 rounded-full border text-[11px] transition-all flex items-center gap-1 ${
+            actionFilter === "ACCUMULATE"
+              ? "bg-emerald-500/20 border-emerald-500/50 text-emerald-300 font-bold"
+              : "border-emerald-500/20 text-emerald-400/70 hover:bg-emerald-500/10"
+          }`}
+        >
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block" />
+          积极加仓 ACCUMULATE ({actionCounts.ACCUMULATE})
+        </button>
+        <button
+          onClick={() => setActionFilter("HOLD")}
+          className={`px-2 py-0.5 rounded-full border text-[11px] transition-all flex items-center gap-1 ${
+            actionFilter === "HOLD"
+              ? "bg-blue-500/20 border-blue-500/50 text-blue-300 font-bold"
+              : "border-blue-500/20 text-blue-400/70 hover:bg-blue-500/10"
+          }`}
+        >
+          <span className="w-1.5 h-1.5 rounded-full bg-blue-400 inline-block" />
+          顺势持有 HOLD ({actionCounts.HOLD})
+        </button>
+        <button
+          onClick={() => setActionFilter("REDUCE")}
+          className={`px-2 py-0.5 rounded-full border text-[11px] transition-all flex items-center gap-1 ${
+            actionFilter === "REDUCE"
+              ? "bg-amber-500/20 border-amber-500/50 text-amber-300 font-bold"
+              : "border-amber-500/20 text-amber-400/70 hover:bg-amber-500/10"
+          }`}
+        >
+          <span className="w-1.5 h-1.5 rounded-full bg-amber-400 inline-block" />
+          逢高减持 REDUCE ({actionCounts.REDUCE})
+        </button>
+        <button
+          onClick={() => setActionFilter("AVOID")}
+          className={`px-2 py-0.5 rounded-full border text-[11px] transition-all flex items-center gap-1 ${
+            actionFilter === "AVOID"
+              ? "bg-rose-500/20 border-rose-500/50 text-rose-300 font-bold"
+              : "border-rose-500/20 text-rose-400/70 hover:bg-rose-500/10"
+          }`}
+        >
+          <span className="w-1.5 h-1.5 rounded-full bg-rose-400 inline-block" />
+          严格规避 AVOID ({actionCounts.AVOID})
+        </button>
+      </div>
+
+      {/* Active Filter Matching Chips */}
+      {filteredNodes.length > 0 && (actionFilter !== "all" || quadrantFilter !== "all" || searchQuery.trim()) && (
+        <div className="flex flex-wrap items-center gap-1.5 py-2 px-3 mb-3 rounded-xl bg-slate-950/70 border border-slate-800 text-xs animate-in fade-in">
+          <span className="text-slate-400 text-[11px] font-medium">
+            符合条件 ({filteredNodes.length}):
+          </span>
+          {filteredNodes.map((n) => (
+            <button
+              key={n.symbol}
+              onClick={() => setHoveredNode(n)}
+              className={`px-2 py-0.5 rounded-md font-mono text-xs transition-all flex items-center gap-1 ${
+                hoveredNode?.symbol === n.symbol
+                  ? "bg-blue-600 text-white shadow"
+                  : "bg-slate-800/80 hover:bg-slate-700 text-slate-300 border border-slate-700/80"
+              }`}
+            >
+              <span className="font-bold">{n.symbol}</span>
+              <span className="text-[10px] opacity-70 font-sans">{n.name}</span>
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Target Stock / ETF Highlight Alert Banner if provided */}
       {(highlightETF || highlightSubETF) && (

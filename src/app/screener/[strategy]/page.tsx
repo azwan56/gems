@@ -139,6 +139,32 @@ export default function FunnelScreenerPage() {
   const [showRrgModal, setShowRrgModal] = useState<boolean>(false);
   const [rrgHighlight, setRrgHighlight] = useState<{ etf?: string | null; subEtf?: string | null; symbol?: string | null }>({});
 
+  // Sector Tactical Posture Filter in Step 1
+  const [postureFilter, setPostureFilter] = useState<string>("all");
+
+  const postureCounts = useMemo(() => {
+    const counts: Record<string, number> = {
+      all: stocks.length,
+      ACCUMULATE: 0,
+      HOLD: 0,
+      REDUCE: 0,
+      AVOID: 0,
+    };
+    for (const s of stocks) {
+      const a = s.subIndustryAction || s.sectorAction || "NEUTRAL";
+      if (a in counts) counts[a]++;
+    }
+    return counts;
+  }, [stocks]);
+
+  const displayedStocks = useMemo(() => {
+    if (postureFilter === "all") return stocks;
+    return stocks.filter((s) => {
+      const a = s.subIndustryAction || s.sectorAction || "NEUTRAL";
+      return a === postureFilter;
+    });
+  }, [stocks, postureFilter]);
+
   // Seeking Alpha custom list management
   const [saSymbols, setSaSymbols] = useState<string[]>([]);
   // Per-symbol entry dates from SA import (populated from /api/seeking-alpha GET entries field)
@@ -719,7 +745,7 @@ export default function FunnelScreenerPage() {
                       <h2 className="text-lg sm:text-xl font-bold text-white mb-1 flex items-center gap-3">
                         {t("Quantitative Pool", "定量股票池")} 
                         <span className="px-2 py-0.5 rounded bg-slate-800 text-slate-300 text-sm font-mono border border-slate-700">
-                          {stocks.length} {t("matches", "只符合条件")}
+                          {postureFilter === "all" ? `${stocks.length} ${t("matches", "只符合条件")}` : `${displayedStocks.length} / ${stocks.length} ${t("matches", "只符合条件")}`}
                         </span>
                       </h2>
                       <p className="text-xs sm:text-sm text-slate-400">
@@ -769,6 +795,66 @@ export default function FunnelScreenerPage() {
                       </button>
                     </div>
                   </div>
+
+                  {/* Tactical Posture Filter Bar */}
+                  <div className="flex flex-wrap items-center gap-1.5 mb-4 px-3 py-2 rounded-xl bg-slate-900/60 border border-slate-800 text-xs">
+                    <span className="text-slate-500 mr-1 text-[11px] font-medium">{t("Filter by Sector Action", "按板块战术姿态筛选:")}</span>
+                    <button
+                      onClick={() => setPostureFilter("all")}
+                      className={`px-2.5 py-1 rounded-md text-xs font-medium transition-all ${
+                        postureFilter === "all"
+                          ? "bg-slate-700 text-white font-medium"
+                          : "text-slate-400 hover:text-slate-200 hover:bg-slate-800"
+                      }`}
+                    >
+                      {t("All", "全部")} ({postureCounts.all})
+                    </button>
+                    <button
+                      onClick={() => setPostureFilter("ACCUMULATE")}
+                      className={`px-2.5 py-1 rounded-md text-xs font-medium transition-all flex items-center gap-1.5 ${
+                        postureFilter === "ACCUMULATE"
+                          ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-bold"
+                          : "text-emerald-400/80 hover:bg-emerald-500/10"
+                      }`}
+                    >
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                      {t("Accumulate", "积极加仓")} ({postureCounts.ACCUMULATE})
+                    </button>
+                    <button
+                      onClick={() => setPostureFilter("HOLD")}
+                      className={`px-2.5 py-1 rounded-md text-xs font-medium transition-all flex items-center gap-1.5 ${
+                        postureFilter === "HOLD"
+                          ? "bg-blue-500/20 text-blue-300 border border-blue-500/40 font-bold"
+                          : "text-blue-400/80 hover:bg-blue-500/10"
+                      }`}
+                    >
+                      <span className="w-1.5 h-1.5 rounded-full bg-blue-400" />
+                      {t("Hold", "顺势持有")} ({postureCounts.HOLD})
+                    </button>
+                    <button
+                      onClick={() => setPostureFilter("REDUCE")}
+                      className={`px-2.5 py-1 rounded-md text-xs font-medium transition-all flex items-center gap-1.5 ${
+                        postureFilter === "REDUCE"
+                          ? "bg-amber-500/20 text-amber-300 border border-amber-500/40 font-bold"
+                          : "text-amber-400/80 hover:bg-amber-500/10"
+                      }`}
+                    >
+                      <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+                      {t("Reduce", "逢高减持")} ({postureCounts.REDUCE})
+                    </button>
+                    <button
+                      onClick={() => setPostureFilter("AVOID")}
+                      className={`px-2.5 py-1 rounded-md text-xs font-medium transition-all flex items-center gap-1.5 ${
+                        postureFilter === "AVOID"
+                          ? "bg-rose-500/20 text-rose-300 border border-rose-500/40 font-bold"
+                          : "text-rose-400/80 hover:bg-rose-500/10"
+                      }`}
+                    >
+                      <span className="w-1.5 h-1.5 rounded-full bg-rose-400" />
+                      {t("Avoid", "严格规避")} ({postureCounts.AVOID})
+                    </button>
+                  </div>
+
                   {/* Desktop Table View */}
                   <div className="hidden md:block border border-slate-800 rounded-xl bg-slate-900/50 overflow-x-auto">
                     <table className="w-full text-sm text-left">
@@ -799,7 +885,7 @@ export default function FunnelScreenerPage() {
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-800/50">
-                        {stocks.map(s => {
+                        {displayedStocks.map(s => {
                           const entryInfo = getStockEntryInfo(s, isSA, undefined, saEntryDates, saEntryPrices);
                           const firstEntryDate = entryInfo.firstEntryDate;
                           const latestEntryDate = entryInfo.latestEntryDate;
@@ -874,7 +960,7 @@ export default function FunnelScreenerPage() {
 
                   {/* Mobile Card View */}
                   <div className="md:hidden space-y-3">
-                    {stocks.map(s => {
+                    {displayedStocks.map(s => {
                       const isSelected = selectedInStep1.has(s.symbol);
                       const entryInfo = getStockEntryInfo(s, isSA, undefined, saEntryDates, saEntryPrices);
                       const entryDate = entryInfo.firstEntryDate;
