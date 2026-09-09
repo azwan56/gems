@@ -10,6 +10,7 @@ interface SectorWindBadgeProps {
   etf?: string | null;
   sectorName?: string | null;
   size?: "sm" | "md";
+  theme?: "dark" | "light";
   className?: string;
   // Sub-industry props
   subIndustryETF?: string | null;
@@ -24,6 +25,7 @@ export const SectorWindBadge: React.FC<SectorWindBadgeProps> = ({
   etf,
   sectorName,
   size = "sm",
+  theme = "dark",
   className = "",
   subIndustryETF,
   subIndustryName,
@@ -41,19 +43,25 @@ export const SectorWindBadge: React.FC<SectorWindBadgeProps> = ({
   const isTailwind = effectiveWind === "tailwind" || effectiveQuad === "Leading" || effectiveQuad === "Improving";
   const isHeadwind = effectiveWind === "headwind" || effectiveQuad === "Lagging" || effectiveQuad === "Weakening";
 
-  let badgeColor = "bg-slate-800/80 text-slate-300 border-slate-700";
-  let icon = <Minus className="w-3 h-3 text-slate-400" />;
+  let badgeColor = theme === "light"
+    ? "bg-slate-100 text-slate-700 border-slate-300"
+    : "bg-slate-800/80 text-slate-300 border-slate-700";
+  let icon = <Minus className={`w-3 h-3 ${theme === "light" ? "text-slate-500" : "text-slate-400"}`} />;
   let label = displayName ? `${displayName} —` : "中性";
 
   if (isTailwind) {
-    badgeColor = "bg-emerald-500/15 text-emerald-400 border-emerald-500/30";
-    icon = <TrendingUp className="w-3 h-3 text-emerald-400" />;
+    badgeColor = theme === "light"
+      ? "bg-emerald-50 text-emerald-800 border-emerald-300"
+      : "bg-emerald-500/15 text-emerald-400 border-emerald-500/30";
+    icon = <TrendingUp className={`w-3 h-3 ${theme === "light" ? "text-emerald-600" : "text-emerald-400"}`} />;
     label = displayName
       ? `${displayName} ↗`
       : (effectiveQuad === "Improving" ? "改善 ↗" : "顺风 ↗");
   } else if (isHeadwind) {
-    badgeColor = "bg-rose-500/15 text-rose-400 border-rose-500/30";
-    icon = <TrendingDown className="w-3 h-3 text-rose-400" />;
+    badgeColor = theme === "light"
+      ? "bg-rose-50 text-rose-800 border-rose-300"
+      : "bg-rose-500/15 text-rose-400 border-rose-500/30";
+    icon = <TrendingDown className={`w-3 h-3 ${theme === "light" ? "text-rose-600" : "text-rose-400"}`} />;
     label = displayName
       ? `${displayName} ↘`
       : (effectiveQuad === "Weakening" ? "转弱 ↘" : "逆风 ↘");
@@ -76,7 +84,11 @@ export const SectorWindBadge: React.FC<SectorWindBadgeProps> = ({
     >
       {icon}
       <span>{label}</span>
-      {displayETF && <span className="opacity-60 text-[9px] font-mono">({displayETF})</span>}
+      {displayETF && (
+        <span className={`${theme === "light" ? "text-slate-600 font-semibold" : "opacity-60"} text-[9px] font-mono`}>
+          ({displayETF})
+        </span>
+      )}
     </span>
   );
 };
