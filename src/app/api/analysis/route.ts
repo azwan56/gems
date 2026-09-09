@@ -69,7 +69,9 @@ export async function GET(request: NextRequest) {
     let report;
     const rotationData = await getLatestSectorRotation();
     if (process.env.GEMINI_API_KEY) {
-      report = await generateGeminiAnalysis(stock, strategy, lang);
+      report = rotationData
+        ? await generateGeminiAnalysis(stock, strategy, lang, rotationData)
+        : await generateGeminiAnalysis(stock, strategy, lang);
     } else {
       report = generateAnalysis(stock, strategy, rotationData);
     }
@@ -125,7 +127,11 @@ export async function POST(request: NextRequest) {
     const rotationData = await getLatestSectorRotation();
     if (process.env.GEMINI_API_KEY) {
       reports = await Promise.all(
-        resolved.map((stock) => generateGeminiAnalysis(stock, strat, lang))
+        resolved.map((stock) =>
+          rotationData
+            ? generateGeminiAnalysis(stock, strat, lang, rotationData)
+            : generateGeminiAnalysis(stock, strat, lang)
+        )
       );
     } else {
       reports = generateAnalysisBatch(resolved, strat, rotationData);

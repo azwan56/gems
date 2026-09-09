@@ -3,14 +3,84 @@ import type { StockMetrics } from "./types";
 import type { StockAnalysisReport } from "./analysis-engine";
 import { getCached, setCache } from "./fmp-cache";
 import { calculateFundamentalScore, calculateTechnicalScore } from "./scoring-engine";
+import { getSectorRotationForStockSync, type SectorRotationData } from "./sector-rotation";
+
+async function fetchDeepInsights(symbol: string) {
+  if (process.env.NODE_ENV === "test") return null;
+  try {
+    const envUrl = process.env.DAILYSTOCK_API_URL || process.env.NEXT_PUBLIC_PYTHON_BACKEND_URL;
+    const pythonBackendUrl = (envUrl && !envUrl.includes("onrender.com"))
+      ? envUrl.replace(/\/api$/, "")
+      : "https://gems-backend-91000643407.us-central1.run.app";
+    const res = await fetch(`${pythonBackendUrl}/api/deep-insights?symbol=${encodeURIComponent(symbol)}`, {
+      signal: AbortSignal.timeout(2000),
+      next: { revalidate: 3600 }
+    });
+    if (res.ok) {
+      const data = await res.json();
+      return data?.insights || null;
+    }
+  } catch (error) {
+    console.warn(`[gemini] Failed to fetch deep insights for ${symbol}`, error);
+  }
+  return null;
+}
 
 export async function generateGeminiAnalysis(
   stock: StockMetrics,
   strategyType: "value" | "large_growth" | "small_growth" | "multi_strategy",
-  language: "en" | "zh" = "en"
+  language: "en" | "zh" = "en",
+  rotationData?: SectorRotationData | null
 ): Promise<StockAnalysisReport> {
   const cacheKey = `gemini:${stock.symbol.toUpperCase()}:${strategyType}:${language}`;
   
+  const windInfo = getSectorRotationForStockSync(stock.symbol, stock.sector, stock.industry, rotationData, {
+    marketCap: stock.marketCap,
+    strategy: strategyType,
+  });
+
+  const hydrateReport = (report: StockAnalysisReport, insights: any) => {
+    report.technicalScore = calculateTechnicalScore(stock);
+    report.fundamentalScore = calculateFundamentalScore(stock);
+    report.sectorScore = windInfo.sectorScore;
+    report.sectorRotation = {
+      sectorName: windInfo.sectorName,
+      etf: windInfo.sectorETF,
+      quadrant: windInfo.quadrant,
+      windStatus: windInfo.windStatus,
+      action: windInfo.action,
+      advice: windInfo.advice,
+      subIndustryETF: windInfo.subIndustryETF,
+      subIndustryName: windInfo.subIndustryNameZh || windInfo.subIndustryName,
+      subIndustryQuadrant: windInfo.subIndustryQuadrant,
+      subIndustryWind: windInfo.subIndustryWind,
+      subIndustryScore: windInfo.subIndustryScore,
+      subIndustryAction: windInfo.subIndustryAction,
+    };
+
+    const pt = insights?.price_target;
+    if (pt && pt.targetConsensus && pt.targetConsensus > 0) {
+      const tp = Number(pt.targetConsensus);
+      const cp = stock.price && stock.price > 0 ? stock.price : tp;
+      const up = ((tp - cp) / cp) * 100;
+      report.analyst = report.analyst || ({} as any);
+      report.analyst.targetPrice = `$${tp.toFixed(2)}`;
+      report.analyst.upside = `${up >= 0 ? "+" : ""}${up.toFixed(1)}%`;
+    }
+
+    const ar = insights?.analyst_ratings;
+    if (ar && report.analyst) {
+      if (ar.consensus) {
+        report.analyst.consensus = ar.consensus as any;
+      }
+      report.analyst.breakdown = {
+        buy: (ar.strongBuy || 0) + (ar.buy || 0),
+        hold: ar.hold || 0,
+        sell: (ar.sell || 0) + (ar.strongSell || 0),
+      };
+    }
+  };
+
   // Try server-side persistent Firestore cache first
   const docId = `${stock.symbol.toUpperCase()}_${strategyType}_${language}`;
   try {
@@ -22,7 +92,10 @@ export async function generateGeminiAnalysis(
       const cachedData = docSnap.data();
       if (cachedData && cachedData.expiresAt > Date.now()) {
         console.log(`[gemini] Serving Firestore cached report for ${stock.symbol} (${strategyType}, ${language})`);
-        return cachedData.report as StockAnalysisReport;
+        const report = cachedData.report as StockAnalysisReport;
+        const insights = await fetchDeepInsights(stock.symbol);
+        hydrateReport(report, insights);
+        return report;
       }
     }
   } catch (error) {
@@ -33,6 +106,8 @@ export async function generateGeminiAnalysis(
   const cached = getCached<StockAnalysisReport>(cacheKey);
   if (cached) {
     console.log(`[gemini] Serving in-memory cached report for ${stock.symbol} (${strategyType}, ${language})`);
+    const insights = await fetchDeepInsights(stock.symbol);
+    hydrateReport(cached, insights);
     return cached;
   }
 
@@ -44,24 +119,16 @@ export async function generateGeminiAnalysis(
   const ai = new GoogleGenAI({ apiKey });
 
   // Try to fetch deep insights from the Python backend
+  const insights = await fetchDeepInsights(stock.symbol);
   let deepInsightsStr = "";
-  try {
-    const pythonBackendUrl = process.env.NEXT_PUBLIC_PYTHON_BACKEND_URL || "https://api.vanpower.live";
-    const res = await fetch(`${pythonBackendUrl}/api/deep-insights?symbol=${stock.symbol}`, { next: { revalidate: 3600 } });
-    if (res.ok) {
-      const data = await res.json();
-      if (data.insights && Object.keys(data.insights).length > 0) {
-        deepInsightsStr = `
+  if (insights && Object.keys(insights).length > 0) {
+    deepInsightsStr = `
 Deep Fundamental Insights (FMP Data):
-- Institutional Ownership: ${data.insights.institutional ? `Total Invested $${(data.insights.institutional.totalInvested / 1e9).toFixed(2)}B by ${data.insights.institutional.investorsHolding} investors` : 'N/A'}
-- Recent Insider Trading: ${data.insights.insider_trading ? data.insights.insider_trading.map((t: any) => `${t.transactionType} of ${t.securitiesTransacted} shares @ $${t.price} by ${t.reportingName}`).join('; ') : 'N/A'}
-- Analyst Consensus: ${data.insights.analyst_ratings ? `${data.insights.analyst_ratings.consensus} (Strong Buy: ${data.insights.analyst_ratings.strongBuy}, Buy: ${data.insights.analyst_ratings.buy}, Hold: ${data.insights.analyst_ratings.hold}, Sell: ${data.insights.analyst_ratings.sell})` : 'N/A'}
-- Analyst Price Target: ${data.insights.price_target ? `Consensus $${data.insights.price_target.targetConsensus} (High: $${data.insights.price_target.targetHigh}, Low: $${data.insights.price_target.targetLow})` : 'N/A'}
+- Institutional Ownership: ${insights.institutional ? `Total Invested $${(insights.institutional.totalInvested / 1e9).toFixed(2)}B by ${insights.institutional.investorsHolding} investors` : 'N/A'}
+- Recent Insider Trading: ${insights.insider_trading ? insights.insider_trading.map((t: any) => `${t.transactionType} of ${t.securitiesTransacted} shares @ $${t.price} by ${t.reportingName}`).join('; ') : 'N/A'}
+- Analyst Consensus: ${insights.analyst_ratings ? `${insights.analyst_ratings.consensus} (Strong Buy: ${insights.analyst_ratings.strongBuy}, Buy: ${insights.analyst_ratings.buy}, Hold: ${insights.analyst_ratings.hold}, Sell: ${insights.analyst_ratings.sell})` : 'N/A'}
+- Analyst Price Target: ${insights.price_target ? `Consensus $${insights.price_target.targetConsensus} (High: $${insights.price_target.targetHigh}, Low: $${insights.price_target.targetLow})` : 'N/A'}
 `;
-      }
-    }
-  } catch (error) {
-    console.warn(`[gemini] Failed to fetch deep insights for ${stock.symbol}`, error);
   }
 
   let strategyContext = "";
@@ -182,9 +249,8 @@ ${deepInsightsStr}`;
   // Guarantee symbol matches what we requested, regardless of hallucination
   parsed.symbol = stock.symbol;
 
-  // Mix in deterministic quantitative scores
-  parsed.technicalScore = calculateTechnicalScore(stock);
-  parsed.fundamentalScore = calculateFundamentalScore(stock);
+  // Mix in deterministic quantitative scores, live sector rotation, and real analyst consensus
+  hydrateReport(parsed, insights);
 
   // Save to server-side persistent Firestore cache
   try {

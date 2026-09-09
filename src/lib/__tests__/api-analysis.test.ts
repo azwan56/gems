@@ -93,6 +93,11 @@ const mockReport = {
   },
 };
 
+// ---- Mock Sector Rotation Store ----
+vi.mock("@/lib/sector-rotation-store", () => ({
+  getLatestSectorRotation: vi.fn().mockResolvedValue(null),
+}));
+
 vi.mock("@/lib/gemini-client", () => ({
   generateGeminiAnalysis: vi.fn().mockResolvedValue({
     symbol: "AAPL",
