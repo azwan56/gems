@@ -61,12 +61,31 @@ export async function getLatestSectorRotation(): Promise<SectorRotationData | nu
       };
     }
 
+    const subIndustries: NonNullable<SectorRotationData["subIndustries"]> = {};
+    const matrixSub = rotationMatrix.sub_industries || rrgSnapshot.sub_industries || {};
+
+    for (const [sym, data] of Object.entries<any>(matrixSub)) {
+      subIndustries[sym] = {
+        name: data.name || sym,
+        parentSector: data.parent_sector || "SPY",
+        quadrant: data.quadrant || "Unknown",
+        action: data.action || "NEUTRAL",
+        macroAlignment: data.macro_alignment || "neutral",
+        netScore: data.net_score ?? 0,
+        bullishScore: data.bullish_score ?? 0,
+        bearishScore: data.bearish_score ?? 0,
+        recommendedStocks: data.actionable_plan?.recommended_stocks || [],
+        trimStocks: data.actionable_plan?.trim_stocks || [],
+      };
+    }
+
     const rotationData: SectorRotationData = {
       date: doc.date || snapshot.docs[0].id,
       macroPhase: macroCycle.phase || "Mid",
       favoredSectors: sectorMap.favored || [],
       avoidSectors: sectorMap.avoid || [],
       sectors,
+      subIndustries,
       narrative: doc.rotation_narrative || "",
       tacticalActionCards: doc.tactical_action_cards || "",
     };
@@ -85,8 +104,9 @@ export async function getLatestSectorRotation(): Promise<SectorRotationData | nu
  */
 export async function getSectorRotationForStock(
   symbol: string,
-  sectorName?: string
+  sectorName?: string,
+  industryName?: string
 ): Promise<StockSectorWind> {
   const rotData = await getLatestSectorRotation();
-  return getSectorRotationForStockSync(symbol, sectorName, rotData);
+  return getSectorRotationForStockSync(symbol, sectorName, industryName, rotData);
 }

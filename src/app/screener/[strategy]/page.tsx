@@ -810,6 +810,10 @@ export default function FunnelScreenerPage() {
                                     wind={s.sectorWind}
                                     quadrant={s.sectorQuadrant}
                                     etf={s.sectorETF}
+                                    subIndustryETF={s.subIndustryETF}
+                                    subIndustryName={s.subIndustryName}
+                                    subIndustryQuadrant={s.subIndustryQuadrant}
+                                    subIndustryWind={s.subIndustryWind}
                                   />
                                 </div>
                               </td>
@@ -885,6 +889,10 @@ export default function FunnelScreenerPage() {
                                     wind={s.sectorWind}
                                     quadrant={s.sectorQuadrant}
                                     etf={s.sectorETF}
+                                    subIndustryETF={s.subIndustryETF}
+                                    subIndustryName={s.subIndustryName}
+                                    subIndustryQuadrant={s.subIndustryQuadrant}
+                                    subIndustryWind={s.subIndustryWind}
                                   />
                                   <span className={`px-1.5 py-0.5 rounded text-[10px] font-mono font-bold ${
                                     returnPct >= 0 ? "bg-emerald-500/20 text-emerald-400" : "bg-rose-500/20 text-rose-400"
@@ -1345,6 +1353,10 @@ export default function FunnelScreenerPage() {
                             wind={analysisReport.sectorRotation.windStatus}
                             quadrant={analysisReport.sectorRotation.quadrant}
                             etf={analysisReport.sectorRotation.etf}
+                            subIndustryETF={analysisReport.sectorRotation.subIndustryETF}
+                            subIndustryName={analysisReport.sectorRotation.subIndustryName}
+                            subIndustryQuadrant={analysisReport.sectorRotation.subIndustryQuadrant}
+                            subIndustryWind={analysisReport.sectorRotation.subIndustryWind}
                           />
                         )}
                       </div>
@@ -1393,6 +1405,10 @@ export default function FunnelScreenerPage() {
                           wind={analysisReport.sectorRotation.windStatus}
                           quadrant={analysisReport.sectorRotation.quadrant}
                           etf={analysisReport.sectorRotation.etf}
+                          subIndustryETF={analysisReport.sectorRotation.subIndustryETF}
+                          subIndustryName={analysisReport.sectorRotation.subIndustryName}
+                          subIndustryQuadrant={analysisReport.sectorRotation.subIndustryQuadrant}
+                          subIndustryWind={analysisReport.sectorRotation.subIndustryWind}
                           size="md"
                         />
                       </div>
@@ -1401,16 +1417,28 @@ export default function FunnelScreenerPage() {
                       </p>
                       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs pt-2 border-t border-slate-800/80">
                         <div>
-                          <span className="text-slate-500 block text-[10px]">{t("Sector", "所属板块")}</span>
-                          <strong className="text-slate-200">{analysisReport.sectorRotation.sectorName}</strong>
+                          <span className="text-slate-500 block text-[10px]">{t("Sector / Sub-Industry", "所属大类 / 细分")}</span>
+                          <strong className="text-slate-200">
+                            {analysisReport.sectorRotation.subIndustryName
+                              ? `${analysisReport.sectorRotation.subIndustryName} (${analysisReport.sectorRotation.sectorName})`
+                              : analysisReport.sectorRotation.sectorName}
+                          </strong>
                         </div>
                         <div>
-                          <span className="text-slate-500 block text-[10px]">{t("Benchmark ETF", "基准行业 ETF")}</span>
-                          <strong className="text-blue-400 font-mono">{analysisReport.sectorRotation.etf}</strong>
+                          <span className="text-slate-500 block text-[10px]">{t("Benchmark ETFs", "追踪 ETF (细分 / 大类)")}</span>
+                          <strong className="text-blue-400 font-mono">
+                            {analysisReport.sectorRotation.subIndustryETF
+                              ? `${analysisReport.sectorRotation.subIndustryETF} / ${analysisReport.sectorRotation.etf}`
+                              : analysisReport.sectorRotation.etf}
+                          </strong>
                         </div>
                         <div>
                           <span className="text-slate-500 block text-[10px]">{t("RRG Quadrant", "RRG 轮动象限")}</span>
-                          <strong className="text-slate-200">{analysisReport.sectorRotation.quadrant}</strong>
+                          <strong className="text-slate-200">
+                            {analysisReport.sectorRotation.subIndustryQuadrant
+                              ? `${analysisReport.sectorRotation.subIndustryQuadrant} (大类: ${analysisReport.sectorRotation.quadrant})`
+                              : analysisReport.sectorRotation.quadrant}
+                          </strong>
                         </div>
                         <div>
                           <span className="text-slate-500 block text-[10px]">{t("Tactical Posture", "战术姿态")}</span>

@@ -36,6 +36,12 @@ export interface StockAnalysisReport {
     windStatus: "tailwind" | "neutral" | "headwind";
     action: string;
     advice: string;
+    subIndustryETF?: string | null;
+    subIndustryName?: string | null;
+    subIndustryQuadrant?: string | null;
+    subIndustryWind?: "tailwind" | "neutral" | "headwind" | null;
+    subIndustryScore?: number | null;
+    subIndustryAction?: string | null;
   };
 }
 
@@ -172,18 +178,26 @@ export function generateAnalysis(
     ],
   };
 
-  const windInfo = getSectorRotationForStockSync(stock.symbol, stock.sector, rotationData);
+  const windInfo = getSectorRotationForStockSync(stock.symbol, stock.sector, stock.industry, rotationData);
 
   let baseRationale = [...(rationaleMap[strategyType] ?? rationaleMap.large_growth)];
   let baseRisks = [...(risksMap[strategyType] ?? risksMap.large_growth)];
   let posSuggestion = positionSuggestionMap[strategyType] ?? positionSuggestionMap.large_growth;
 
   if (windInfo.windStatus === "tailwind") {
-    baseRationale.unshift(`【板块顺风红利】: 所属 ${windInfo.sectorName} (${windInfo.sectorETF}) 正处于 RRG ${windInfo.quadrant} 象限，主力资金加速流入，享有行业级 Beta 扩张顺风。`);
-    posSuggestion += ` 【大势加成】: 板块处于顺风领涨期，可逢均线回踩积极建仓。`;
+    if (windInfo.subIndustryETF && windInfo.subIndustryNameZh) {
+      baseRationale.unshift(`【赛道顺风红利】: 所属细分【${windInfo.subIndustryNameZh} (${windInfo.subIndustryETF})】正处于 RRG ${windInfo.subIndustryQuadrant} 象限，主力资金显著增配，享有细分行业 Beta 扩张红利。`);
+    } else {
+      baseRationale.unshift(`【板块顺风红利】: 所属 ${windInfo.sectorName} (${windInfo.sectorETF}) 正处于 RRG ${windInfo.quadrant} 象限，主力资金加速流入，享有行业级 Beta 扩张顺风。`);
+    }
+    posSuggestion += ` 【大势加成】: 板块赛道处于顺风领涨期，可逢均线回踩积极建仓。`;
   } else if (windInfo.windStatus === "headwind") {
-    baseRisks.unshift(`【板块逆风预警】: 所属 ${windInfo.sectorName} (${windInfo.sectorETF}) 处于 RRG ${windInfo.quadrant} 象限，行业动能滞后或失血，需防范行业集体杀估值风险。`);
-    posSuggestion += ` 【大势风控】: 鉴于板块处于 ${windInfo.quadrant} 逆风退潮期，建议控制单仓比例，分批吸纳或逢高锁利，切忌盲目急躁重仓。`;
+    if (windInfo.subIndustryETF && windInfo.subIndustryNameZh) {
+      baseRisks.unshift(`【赛道逆风预警】: 所属细分【${windInfo.subIndustryNameZh} (${windInfo.subIndustryETF})】处于 RRG ${windInfo.subIndustryQuadrant} 象限，赛道动能走弱或失血，需防范估值杀跌风险。`);
+    } else {
+      baseRisks.unshift(`【板块逆风预警】: 所属 ${windInfo.sectorName} (${windInfo.sectorETF}) 处于 RRG ${windInfo.quadrant} 象限，行业动能滞后或失血，需防范行业集体杀估值风险。`);
+    }
+    posSuggestion += ` 【大势风控】: 鉴于板块赛道处于 ${windInfo.subIndustryQuadrant || windInfo.quadrant} 逆风退潮期，建议控制单仓比例，分批吸纳或逢高锁利，切忌盲目急躁重仓。`;
   }
 
   const consensusOptions: AnalystConsensus["consensus"][] = ["Strong Buy", "Buy", "Hold"];
@@ -207,6 +221,12 @@ export function generateAnalysis(
       windStatus: windInfo.windStatus,
       action: windInfo.action,
       advice: windInfo.advice,
+      subIndustryETF: windInfo.subIndustryETF,
+      subIndustryName: windInfo.subIndustryNameZh || windInfo.subIndustryName,
+      subIndustryQuadrant: windInfo.subIndustryQuadrant,
+      subIndustryWind: windInfo.subIndustryWind,
+      subIndustryScore: windInfo.subIndustryScore,
+      subIndustryAction: windInfo.subIndustryAction,
     },
     analyst: {
       consensus: consensusOptions[seed % consensusOptions.length],

@@ -49,6 +49,13 @@ export interface StockMetrics {
   sectorWind?: "tailwind" | "neutral" | "headwind" | null;
   sectorScore?: number | null;
   sectorAction?: string | null;
+  // Level-2 Sub-Industry & Thematic Alpha
+  subIndustryETF?: string | null;
+  subIndustryName?: string | null;
+  subIndustryQuadrant?: "Leading" | "Weakening" | "Lagging" | "Improving" | "Unknown" | null;
+  subIndustryWind?: "tailwind" | "neutral" | "headwind" | null;
+  subIndustryScore?: number | null;
+  subIndustryAction?: string | null;
 }
 
 /** The strategy types supported by the MVP */

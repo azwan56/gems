@@ -225,3 +225,234 @@ export function getSectorETF(sector: string): string {
   return SECTOR_TO_ETF[sector] || "SPY";
 }
 
+/**
+ * 16 High-Liquidity Sub-Industry & Thematic ETFs mapping.
+ */
+export const SUB_INDUSTRY_ETFS: Record<
+  string,
+  { name: string; nameZh: string; parentSector: string; parentETF: string }
+> = {
+  SMH: { name: "Semiconductors", nameZh: "半导体与芯片", parentSector: "Technology", parentETF: "XLK" },
+  IGV: { name: "Software & Cloud", nameZh: "软件与SaaS云", parentSector: "Technology", parentETF: "XLK" },
+  CIBR: { name: "Cybersecurity", nameZh: "网络安全", parentSector: "Technology", parentETF: "XLK" },
+  KRE: { name: "Regional Banking", nameZh: "区域性银行", parentSector: "Financial Services", parentETF: "XLF" },
+  IPAY: { name: "Fintech & Payments", nameZh: "数字支付/Fintech", parentSector: "Financial Services", parentETF: "XLF" },
+  XBI: { name: "Biotechnology", nameZh: "生物科技 (Biotech)", parentSector: "Healthcare", parentETF: "XLV" },
+  IHI: { name: "Medical Devices", nameZh: "医疗器械精密仪器", parentSector: "Healthcare", parentETF: "XLV" },
+  ITA: { name: "Aerospace & Defense", nameZh: "国防军工与航天", parentSector: "Industrials", parentETF: "XLI" },
+  IYT: { name: "Transportation", nameZh: "交通运输 (道氏先导)", parentSector: "Industrials", parentETF: "XLI" },
+  ITB: { name: "Homebuilders", nameZh: "房屋建筑与建材", parentSector: "Consumer Cyclical", parentETF: "XLY" },
+  XRT: { name: "Retail", nameZh: "商业零售", parentSector: "Consumer Cyclical", parentETF: "XLY" },
+  XOP: { name: "Oil & Gas E&P", nameZh: "油气勘探开采", parentSector: "Energy", parentETF: "XLE" },
+  ICLN: { name: "Clean Energy", nameZh: "清洁能源", parentSector: "Energy", parentETF: "XLE" },
+  SOCL: { name: "Social Media", nameZh: "社交与数字媒体", parentSector: "Communication Services", parentETF: "XLC" },
+  IWO: { name: "Russell 2000 Growth", nameZh: "小盘成长", parentSector: "Broad", parentETF: "SPY" },
+  SPHD: { name: "High Dividend Low Vol", nameZh: "高股息低波", parentSector: "Broad", parentETF: "SPY" },
+};
+
+/**
+ * Maps standard FMP/Yahoo industry strings to Sub-Industry ETFs.
+ */
+export const INDUSTRY_TO_SUB_ETF: Record<string, string> = {
+  // Semiconductors
+  Semiconductors: "SMH",
+  "Semiconductor Equipment": "SMH",
+  "Semiconductor Equipment & Materials": "SMH",
+  // Software
+  "Software—Application": "IGV",
+  "Software—Infrastructure": "IGV",
+  "Software - Application": "IGV",
+  "Software - Infrastructure": "IGV",
+  "Information Technology Services": "IGV",
+  // Cybersecurity
+  Cybersecurity: "CIBR",
+  "Security & Protection Services": "CIBR",
+  // Regional Banks
+  "Banks—Regional": "KRE",
+  "Banks - Regional": "KRE",
+  // Payments / Fintech
+  "Credit Services": "IPAY",
+  "Financial Data": "IPAY",
+  "Financial Data & Stock Exchanges": "IPAY",
+  // Biotech
+  Biotechnology: "XBI",
+  // Medical Devices
+  "Medical Instruments": "IHI",
+  "Medical Devices": "IHI",
+  "Medical Instruments & Supplies": "IHI",
+  // Aerospace & Defense
+  "Aerospace & Defense": "ITA",
+  // Transportation
+  Railroads: "IYT",
+  "Integrated Freight & Logistics": "IYT",
+  Airlines: "IYT",
+  Trucking: "IYT",
+  Marine: "IYT",
+  // Homebuilders
+  "Residential Construction": "ITB",
+  "Building Materials": "ITB",
+  // Retail
+  "Internet Retail": "XRT",
+  "Specialty Retail": "XRT",
+  "Discount Stores": "XRT",
+  "Department Stores": "XRT",
+  // Oil & Gas
+  "Oil & Gas E&P": "XOP",
+  "Oil & Gas Exploration & Production": "XOP",
+  "Oil & Gas Equipment": "XOP",
+  "Oil & Gas Refining & Marketing": "XOP",
+  // Clean Energy
+  Solar: "ICLN",
+  "Clean Energy": "ICLN",
+  // Social Media
+  "Internet Content & Information": "SOCL",
+};
+
+/**
+ * Ticker-level precision overrides for white-chip / growth leaders.
+ */
+export const SYMBOL_SUB_ETF_OVERRIDES: Record<string, string> = {
+  NVDA: "SMH",
+  TSM: "SMH",
+  AVGO: "SMH",
+  ASML: "SMH",
+  AMD: "SMH",
+  QCOM: "SMH",
+  AMAT: "SMH",
+  ARM: "SMH",
+  LRCX: "SMH",
+  KLAC: "SMH",
+  MRVL: "SMH",
+  TXN: "SMH",
+  MU: "SMH",
+
+  MSFT: "IGV",
+  CRM: "IGV",
+  ADBE: "IGV",
+  NOW: "IGV",
+  ORCL: "IGV",
+  INTU: "IGV",
+  PLTR: "IGV",
+  SNOW: "IGV",
+  DDOG: "IGV",
+  MDB: "IGV",
+  APP: "IGV",
+  TTD: "IGV",
+  SHOP: "IGV",
+
+  PANW: "CIBR",
+  CRWD: "CIBR",
+  FTNT: "CIBR",
+  ZS: "CIBR",
+  NET: "CIBR",
+
+  TFC: "KRE",
+  CFG: "KRE",
+  KEY: "KRE",
+  FITB: "KRE",
+  HBAN: "KRE",
+  WAL: "KRE",
+  ZION: "KRE",
+
+  V: "IPAY",
+  MA: "IPAY",
+  PYPL: "IPAY",
+  SQ: "IPAY",
+  HOOD: "IPAY",
+  COIN: "IPAY",
+  AFRM: "IPAY",
+  SOFI: "IPAY",
+
+  LLY: "XBI",
+  VRTX: "XBI",
+  REGN: "XBI",
+  MRNA: "XBI",
+  BIIB: "XBI",
+
+  ISRG: "IHI",
+  MDT: "IHI",
+  ABT: "IHI",
+  BSX: "IHI",
+  SYK: "IHI",
+  DXCM: "IHI",
+
+  LMT: "ITA",
+  RTX: "ITA",
+  BA: "ITA",
+  NOC: "ITA",
+  GD: "ITA",
+  GE: "ITA",
+  AXON: "ITA",
+  RKLB: "ITA",
+
+  UNP: "IYT",
+  UPS: "IYT",
+  FDX: "IYT",
+  DAL: "IYT",
+  CSX: "IYT",
+
+  DHI: "ITB",
+  LEN: "ITB",
+  NVR: "ITB",
+  TOL: "ITB",
+
+  WMT: "XRT",
+  COST: "XRT",
+  TGT: "XRT",
+  ROST: "XRT",
+  CELH: "XRT",
+
+  OXY: "XOP",
+  EOG: "XOP",
+  DVN: "XOP",
+  FANG: "XOP",
+
+  FSLR: "ICLN",
+  ENPH: "ICLN",
+
+  META: "SOCL",
+  GOOGL: "SOCL",
+  GOOG: "SOCL",
+  PINS: "SOCL",
+  SNAP: "SOCL",
+  SPOT: "SOCL",
+};
+
+/**
+ * Resolve sub-industry ETF and name for a symbol and optional industry string.
+ */
+export function getSubIndustryInfo(
+  symbol: string,
+  industry?: string
+): { etf: string; name: string; nameZh: string; parentSector: string; parentETF: string } | null {
+  const symUpper = symbol.toUpperCase();
+  // 1. Ticker override has top priority
+  const overrideETF = SYMBOL_SUB_ETF_OVERRIDES[symUpper];
+  if (overrideETF && SUB_INDUSTRY_ETFS[overrideETF]) {
+    const info = SUB_INDUSTRY_ETFS[overrideETF];
+    return { etf: overrideETF, ...info };
+  }
+
+  // 2. Industry name mapping
+  if (industry && industry !== "Unknown") {
+    const etf = INDUSTRY_TO_SUB_ETF[industry];
+    if (etf && SUB_INDUSTRY_ETFS[etf]) {
+      const info = SUB_INDUSTRY_ETFS[etf];
+      return { etf, ...info };
+    }
+  }
+
+  // 3. Static sector map industry fallback
+  const staticEntry = SECTOR_MAP[symUpper];
+  if (staticEntry?.industry) {
+    const etf = INDUSTRY_TO_SUB_ETF[staticEntry.industry];
+    if (etf && SUB_INDUSTRY_ETFS[etf]) {
+      const info = SUB_INDUSTRY_ETFS[etf];
+      return { etf, ...info };
+    }
+  }
+
+  return null;
+}
+
+

@@ -84,13 +84,28 @@ export function calculateSectorScore(stock: StockMetrics): number {
 
   const quad = stock.sectorQuadrant;
   const wind = stock.sectorWind;
+  let parentScore = 50;
+  if (wind === "tailwind" || quad === "Leading") parentScore = 90;
+  else if (quad === "Improving") parentScore = 78;
+  else if (quad === "Weakening") parentScore = 45;
+  else if (wind === "headwind" || quad === "Lagging") parentScore = 25;
 
-  if (wind === "tailwind" || quad === "Leading") return 90;
-  if (quad === "Improving") return 78;
-  if (quad === "Weakening") return 45;
-  if (wind === "headwind" || quad === "Lagging") return 25;
+  if (stock.subIndustryScore !== undefined && stock.subIndustryScore !== null) {
+    return Math.round(0.35 * parentScore + 0.65 * stock.subIndustryScore);
+  }
 
-  return 50; // default neutral
+  if (stock.subIndustryQuadrant) {
+    let subScore = 50;
+    const subQuad = stock.subIndustryQuadrant;
+    const subWind = stock.subIndustryWind;
+    if (subWind === "tailwind" || subQuad === "Leading") subScore = 90;
+    else if (subQuad === "Improving") subScore = 78;
+    else if (subQuad === "Weakening") subScore = 45;
+    else if (subWind === "headwind" || subQuad === "Lagging") subScore = 25;
+    return Math.round(0.35 * parentScore + 0.65 * subScore);
+  }
+
+  return parentScore;
 }
 
 /**

@@ -114,12 +114,20 @@ export function enrichStockScores(
   const fundamentalScore = stock.fundamentalScore ?? computedFund;
 
   // Sector Rotation Sub-score & Wind Attribution (0-100)
-  const windInfo = getSectorRotationForStockSync(stock.symbol, stock.sector, rotationData);
+  const windInfo = getSectorRotationForStockSync(stock.symbol, stock.sector, stock.industry, rotationData);
   const sectorETF = stock.sectorETF ?? windInfo.sectorETF;
   const sectorQuadrant = stock.sectorQuadrant ?? windInfo.quadrant;
   const sectorWind = stock.sectorWind ?? windInfo.windStatus;
   const sectorAction = stock.sectorAction ?? windInfo.action;
   const sectorScore = stock.sectorScore ?? windInfo.sectorScore;
+
+  // Level-2 Sub-Industry fields
+  const subIndustryETF = stock.subIndustryETF ?? windInfo.subIndustryETF ?? null;
+  const subIndustryName = stock.subIndustryName ?? (windInfo.subIndustryNameZh || windInfo.subIndustryName) ?? null;
+  const subIndustryQuadrant = stock.subIndustryQuadrant ?? windInfo.subIndustryQuadrant ?? null;
+  const subIndustryWind = stock.subIndustryWind ?? windInfo.subIndustryWind ?? null;
+  const subIndustryScore = stock.subIndustryScore ?? windInfo.subIndustryScore ?? null;
+  const subIndustryAction = stock.subIndustryAction ?? windInfo.subIndustryAction ?? null;
 
   // 3D Composite Total Score (40% Fundamental + 30% Technical + 30% Sector Rotation)
   const composite = Math.round(fundamentalScore * 0.40 + technicalScore * 0.30 + sectorScore * 0.30);
@@ -134,6 +142,12 @@ export function enrichStockScores(
     sectorQuadrant,
     sectorWind,
     sectorAction,
+    subIndustryETF,
+    subIndustryName,
+    subIndustryQuadrant,
+    subIndustryWind,
+    subIndustryScore,
+    subIndustryAction,
     totalScore,
   };
 }
