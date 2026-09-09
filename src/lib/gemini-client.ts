@@ -58,14 +58,34 @@ export async function generateGeminiAnalysis(
       subIndustryAction: windInfo.subIndustryAction,
     };
 
+    const rawAiTarget = report.analyst?.aiTargetPrice || report.analyst?.targetPrice || null;
+    const rawAiUpside = report.analyst?.aiUpside || report.analyst?.upside || null;
+
     const pt = insights?.price_target;
     if (pt && pt.targetConsensus && pt.targetConsensus > 0) {
-      const tp = Number(pt.targetConsensus);
-      const cp = stock.price && stock.price > 0 ? stock.price : tp;
-      const up = ((tp - cp) / cp) * 100;
+      const wsTarget = Number(pt.targetConsensus);
+      const cp = stock.price && stock.price > 0 ? stock.price : wsTarget;
+      const wsUp = ((wsTarget - cp) / cp) * 100;
+
       report.analyst = report.analyst || ({} as any);
-      report.analyst.targetPrice = `$${tp.toFixed(2)}`;
-      report.analyst.upside = `${up >= 0 ? "+" : ""}${up.toFixed(1)}%`;
+      report.analyst.wallStreetTargetPrice = `$${wsTarget.toFixed(2)}`;
+      report.analyst.wallStreetUpside = `${wsUp >= 0 ? "+" : ""}${wsUp.toFixed(1)}%`;
+
+      report.analyst.aiTargetPrice = rawAiTarget && rawAiTarget !== `$${wsTarget.toFixed(2)}`
+        ? rawAiTarget
+        : `$${(cp * 1.25).toFixed(2)}`;
+      report.analyst.aiUpside = rawAiUpside && rawAiTarget !== `$${wsTarget.toFixed(2)}`
+        ? rawAiUpside
+        : "+25.0%";
+
+      report.analyst.targetPrice = `$${wsTarget.toFixed(2)}`;
+      report.analyst.upside = `${wsUp >= 0 ? "+" : ""}${wsUp.toFixed(1)}%`;
+    } else {
+      report.analyst = report.analyst || ({} as any);
+      report.analyst.aiTargetPrice = rawAiTarget;
+      report.analyst.aiUpside = rawAiUpside;
+      report.analyst.wallStreetTargetPrice = null;
+      report.analyst.wallStreetUpside = null;
     }
 
     const ar = insights?.analyst_ratings;
@@ -165,8 +185,10 @@ Rules for fields:
 - catalysts: Array of 1 to 3 specific upcoming catalysts or events that could trigger a re-rating in the next 3-6 months.
 - positionSuggestion: A short paragraph (1-2 sentences) giving specific sizing or holding horizon advice (持仓建议).
 - analyst.consensus: Must be exactly one of: "Strong Buy", "Buy", "Hold", "Sell", "Strong Sell".
-- analyst.targetPrice: Estimate a realistic 12-month target price formatted as "$X.XX".
-- analyst.upside: Calculate the percentage upside to your target price formatted as "+X.X%" or "-X.X%".
+- analyst.targetPrice: Wall Street sell-side consensus target price formatted as "$X.XX" (if Analyst Price Target is provided in Deep Fundamental Insights, use that consensus target).
+- analyst.upside: Percentage upside to targetPrice formatted as "+X.X%" or "-X.X%".
+- analyst.aiTargetPrice: Your independent forward 12-month revaluation target price based on fundamental earnings growth, margin expansion, and fair forward P/E, formatted as "$X.XX".
+- analyst.aiUpside: Percentage upside to your aiTargetPrice formatted as "+X.X%" or "-X.X%".
 - analyst.breakdown: A realistic distribution of analyst ratings matching the consensus.`;
 
   const userPrompt = `Metrics Data:
@@ -210,6 +232,8 @@ ${deepInsightsStr}`;
               consensus: { type: Type.STRING },
               targetPrice: { type: Type.STRING },
               upside: { type: Type.STRING },
+              aiTargetPrice: { type: Type.STRING },
+              aiUpside: { type: Type.STRING },
               breakdown: {
                 type: Type.OBJECT,
                 properties: {

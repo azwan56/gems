@@ -2,13 +2,14 @@
 
 import { useState, useEffect, useCallback, useMemo } from "react";
 import Link from "next/link";
-import { Gem, ArrowLeft, StarOff, Trash2, Shield, Sword, Rocket, CircleDollarSign, RefreshCcw, AlertTriangle, HelpCircle, ChevronDown, Languages, ArrowUpFromLine, Check, Loader2, X, FileText, TrendingUp, Activity, ActivitySquare, Target, Users, Zap, ShieldAlert, Download, Eye } from "lucide-react";
+import { Gem, ArrowLeft, StarOff, Trash2, Shield, Sword, Rocket, CircleDollarSign, RefreshCcw, AlertTriangle, HelpCircle, ChevronDown, Languages, ArrowUpFromLine, Check, Loader2, X, FileText, TrendingUp, Activity, ActivitySquare, Target, Users, Zap, ShieldAlert, Download, Eye, Sparkles, Compass } from "lucide-react";
 import type { WatchlistItem, StockMetrics } from "@/lib/types";
 import { useLanguage } from "@/lib/language-context";
 import { useAuth } from "@/lib/auth-context";
 import { applyFilters } from "@/lib/screener-engine";
 import UserMenu from "@/components/UserMenu";
 import PremiumGate from "@/components/PremiumGate";
+import { SectorWindBadge } from "@/components/SectorWindBadge";
 
 // Static badge colors for strategy tags
 const strategyBadgeColors: Record<string, string> = {
@@ -1024,32 +1025,77 @@ export default function WatchlistPage() {
               ) : analysisPanel.report ? (
                 <>
                   {/* Analyst Pricing & Targets */}
-                  <div className="grid grid-cols-2 gap-3 sm:gap-4">
-                    <div className="bg-gradient-to-br from-blue-900/30 to-indigo-900/30 border border-blue-500/20 rounded-xl p-4">
-                      <div className="flex items-center gap-1.5 text-blue-400 mb-2">
-                        <Target className="w-3.5 h-3.5 shrink-0" />
-                        <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider">{t("Price Target", "目标价")}</span>
+                  {/* Analyst Pricing & Targets: Dual Wall Street Consensus + AI Fair Value */}
+                  {(() => {
+                    const wsTarget = analysisPanel.report.analyst.wallStreetTargetPrice;
+                    const wsUpside = analysisPanel.report.analyst.wallStreetUpside;
+                    const aiTarget = analysisPanel.report.analyst.aiTargetPrice;
+                    const aiUpside = analysisPanel.report.analyst.aiUpside;
+                    const hasDual = Boolean(wsTarget && aiTarget && wsTarget !== aiTarget);
+
+                    return (
+                      <div className={`grid gap-3 sm:gap-4 ${hasDual ? "grid-cols-1 sm:grid-cols-3" : "grid-cols-2"}`}>
+                        {/* Wall Street Consensus Target */}
+                        <div className="bg-gradient-to-br from-blue-950/40 to-slate-900/60 border border-blue-500/20 rounded-xl p-4">
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center gap-1.5 text-blue-400">
+                              <Target className="w-3.5 h-3.5 shrink-0" />
+                              <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider">{t("Wall St Target", "华尔街目标价")}</span>
+                            </div>
+                            {hasDual && (
+                              <span className="text-[9px] px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-300 font-mono border border-blue-500/20">
+                                {t("Consensus", "机构中位")}
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-xl sm:text-2xl font-bold text-white truncate">
+                            {wsTarget || analysisPanel.report.analyst.targetPrice}
+                          </div>
+                          <div className={`text-xs font-semibold mt-1 font-mono ${(wsUpside || analysisPanel.report.analyst.upside || "").startsWith("-") ? "text-rose-400" : "text-emerald-400"}`}>
+                            {wsUpside || analysisPanel.report.analyst.upside}
+                          </div>
+                        </div>
+
+                        {/* AI Revaluation Target (shown when dual targets exist) */}
+                        {hasDual && (
+                          <div className="bg-gradient-to-br from-purple-950/40 to-slate-900/60 border border-purple-500/20 rounded-xl p-4">
+                            <div className="flex items-center justify-between mb-2">
+                              <div className="flex items-center gap-1.5 text-purple-400">
+                                <Sparkles className="w-3.5 h-3.5 shrink-0" />
+                                <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider">{t("AI Fair Value", "AI 基本面重估")}</span>
+                              </div>
+                              <span className="text-[9px] px-1.5 py-0.5 rounded bg-purple-500/10 text-purple-300 font-mono border border-purple-500/20">
+                                {t("Forward Model", "前瞻测算")}
+                              </span>
+                            </div>
+                            <div className="text-xl sm:text-2xl font-bold text-white truncate">
+                              {aiTarget}
+                            </div>
+                            <div className={`text-xs font-semibold mt-1 font-mono ${(aiUpside || "").startsWith("-") ? "text-rose-400" : "text-emerald-400"}`}>
+                              {aiUpside}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Market Consensus Breakdown */}
+                        <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-4">
+                          <div className="flex items-center gap-1.5 text-slate-400 mb-2">
+                            <Users className="w-3.5 h-3.5 shrink-0" />
+                            <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider">{t("Consensus", "市场共识")}</span>
+                          </div>
+                          <div className="text-lg sm:text-xl font-bold text-emerald-400 mb-1 truncate">{t(analysisPanel.report.analyst.consensus, analysisPanel.report.analyst.consensus)}</div>
+                          <div className="text-[10px] text-slate-500 flex flex-wrap gap-x-2">
+                            <span>{t("Buy", "买入")}: {analysisPanel.report.analyst.breakdown.buy}</span>
+                            <span>{t("Hold", "持有")}: {analysisPanel.report.analyst.breakdown.hold}</span>
+                            <span>{t("Sell", "卖出")}: {analysisPanel.report.analyst.breakdown.sell}</span>
+                          </div>
+                        </div>
                       </div>
-                      <div className="text-xl sm:text-2xl font-bold text-white truncate">{analysisPanel.report.analyst.targetPrice}</div>
-                      <div className="text-xs font-semibold text-emerald-400 mt-1">{analysisPanel.report.analyst.upside}</div>
-                    </div>
-                    
-                    <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-4">
-                      <div className="flex items-center gap-1.5 text-slate-400 mb-2">
-                        <Users className="w-3.5 h-3.5 shrink-0" />
-                        <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider">{t("Consensus", "市场共识")}</span>
-                      </div>
-                      <div className="text-lg sm:text-xl font-bold text-emerald-400 mb-1 truncate">{t(analysisPanel.report.analyst.consensus, analysisPanel.report.analyst.consensus)}</div>
-                      <div className="text-[10px] text-slate-500 flex flex-wrap gap-x-2">
-                        <span>{t("Buy", "买入")}: {analysisPanel.report.analyst.breakdown.buy}</span>
-                        <span>{t("Hold", "持有")}: {analysisPanel.report.analyst.breakdown.hold}</span>
-                        <span>{t("Sell", "卖出")}: {analysisPanel.report.analyst.breakdown.sell}</span>
-                      </div>
-                    </div>
-                  </div>
+                    );
+                  })()}
 
                   {/* Quantitative Scores */}
-                  <div className="grid grid-cols-2 gap-3 sm:gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mt-3 sm:mt-4">
                     <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-4">
                       <div className="flex items-center gap-1.5 text-purple-400 mb-2">
                         <ActivitySquare className="w-3.5 h-3.5 shrink-0" />
@@ -1075,6 +1121,33 @@ export default function WatchlistPage() {
                       </div>
                       <div className="w-full bg-slate-900 h-1.5 mt-2 rounded-full overflow-hidden">
                         <div className="bg-amber-500 h-full rounded-full" style={{ width: `${analysisPanel.report.fundamentalScore}%` }} />
+                      </div>
+                    </div>
+
+                    <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-1.5 text-blue-400">
+                          <Compass className="w-3.5 h-3.5 shrink-0" />
+                          <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider">{t("Sector Rotation", "板块动能评分")}</span>
+                        </div>
+                        {analysisPanel.report.sectorRotation && (
+                          <SectorWindBadge
+                            wind={analysisPanel.report.sectorRotation.windStatus}
+                            quadrant={analysisPanel.report.sectorRotation.quadrant}
+                            etf={analysisPanel.report.sectorRotation.etf}
+                            subIndustryETF={analysisPanel.report.sectorRotation.subIndustryETF}
+                            subIndustryName={analysisPanel.report.sectorRotation.subIndustryName}
+                            subIndustryQuadrant={analysisPanel.report.sectorRotation.subIndustryQuadrant}
+                            subIndustryWind={analysisPanel.report.sectorRotation.subIndustryWind}
+                          />
+                        )}
+                      </div>
+                      <div className="flex items-baseline gap-1.5">
+                        <span className="text-xl sm:text-2xl font-bold text-white">{analysisPanel.report.sectorScore ?? 50}</span>
+                        <span className="text-[10px] text-slate-500">/ 100</span>
+                      </div>
+                      <div className="w-full bg-slate-900 h-1.5 mt-2 rounded-full overflow-hidden">
+                        <div className="bg-blue-500 h-full rounded-full" style={{ width: `${analysisPanel.report.sectorScore ?? 50}%` }} />
                       </div>
                     </div>
                   </div>

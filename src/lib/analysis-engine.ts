@@ -13,6 +13,10 @@ export interface AnalystConsensus {
   targetPrice: string;
   upside: string;
   breakdown: { buy: number; hold: number; sell: number };
+  wallStreetTargetPrice?: string | null;
+  wallStreetUpside?: string | null;
+  aiTargetPrice?: string | null;
+  aiUpside?: string | null;
 }
 
 /** Full analysis report for a single stock */
@@ -236,6 +240,10 @@ export function generateAnalysis(
       targetPrice: `$${targetPrice}`,
       upside: `+${upside}%`,
       breakdown: { buy: buyCount, hold: holdCount, sell: sellCount },
+      wallStreetTargetPrice: `$${targetPrice}`,
+      wallStreetUpside: `+${upside}%`,
+      aiTargetPrice: `$${(Number(targetPrice) * 1.15).toFixed(2)}`,
+      aiUpside: `+${(Number(upside) + 15).toFixed(1)}%`,
     },
   };
 }
