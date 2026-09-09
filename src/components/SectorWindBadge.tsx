@@ -2,11 +2,13 @@
 
 import React from "react";
 import { TrendingUp, TrendingDown, Minus } from "lucide-react";
+import { MACRO_SECTOR_NAMES_ZH } from "@/lib/sector-map";
 
 interface SectorWindBadgeProps {
   wind?: "tailwind" | "neutral" | "headwind" | null;
   quadrant?: string | null;
   etf?: string | null;
+  sectorName?: string | null;
   size?: "sm" | "md";
   className?: string;
   // Sub-industry props
@@ -20,6 +22,7 @@ export const SectorWindBadge: React.FC<SectorWindBadgeProps> = ({
   wind,
   quadrant,
   etf,
+  sectorName,
   size = "sm",
   className = "",
   subIndustryETF,
@@ -30,7 +33,8 @@ export const SectorWindBadge: React.FC<SectorWindBadgeProps> = ({
   const effectiveWind = subIndustryWind ?? wind;
   const effectiveQuad = subIndustryQuadrant ?? quadrant;
   const displayETF = subIndustryETF || etf;
-  const displayName = subIndustryName;
+  const macroNameZh = (sectorName && MACRO_SECTOR_NAMES_ZH[sectorName]) || (etf && MACRO_SECTOR_NAMES_ZH[etf]) || null;
+  const displayName = subIndustryName || macroNameZh;
 
   if (!effectiveWind && !effectiveQuad) return null;
 

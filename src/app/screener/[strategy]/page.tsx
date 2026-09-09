@@ -147,12 +147,14 @@ export default function FunnelScreenerPage() {
       all: stocks.length,
       ACCUMULATE: 0,
       HOLD: 0,
+      NEUTRAL: 0,
       REDUCE: 0,
       AVOID: 0,
     };
     for (const s of stocks) {
       const a = s.subIndustryAction || s.sectorAction || "NEUTRAL";
       if (a in counts) counts[a]++;
+      else counts.NEUTRAL++;
     }
     return counts;
   }, [stocks]);
@@ -832,6 +834,17 @@ export default function FunnelScreenerPage() {
                       {t("Hold", "顺势持有")} ({postureCounts.HOLD})
                     </button>
                     <button
+                      onClick={() => setPostureFilter("NEUTRAL")}
+                      className={`px-2.5 py-1 rounded-md text-xs font-medium transition-all flex items-center gap-1.5 ${
+                        postureFilter === "NEUTRAL"
+                          ? "bg-slate-600/40 text-slate-200 border border-slate-500/50 font-bold"
+                          : "text-slate-400 hover:text-slate-300 hover:bg-slate-800"
+                      }`}
+                    >
+                      <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
+                      {t("Neutral", "中性观察")} ({postureCounts.NEUTRAL})
+                    </button>
+                    <button
                       onClick={() => setPostureFilter("REDUCE")}
                       className={`px-2.5 py-1 rounded-md text-xs font-medium transition-all flex items-center gap-1.5 ${
                         postureFilter === "REDUCE"
@@ -912,6 +925,7 @@ export default function FunnelScreenerPage() {
                                     wind={s.sectorWind}
                                     quadrant={s.sectorQuadrant}
                                     etf={s.sectorETF}
+                                    sectorName={s.sector}
                                     subIndustryETF={s.subIndustryETF}
                                     subIndustryName={s.subIndustryName}
                                     subIndustryQuadrant={s.subIndustryQuadrant}
@@ -991,6 +1005,7 @@ export default function FunnelScreenerPage() {
                                     wind={s.sectorWind}
                                     quadrant={s.sectorQuadrant}
                                     etf={s.sectorETF}
+                                    sectorName={s.sector}
                                     subIndustryETF={s.subIndustryETF}
                                     subIndustryName={s.subIndustryName}
                                     subIndustryQuadrant={s.subIndustryQuadrant}

@@ -184,6 +184,55 @@ const SECTOR_MAP: Record<string, { sector: string; industry: string }> = {
   ABNB: { sector: "Consumer Cyclical", industry: "Travel Services" },
   SPOT: { sector: "Communication Services", industry: "Internet Content & Information" },
   PINS: { sector: "Communication Services", industry: "Internet Content & Information" },
+
+  // ---- Additional Core & GARP Mappings ----
+  GEN: { sector: "Technology", industry: "Software—Infrastructure" },
+  INCY: { sector: "Healthcare", industry: "Biotechnology" },
+  NEM: { sector: "Basic Materials", industry: "Gold" },
+  CF: { sector: "Basic Materials", industry: "Agricultural Inputs" },
+  MOS: { sector: "Basic Materials", industry: "Agricultural Inputs" },
+  FCX: { sector: "Basic Materials", industry: "Copper" },
+  SCCO: { sector: "Basic Materials", industry: "Copper" },
+  LIN: { sector: "Basic Materials", industry: "Specialty Chemicals" },
+  APD: { sector: "Basic Materials", industry: "Specialty Chemicals" },
+  ECL: { sector: "Basic Materials", industry: "Specialty Chemicals" },
+  SHW: { sector: "Basic Materials", industry: "Specialty Chemicals" },
+  NUE: { sector: "Basic Materials", industry: "Steel" },
+  STLD: { sector: "Basic Materials", industry: "Steel" },
+};
+
+/**
+ * Chinese names for the 11 GICS macro sectors & SPDR ETFs.
+ */
+export const MACRO_SECTOR_NAMES_ZH: Record<string, string> = {
+  Technology: "信息科技",
+  "Information Technology": "信息科技",
+  XLK: "科技",
+  "Financial Services": "金融",
+  Financials: "金融",
+  XLF: "金融",
+  Healthcare: "医疗保健",
+  "Health Care": "医疗保健",
+  XLV: "医疗",
+  "Consumer Cyclical": "非必需消费",
+  "Consumer Discretionary": "非必需消费",
+  XLY: "非必需消费",
+  "Consumer Defensive": "必需消费",
+  "Consumer Staples": "必需消费",
+  XLP: "必需消费",
+  Energy: "能源",
+  XLE: "能源",
+  "Basic Materials": "基础材料",
+  Materials: "基础材料",
+  XLB: "材料",
+  Industrials: "工业制造",
+  XLI: "工业",
+  Utilities: "公用事业",
+  XLU: "公用事业",
+  "Real Estate": "房地产",
+  XLRE: "房地产",
+  "Communication Services": "通信服务",
+  XLC: "通信",
 };
 
 /**
