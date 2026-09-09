@@ -5,34 +5,40 @@
 
 import { getSectorInfo, getSectorETF, getSubIndustryInfo } from "./sector-map";
 
+export interface RrgPoint {
+  date: string;
+  rs_ratio: number;
+  rs_momentum: number;
+}
+
+export interface SectorRotationItem {
+  name: string;
+  quadrant: "Leading" | "Weakening" | "Lagging" | "Improving" | "Unknown";
+  action: "ACCUMULATE" | "HOLD" | "REDUCE" | "AVOID" | "NEUTRAL";
+  macroAlignment?: "favored" | "neutral" | "avoid";
+  netScore?: number;
+  bullishScore?: number;
+  bearishScore?: number;
+  recommendedStocks?: string[];
+  trimStocks?: string[];
+  rsRatio?: number;
+  rsMomentum?: number;
+  velocity?: number;
+  directionAngle?: number;
+  trajectory?: RrgPoint[];
+}
+
+export interface SubIndustryRotationItem extends SectorRotationItem {
+  parentSector?: string;
+}
+
 export interface SectorRotationData {
   date: string;
   macroPhase: string;
   favoredSectors: string[];
   avoidSectors: string[];
-  sectors: Record<string, {
-    name: string;
-    quadrant: "Leading" | "Weakening" | "Lagging" | "Improving" | "Unknown";
-    action: "ACCUMULATE" | "HOLD" | "REDUCE" | "AVOID" | "NEUTRAL";
-    macroAlignment?: "favored" | "neutral" | "avoid";
-    netScore?: number;
-    bullishScore?: number;
-    bearishScore?: number;
-    recommendedStocks?: string[];
-    trimStocks?: string[];
-  }>;
-  subIndustries?: Record<string, {
-    name: string;
-    parentSector?: string;
-    quadrant: "Leading" | "Weakening" | "Lagging" | "Improving" | "Unknown";
-    action: "ACCUMULATE" | "HOLD" | "REDUCE" | "AVOID" | "NEUTRAL";
-    macroAlignment?: "favored" | "neutral" | "avoid";
-    netScore?: number;
-    bullishScore?: number;
-    bearishScore?: number;
-    recommendedStocks?: string[];
-    trimStocks?: string[];
-  }>;
+  sectors: Record<string, SectorRotationItem>;
+  subIndustries?: Record<string, SubIndustryRotationItem>;
   narrative?: string;
   tacticalActionCards?: string;
 }

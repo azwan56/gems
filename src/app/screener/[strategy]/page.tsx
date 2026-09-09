@@ -17,6 +17,7 @@ import UserMenu from "@/components/UserMenu";
 import PremiumGate from "@/components/PremiumGate";
 import StockChatAssistant from "@/components/StockChatAssistant";
 import { SectorWindBadge } from "@/components/SectorWindBadge";
+import RrgQuadrantChart from "@/components/RrgQuadrantChart";
 
 import { DEFAULT_STRATEGY_PRESETS } from "@/lib/strategy-constants";
 
@@ -133,6 +134,10 @@ export default function FunnelScreenerPage() {
   const [shareCardUrl, setShareCardUrl] = useState<string | null>(null);
   const [isGeneratingCard, setIsGeneratingCard] = useState(false);
   const [chatOpenKey, setChatOpenKey] = useState<number>(0);
+
+  // RRG Quadrant Chart Modal State
+  const [showRrgModal, setShowRrgModal] = useState<boolean>(false);
+  const [rrgHighlight, setRrgHighlight] = useState<{ etf?: string | null; subEtf?: string | null; symbol?: string | null }>({});
 
   // Seeking Alpha custom list management
   const [saSymbols, setSaSymbols] = useState<string[]>([]);
@@ -688,10 +693,21 @@ export default function FunnelScreenerPage() {
                       {t("Auto-refresh: weekdays 5 PM ET", "自动刷新：交易日收盘后1小时")}
                     </span>
                     <button
+                      onClick={() => {
+                        setRrgHighlight({});
+                        setShowRrgModal(true);
+                      }}
+                      title={t("View Sector Rotation RRG Quadrant Chart", "查看板块与细分赛道 RRG 四象限图")}
+                      className="w-full sm:w-auto mt-2 sm:mt-0 sm:ml-auto flex items-center justify-center gap-1.5 px-2.5 py-1.5 sm:py-1 rounded bg-blue-600/20 hover:bg-blue-600/30 text-blue-300 border border-blue-500/30 transition-colors text-xs font-medium"
+                    >
+                      <Compass className="w-3.5 h-3.5 text-blue-400" />
+                      <span>{t("RRG Quadrant Chart", "RRG 轮动象限图")}</span>
+                    </button>
+                    <button
                       onClick={refreshPool}
                       disabled={refreshing}
                       title={t("Force refresh data from FMP API", "强制从 FMP API 刷新数据")}
-                      className="w-full sm:w-auto mt-2 sm:mt-0 sm:ml-auto flex items-center justify-center gap-1.5 px-2.5 py-1.5 sm:py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition-colors disabled:opacity-50"
+                      className="w-full sm:w-auto mt-2 sm:mt-0 flex items-center justify-center gap-1.5 px-2.5 py-1.5 sm:py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition-colors disabled:opacity-50"
                     >
                       <RefreshCw className={`w-3 h-3 ${refreshing ? "animate-spin" : ""}`} />
                       {refreshing ? t("Refreshing...", "刷新中...") : t("Manual Refresh", "手动刷新")}
@@ -1401,16 +1417,33 @@ export default function FunnelScreenerPage() {
                         <h3 className="text-sm font-bold text-blue-400 uppercase tracking-widest flex items-center gap-2">
                           <Compass className="w-4 h-4" /> {t("Sector Rotation Context", "自上而下板块大势与宏观契合度")}
                         </h3>
-                        <SectorWindBadge
-                          wind={analysisReport.sectorRotation.windStatus}
-                          quadrant={analysisReport.sectorRotation.quadrant}
-                          etf={analysisReport.sectorRotation.etf}
-                          subIndustryETF={analysisReport.sectorRotation.subIndustryETF}
-                          subIndustryName={analysisReport.sectorRotation.subIndustryName}
-                          subIndustryQuadrant={analysisReport.sectorRotation.subIndustryQuadrant}
-                          subIndustryWind={analysisReport.sectorRotation.subIndustryWind}
-                          size="md"
-                        />
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => {
+                              setRrgHighlight({
+                                etf: analysisReport.sectorRotation?.etf,
+                                subEtf: analysisReport.sectorRotation?.subIndustryETF,
+                                symbol: analyzingStock?.symbol,
+                              });
+                              setShowRrgModal(true);
+                            }}
+                            className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-blue-600/20 hover:bg-blue-600/30 border border-blue-500/40 text-blue-300 text-xs transition-colors font-medium"
+                            title="在 RRG 四象限图中查看当前标的的板块及细分赛道动能位置"
+                          >
+                            <Compass className="w-3.5 h-3.5 text-blue-400" />
+                            <span>在四象限图中定位</span>
+                          </button>
+                          <SectorWindBadge
+                            wind={analysisReport.sectorRotation.windStatus}
+                            quadrant={analysisReport.sectorRotation.quadrant}
+                            etf={analysisReport.sectorRotation.etf}
+                            subIndustryETF={analysisReport.sectorRotation.subIndustryETF}
+                            subIndustryName={analysisReport.sectorRotation.subIndustryName}
+                            subIndustryQuadrant={analysisReport.sectorRotation.subIndustryQuadrant}
+                            subIndustryWind={analysisReport.sectorRotation.subIndustryWind}
+                            size="md"
+                          />
+                        </div>
                       </div>
                       <p className="text-slate-300 text-sm leading-relaxed mb-3">
                         {analysisReport.sectorRotation.advice}
@@ -1549,6 +1582,21 @@ export default function FunnelScreenerPage() {
           </div>
         </div>
       )}
+      {/* RRG Quadrant Chart Modal Dialog */}
+      {showRrgModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="w-full max-w-5xl max-h-[92vh] overflow-y-auto">
+            <RrgQuadrantChart
+              isModal={true}
+              onClose={() => setShowRrgModal(false)}
+              highlightETF={rrgHighlight.etf}
+              highlightSubETF={rrgHighlight.subEtf}
+              symbol={rrgHighlight.symbol}
+            />
+          </div>
+        </div>
+      )}
+
       {analyzingStock && (
         <StockChatAssistant
           key={`${analyzingStock.symbol}-${chatOpenKey}`}
