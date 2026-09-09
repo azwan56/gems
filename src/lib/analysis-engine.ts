@@ -178,7 +178,10 @@ export function generateAnalysis(
     ],
   };
 
-  const windInfo = getSectorRotationForStockSync(stock.symbol, stock.sector, stock.industry, rotationData);
+  const windInfo = getSectorRotationForStockSync(stock.symbol, stock.sector, stock.industry, rotationData, {
+    marketCap: stock.marketCap,
+    strategy: strategyType,
+  });
 
   let baseRationale = [...(rationaleMap[strategyType] ?? rationaleMap.large_growth)];
   let baseRisks = [...(risksMap[strategyType] ?? risksMap.large_growth)];

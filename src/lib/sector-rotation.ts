@@ -67,7 +67,8 @@ export function getSectorRotationForStockSync(
   symbol: string,
   sectorName?: string,
   industryOrData?: string | SectorRotationData | null,
-  maybeRotationData?: SectorRotationData | null
+  maybeRotationData?: SectorRotationData | null,
+  options?: { marketCap?: number | null; strategy?: string | null }
 ): StockSectorWind {
   const symUpper = symbol.toUpperCase();
   const info = getSectorInfo(symUpper);
@@ -111,8 +112,8 @@ export function getSectorRotationForStockSync(
   if (macroAlign === "favored") parentScore = Math.min(100, parentScore + 10);
   if (macroAlign === "avoid") parentScore = Math.max(0, parentScore - 15);
 
-  // Level-2 Sub-Industry resolution
-  const subInfo = getSubIndustryInfo(symUpper, industryName || info.industry);
+  // Level-2 Sub-Industry resolution (supports exact, semantic keyword, and Russell 2000 IWO fallback)
+  const subInfo = getSubIndustryInfo(symUpper, industryName || info.industry, options);
   let subIndustryETF: string | null = null;
   let subIndustryName: string | null = null;
   let subIndustryNameZh: string | null = null;

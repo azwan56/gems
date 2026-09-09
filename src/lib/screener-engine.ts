@@ -114,7 +114,9 @@ export function enrichStockScores(
   const fundamentalScore = stock.fundamentalScore ?? computedFund;
 
   // Sector Rotation Sub-score & Wind Attribution (0-100)
-  const windInfo = getSectorRotationForStockSync(stock.symbol, stock.sector, stock.industry, rotationData);
+  const windInfo = getSectorRotationForStockSync(stock.symbol, stock.sector, stock.industry, rotationData, {
+    marketCap: stock.marketCap,
+  });
   const sectorETF = stock.sectorETF ?? windInfo.sectorETF;
   const sectorQuadrant = stock.sectorQuadrant ?? windInfo.quadrant;
   const sectorWind = stock.sectorWind ?? windInfo.windStatus;

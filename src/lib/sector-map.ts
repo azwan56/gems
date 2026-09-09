@@ -258,54 +258,72 @@ export const INDUSTRY_TO_SUB_ETF: Record<string, string> = {
   Semiconductors: "SMH",
   "Semiconductor Equipment": "SMH",
   "Semiconductor Equipment & Materials": "SMH",
-  // Software
+  "Semiconductor - Equipment & Materials": "SMH",
+  // Software & Cloud SaaS
   "Software—Application": "IGV",
   "Software—Infrastructure": "IGV",
   "Software - Application": "IGV",
   "Software - Infrastructure": "IGV",
+  "Software—AI": "IGV",
   "Information Technology Services": "IGV",
   // Cybersecurity
   Cybersecurity: "CIBR",
   "Security & Protection Services": "CIBR",
-  // Regional Banks
+  // Regional Banks & Thrifts
   "Banks—Regional": "KRE",
   "Banks - Regional": "KRE",
+  "Thrifts & Mortgage Finance": "KRE",
+  "Savings Institutions": "KRE",
   // Payments / Fintech
   "Credit Services": "IPAY",
   "Financial Data": "IPAY",
   "Financial Data & Stock Exchanges": "IPAY",
-  // Biotech
+  // Biotech & Pharmaceuticals (vital for Russell 2000 & IPOs)
   Biotechnology: "XBI",
-  // Medical Devices
+  "Drug Manufacturers": "XBI",
+  "Drug Manufacturers—General": "XBI",
+  "Drug Manufacturers - General": "XBI",
+  "Drug Manufacturers—Specialty & Generic": "XBI",
+  "Drug Manufacturers - Specialty & Generic": "XBI",
+  "Diagnostics & Research": "XBI",
+  // Medical Devices & Instruments
   "Medical Instruments": "IHI",
   "Medical Devices": "IHI",
   "Medical Instruments & Supplies": "IHI",
+  "Medical Devices & Instruments": "IHI",
   // Aerospace & Defense
   "Aerospace & Defense": "ITA",
-  // Transportation
+  // Transportation & Logistics
   Railroads: "IYT",
   "Integrated Freight & Logistics": "IYT",
   Airlines: "IYT",
   Trucking: "IYT",
   Marine: "IYT",
-  // Homebuilders
+  "Marine Shipping": "IYT",
+  // Homebuilders & Building Materials
   "Residential Construction": "ITB",
   "Building Materials": "ITB",
-  // Retail
+  // Retail & E-Commerce
   "Internet Retail": "XRT",
   "Specialty Retail": "XRT",
   "Discount Stores": "XRT",
   "Department Stores": "XRT",
-  // Oil & Gas
+  "Apparel Retail": "XRT",
+  "Footwear & Accessories": "XRT",
+  // Oil & Gas Exploration & Production
   "Oil & Gas E&P": "XOP",
   "Oil & Gas Exploration & Production": "XOP",
   "Oil & Gas Equipment": "XOP",
   "Oil & Gas Refining & Marketing": "XOP",
-  // Clean Energy
+  "Oil & Gas Integrated": "XOP",
+  // Clean Energy & Renewables
   Solar: "ICLN",
   "Clean Energy": "ICLN",
-  // Social Media
+  "Utilities—Renewable": "ICLN",
+  "Renewable Energy Equipment & Services": "ICLN",
+  // Social Media & Digital Content
   "Internet Content & Information": "SOCL",
+  "Electronic Gaming & Multimedia": "SOCL",
 };
 
 /**
@@ -419,11 +437,18 @@ export const SYMBOL_SUB_ETF_OVERRIDES: Record<string, string> = {
 };
 
 /**
- * Resolve sub-industry ETF and name for a symbol and optional industry string.
+ * Resolve sub-industry ETF and name for a symbol, optional industry string, and optional marketCap/strategy.
+ * Multi-layer resolution:
+ *   1. Ticker overrides (top mega-caps & leaders)
+ *   2. Exact GICS industry match
+ *   3. Semantic / keyword substring match (IPOs and small caps with variant naming)
+ *   4. Static map fallback
+ *   5. Small-Cap Growth style alpha fallback (IWO) for small caps without vertical thematic ETF
  */
 export function getSubIndustryInfo(
   symbol: string,
-  industry?: string
+  industry?: string,
+  options?: { marketCap?: number | null; strategy?: string | null }
 ): { etf: string; name: string; nameZh: string; parentSector: string; parentETF: string } | null {
   const symUpper = symbol.toUpperCase();
   // 1. Ticker override has top priority
@@ -433,13 +458,31 @@ export function getSubIndustryInfo(
     return { etf: overrideETF, ...info };
   }
 
-  // 2. Industry name mapping
+  // 2. Industry name mapping (Exact + Semantic keyword fallback)
   if (industry && industry !== "Unknown") {
+    // 2a. Exact match
     const etf = INDUSTRY_TO_SUB_ETF[industry];
     if (etf && SUB_INDUSTRY_ETFS[etf]) {
       const info = SUB_INDUSTRY_ETFS[etf];
       return { etf, ...info };
     }
+
+    // 2b. Semantic keyword / substring fallback (crucial for newly listed IPOs and Russell 2000)
+    const indLower = industry.toLowerCase();
+    if (indLower.includes("semiconductor")) return { etf: "SMH", ...SUB_INDUSTRY_ETFS["SMH"] };
+    if (indLower.includes("software") || indLower.includes("saas") || indLower.includes("cloud")) return { etf: "IGV", ...SUB_INDUSTRY_ETFS["IGV"] };
+    if (indLower.includes("cyber") || (indLower.includes("security") && !indLower.includes("financial"))) return { etf: "CIBR", ...SUB_INDUSTRY_ETFS["CIBR"] };
+    if ((indLower.includes("regional") && indLower.includes("bank")) || indLower.includes("thrift")) return { etf: "KRE", ...SUB_INDUSTRY_ETFS["KRE"] };
+    if (indLower.includes("biotech") || indLower.includes("drug") || indLower.includes("pharma")) return { etf: "XBI", ...SUB_INDUSTRY_ETFS["XBI"] };
+    if (indLower.includes("medical instrument") || indLower.includes("medical device")) return { etf: "IHI", ...SUB_INDUSTRY_ETFS["IHI"] };
+    if (indLower.includes("aerospace") || indLower.includes("defense")) return { etf: "ITA", ...SUB_INDUSTRY_ETFS["ITA"] };
+    if (indLower.includes("railroad") || indLower.includes("airline") || indLower.includes("freight") || indLower.includes("trucking")) return { etf: "IYT", ...SUB_INDUSTRY_ETFS["IYT"] };
+    if (indLower.includes("homebuilder") || indLower.includes("residential construction") || indLower.includes("building material")) return { etf: "ITB", ...SUB_INDUSTRY_ETFS["ITB"] };
+    if (indLower.includes("retail")) return { etf: "XRT", ...SUB_INDUSTRY_ETFS["XRT"] };
+    if (indLower.includes("oil & gas") || indLower.includes("e&p") || indLower.includes("exploration & production") || indLower.includes("drilling")) return { etf: "XOP", ...SUB_INDUSTRY_ETFS["XOP"] };
+    if (indLower.includes("solar") || indLower.includes("clean energy") || indLower.includes("renewable")) return { etf: "ICLN", ...SUB_INDUSTRY_ETFS["ICLN"] };
+    if (indLower.includes("social") || indLower.includes("internet content") || indLower.includes("gaming")) return { etf: "SOCL", ...SUB_INDUSTRY_ETFS["SOCL"] };
+    if (indLower.includes("payment") || indLower.includes("fintech") || indLower.includes("credit service")) return { etf: "IPAY", ...SUB_INDUSTRY_ETFS["IPAY"] };
   }
 
   // 3. Static sector map industry fallback
@@ -450,6 +493,19 @@ export function getSubIndustryInfo(
       const info = SUB_INDUSTRY_ETFS[etf];
       return { etf, ...info };
     }
+    const indLower = staticEntry.industry.toLowerCase();
+    if (indLower.includes("semiconductor")) return { etf: "SMH", ...SUB_INDUSTRY_ETFS["SMH"] };
+    if (indLower.includes("software") || indLower.includes("saas")) return { etf: "IGV", ...SUB_INDUSTRY_ETFS["IGV"] };
+    if (indLower.includes("cyber") || indLower.includes("security")) return { etf: "CIBR", ...SUB_INDUSTRY_ETFS["CIBR"] };
+    if (indLower.includes("biotech") || indLower.includes("drug")) return { etf: "XBI", ...SUB_INDUSTRY_ETFS["XBI"] };
+  }
+
+  // 4. Russell 2000 / Small-Cap Growth style alpha benchmark fallback (IWO)
+  // When an innovative small cap (<$3B market cap or explicitly screened in small_growth)
+  // doesn't have a specialized thematic sub-industry, it adopts IWO (Russell 2000 Growth) as its style beta!
+  const isSmallCap = (options?.marketCap && options.marketCap > 0 && options.marketCap < 3_000_000_000) || options?.strategy === "small_growth";
+  if (isSmallCap && SUB_INDUSTRY_ETFS["IWO"]) {
+    return { etf: "IWO", ...SUB_INDUSTRY_ETFS["IWO"] };
   }
 
   return null;
