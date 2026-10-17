@@ -299,14 +299,14 @@ export function TermTooltip({ term, children, className = '', showIcon = true }:
                 createPortal(
                     isMobile ? (
                         <div
-                            className="fixed inset-0 z-[99999] bg-slate-950/70 backdrop-blur-xs flex items-end justify-center p-3 overscroll-contain animate-in fade-in duration-150"
+                            className="fixed inset-0 z-[99999] bg-black/50 backdrop-blur-xs flex items-end justify-center p-3 overscroll-contain animate-in fade-in duration-150"
                             onClick={(e) => {
                                 e.stopPropagation();
                                 setOpen(false);
                             }}
                         >
                             <div
-                                className="w-full max-w-md rounded-2xl bg-[#0b1326] border-2 border-cyan-500/60 shadow-[0_20px_60px_rgba(0,0,0,0.9)] p-5 text-left text-slate-100 mb-14"
+                                className="w-full max-w-md rounded-2xl bg-slate-900 border-2 border-cyan-500/60 shadow-[0_20px_60px_rgba(15,23,42,0.5)] p-5 text-left text-slate-100 mb-14"
                                 onClick={(e) => e.stopPropagation()}
                             >
                                 <div className="w-10 h-1 bg-slate-700 rounded-full mx-auto mb-3" />
@@ -331,7 +331,7 @@ export function TermTooltip({ term, children, className = '', showIcon = true }:
                                 </div>
 
                                 {entry.formula && (
-                                    <div className="my-2.5 px-3 py-1.5 rounded-lg bg-slate-900/90 border border-slate-700/80 font-mono text-xs text-amber-300">
+                                    <div className="my-2.5 px-3 py-1.5 rounded-lg bg-slate-950 border border-slate-700/80 font-mono text-xs text-amber-300">
                                         {entry.formula}
                                     </div>
                                 )}
@@ -355,7 +355,7 @@ export function TermTooltip({ term, children, className = '', showIcon = true }:
                                 left: coords.left,
                                 transform: coords.placeAbove ? 'translateY(-100%)' : 'translateY(0)',
                             }}
-                            className="fixed z-[99999] w-[320px] rounded-xl bg-[#0b1326] border border-cyan-500/60 shadow-[0_16px_48px_rgba(0,0,0,0.92),0_0_25px_rgba(6,182,212,0.18)] p-4 text-left text-slate-100 pointer-events-auto"
+                            className="fixed z-[99999] w-[320px] rounded-xl bg-slate-900 border border-cyan-500/60 shadow-[0_16px_48px_rgba(15,23,42,0.45),0_0_25px_rgba(6,182,212,0.18)] p-4 text-left text-slate-100 pointer-events-auto"
                         >
                             <div className="flex items-center justify-between gap-2 mb-1.5">
                                 <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-cyan-500/15 border border-cyan-500/30 text-[10px] font-bold uppercase tracking-wider text-cyan-300">
@@ -370,7 +370,7 @@ export function TermTooltip({ term, children, className = '', showIcon = true }:
                             </div>
 
                             {entry.formula && (
-                                <div className="mb-2 px-2.5 py-1 rounded bg-slate-900/95 border border-slate-800 font-mono text-[11px] text-amber-300">
+                                <div className="mb-2 px-2.5 py-1 rounded bg-slate-950 border border-slate-800 font-mono text-[11px] text-amber-300">
                                     {entry.formula}
                                 </div>
                             )}

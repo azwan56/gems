@@ -3,6 +3,7 @@ import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { LanguageProvider } from "@/lib/language-context";
 import { AuthProvider } from "@/lib/auth-context";
+import { ThemeProvider } from "@/lib/theme-context";
 import { MobileBottomNav } from "@/components/MobileBottomNav";
 
 const inter = Inter({
@@ -28,9 +29,15 @@ export default function RootLayout({
   return (
     <html
       lang="en"
+      suppressHydrationWarning
       className={`${inter.variable} ${jetbrainsMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col pb-20 md:pb-0 print:pb-0">
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `try{var t=localStorage.getItem('gems-theme');if(t==='light'||t==='dark'){document.documentElement.setAttribute('data-theme',t);}}catch(e){}`,
+          }}
+        />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
@@ -46,8 +53,10 @@ export default function RootLayout({
         />
         <AuthProvider>
           <LanguageProvider>
-            {children}
-            <MobileBottomNav />
+            <ThemeProvider>
+              {children}
+              <MobileBottomNav />
+            </ThemeProvider>
           </LanguageProvider>
         </AuthProvider>
       </body>

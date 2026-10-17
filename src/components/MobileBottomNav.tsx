@@ -54,7 +54,7 @@ export function MobileBottomNav() {
     return (
         <nav
             aria-label="Mobile Primary Navigation"
-            className="md:hidden print:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#070b14]/95 backdrop-blur-xl border-t border-slate-800/90 px-1.5 pt-1.5 pb-[max(0.375rem,env(safe-area-inset-bottom))] shadow-[0_-8px_30px_rgba(0,0,0,0.65)]"
+            className="md:hidden print:hidden fixed bottom-0 left-0 right-0 z-40 bg-slate-900/95 backdrop-blur-xl border-t border-slate-800/90 px-1.5 pt-1.5 pb-[max(0.375rem,env(safe-area-inset-bottom))] shadow-[0_-8px_30px_rgba(15,23,42,0.2)]"
         >
             <div className="grid grid-cols-5 gap-1 max-w-md mx-auto">
                 {NAV_ITEMS.map((item) => {

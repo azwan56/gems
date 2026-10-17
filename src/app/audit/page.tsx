@@ -91,166 +91,185 @@ export default function AuditDashboardPage() {
   }
 
   return (
-    <main className="min-h-screen bg-slate-950 text-slate-100 py-6 sm:py-8 px-4 sm:px-6 max-w-[1280px] mx-auto w-full">
-      {/* Header Bar */}
-      <div className="flex items-center justify-between gap-2 mb-6 sm:mb-8 pb-4 border-b border-slate-800/80">
-        <div className="flex items-center gap-3 min-w-0">
-          <Link href="/" className="flex items-center gap-1.5 text-slate-400 hover:text-white transition-colors bg-slate-900/60 p-2 rounded-xl border border-slate-800 shrink-0">
-            <ArrowLeft className="w-4 h-4" />
-            <span className="text-sm font-medium hidden sm:inline">{t("Back", "返回大盘")}</span>
-          </Link>
-          <div className="flex items-center gap-2.5 min-w-0">
-            <div className="p-2 bg-gradient-to-br from-blue-500/20 to-indigo-500/20 rounded-xl border border-blue-500/30 shrink-0">
-              <Cpu className="w-5 h-5 text-blue-400" />
+    <main className="min-h-screen bg-slate-950 text-slate-100 py-4 sm:py-8 px-3 sm:px-6 max-w-[1280px] mx-auto w-full">
+      {/* Header Bar — Clean single-line top bar */}
+      <div className="mb-5 sm:mb-8 pb-3 sm:pb-4 border-b border-slate-800/80">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+            <Link
+              href="/"
+              className="flex items-center gap-1.5 text-slate-400 hover:text-white transition-colors bg-slate-900/80 p-2 rounded-xl border border-slate-800 shrink-0"
+              aria-label={t("Back Home", "返回大盘")}
+            >
+              <ArrowLeft className="w-4 h-4 shrink-0" />
+              <span className="text-xs sm:text-sm font-medium hidden sm:inline whitespace-nowrap">{t("Back", "返回大盘")}</span>
+            </Link>
+            <div className="p-2 bg-gradient-to-br from-blue-500/20 to-indigo-500/20 rounded-xl border border-blue-500/30 shrink-0 hidden xs:flex sm:flex">
+              <Cpu className="w-4 h-4 sm:w-5 sm:h-5 text-blue-400" />
             </div>
-            <div className="min-w-0">
-              <h1 className="text-base sm:text-2xl font-bold tracking-tight text-white flex flex-wrap items-center gap-2">
-                <span className="truncate">{t("AI Strategy Audit & Self-Healing", "AI 策略胜率与自愈战报")}</span>
-                <span className="px-2 py-0.5 text-[10px] sm:text-xs font-semibold rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 inline-flex items-center gap-1 shrink-0">
-                  <Sparkles className="w-3 h-3" /> Live Audit
-                </span>
-              </h1>
-              <p className="text-[11px] sm:text-xs text-slate-400 line-clamp-1">
-                {t("Transparent closed-loop performance tracking & autonomous parameter self-healing audit.", "真实透明的闭环胜率跟踪与策略参数自动化自愈进化审计")}
-              </p>
-            </div>
+            <h1 className="text-sm sm:text-2xl font-bold tracking-tight text-white truncate whitespace-nowrap">
+              {t("AI Strategy Audit & Self-Healing", "AI 策略胜率与自愈战报")}
+            </h1>
+            <span className="hidden md:inline-flex px-2.5 py-0.5 text-xs font-semibold rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 items-center gap-1 whitespace-nowrap shrink-0">
+              <Sparkles className="w-3 h-3 shrink-0" /> Live Audit
+            </span>
+          </div>
+          <div className="shrink-0">
+            <UserMenu />
           </div>
         </div>
-        <div className="shrink-0">
-          <UserMenu />
+
+        {/* Full-width Subtitle Row (prevents squeezing title on mobile) */}
+        <div className="mt-2.5 flex items-center gap-2 flex-wrap">
+          <span className="md:hidden px-2 py-0.5 text-[10px] font-semibold rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 inline-flex items-center gap-1 whitespace-nowrap shrink-0">
+            <Sparkles className="w-2.5 h-2.5 shrink-0" /> Live Audit
+          </span>
+          <p className="text-[11px] sm:text-xs text-slate-400 leading-snug">
+            {t(
+              "Transparent closed-loop performance tracking & autonomous parameter self-healing audit.",
+              "真实透明的闭环胜率跟踪与策略参数自动化自愈进化审计"
+            )}
+          </p>
         </div>
       </div>
 
       {/* Hero Performance Overview Stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4 mb-6 sm:mb-8">
-        <div className="p-4 sm:p-5 rounded-2xl bg-slate-900/50 border border-slate-800 backdrop-blur-md relative overflow-hidden">
-          <div className="text-[11px] sm:text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">
-            <TermTooltip term="T+5">{t("T+5 Short-Term Win Rate", "总体 T+5 短线胜率")}</TermTooltip>
+      <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-5 gap-2.5 sm:gap-4 mb-5 sm:mb-8">
+        <div className="p-3.5 sm:p-5 rounded-2xl bg-slate-900/70 border border-slate-800 backdrop-blur-md relative overflow-hidden">
+          <div className="text-[11px] sm:text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1 whitespace-nowrap">
+            <TermTooltip term="T+5">{t("T+5 Win Rate", "总体 T+5 短线胜率")}</TermTooltip>
           </div>
-          <div className="text-xl sm:text-2xl font-extrabold text-emerald-400 flex items-baseline gap-1.5">
+          <div className="text-lg sm:text-2xl font-extrabold text-emerald-400 flex items-baseline gap-1">
             {avgT5}%
-            <span className="text-[11px] font-normal text-slate-400">(Live)</span>
+            <span className="text-[10px] sm:text-[11px] font-normal text-slate-400">(Live)</span>
           </div>
-          <div className="mt-2 flex items-center gap-1 text-[11px] sm:text-xs text-emerald-400/90 font-medium">
-            <TrendingUp className="w-3.5 h-3.5" /> {t("Live Snapshot Data", "实时快照统计")}
+          <div className="mt-1.5 flex items-center gap-1 text-[11px] sm:text-xs text-emerald-400/90 font-medium truncate">
+            <TrendingUp className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" /> {t("Live Snapshot", "实时快照统计")}
           </div>
         </div>
 
-        <div className="p-4 sm:p-5 rounded-2xl bg-slate-900/50 border border-slate-800 backdrop-blur-md">
-          <div className="text-[11px] sm:text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">
-            {t("T+20 Mid-Term Win Rate", "T+20 月线胜率")}
+        <div className="p-3.5 sm:p-5 rounded-2xl bg-slate-900/70 border border-slate-800 backdrop-blur-md">
+          <div className="text-[11px] sm:text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1 whitespace-nowrap">
+            {t("T+20 Win Rate", "T+20 月线胜率")}
           </div>
-          <div className="text-xl sm:text-2xl font-extrabold text-blue-400">
+          <div className="text-lg sm:text-2xl font-extrabold text-blue-400">
             {avgT20}%
           </div>
-          <div className="mt-2 text-[11px] sm:text-xs text-slate-400">
-            {t("Calculated across active portfolios", "跨组合聚合计算")}
+          <div className="mt-1.5 text-[11px] sm:text-xs text-slate-400 truncate">
+            {t("Active portfolios", "跨组合聚合计算")}
           </div>
         </div>
 
-        <div className="p-4 sm:p-5 rounded-2xl bg-slate-900/50 border border-slate-800 backdrop-blur-md">
-          <div className="text-[11px] sm:text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">
-            {t("T+60 Quarterly Win Rate", "T+60 季线胜率(3M)")}
+        <div className="p-3.5 sm:p-5 rounded-2xl bg-slate-900/70 border border-slate-800 backdrop-blur-md">
+          <div className="text-[11px] sm:text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1 whitespace-nowrap">
+            {t("T+60 Win Rate", "T+60 季线胜率(3M)")}
           </div>
-          <div className="text-xl sm:text-2xl font-extrabold text-indigo-400">
+          <div className="text-lg sm:text-2xl font-extrabold text-indigo-400">
             {avgT60}%
           </div>
-          <div className="mt-2 text-[11px] sm:text-xs text-indigo-300 font-medium">
-            {t("Quarterly Holding Win Rate", "季度持仓胜率高企")}
+          <div className="mt-1.5 text-[11px] sm:text-xs text-indigo-400 font-medium truncate">
+            {t("Quarterly Holding", "季度持仓胜率高企")}
           </div>
         </div>
 
-        <div className="p-4 sm:p-5 rounded-2xl bg-slate-900/50 border border-slate-800 backdrop-blur-md">
-          <div className="text-[11px] sm:text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">
-            {t("Self-Healing Actions", "近 30 天自愈修复")}
+        <div className="p-3.5 sm:p-5 rounded-2xl bg-slate-900/70 border border-slate-800 backdrop-blur-md">
+          <div className="text-[11px] sm:text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1 whitespace-nowrap">
+            {t("Self-Healing", "近 30 天自愈修复")}
           </div>
-          <div className="text-xl sm:text-2xl font-extrabold text-purple-400 flex items-center gap-1.5">
-            3 <Zap className="w-4 h-4 text-purple-400" />
+          <div className="text-lg sm:text-2xl font-extrabold text-purple-400 flex items-center gap-1">
+            3 <Zap className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-purple-400 shrink-0" />
           </div>
-          <div className="mt-2 text-[11px] sm:text-xs text-purple-300 font-medium truncate">
-            {t("Latest: Small-Cap ROE Adjusted", "最新: 中小盘 ROE 门槛调紧")}
+          <div className="mt-1.5 text-[11px] sm:text-xs text-purple-400 font-medium truncate">
+            {t("Small-Cap ROE Adjusted", "最新: 中小盘 ROE 调紧")}
           </div>
         </div>
 
-        <div className="col-span-2 lg:col-span-1 p-4 sm:p-5 rounded-2xl bg-slate-900/50 border border-slate-800 backdrop-blur-md">
-          <div className="text-[11px] sm:text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">
-            <TermTooltip term="Walk-Forward">{t("System Health Status", "策略闭环健康度")}</TermTooltip>
+        <div className="col-span-2 lg:col-span-1 p-3.5 sm:p-5 rounded-2xl bg-slate-900/70 border border-slate-800 backdrop-blur-md flex sm:block items-center justify-between">
+          <div>
+            <div className="text-[11px] sm:text-xs font-semibold text-slate-400 uppercase tracking-wider mb-0.5 sm:mb-1">
+              <TermTooltip term="Walk-Forward">{t("System Health Status", "策略闭环健康度")}</TermTooltip>
+            </div>
+            <div className="text-[11px] sm:text-xs text-slate-400 sm:hidden">
+              {t("Zero CRITICAL Alerts", "零严重告警 (0 Critical)")}
+            </div>
           </div>
-          <div className="text-xl font-bold text-emerald-400 flex items-center gap-1.5 mt-0.5">
-            <CheckCircle2 className="w-5 h-5 text-emerald-400" /> OPTIMAL
-          </div>
-          <div className="mt-2 text-[11px] sm:text-xs text-slate-400">
-            {t("Zero CRITICAL Alerts", "零严重告警 (0 Critical)")}
+          <div>
+            <div className="text-base sm:text-xl font-bold text-emerald-400 flex items-center gap-1.5 whitespace-nowrap">
+              <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-400 shrink-0" /> OPTIMAL
+            </div>
+            <div className="mt-1.5 text-xs text-slate-400 hidden sm:block">
+              {t("Zero CRITICAL Alerts", "零严重告警 (0 Critical)")}
+            </div>
           </div>
         </div>
       </div>
 
 
       {/* Navigation Tabs */}
-      <div className="flex gap-2 mb-6 border-b border-slate-800/80 pb-2 overflow-x-auto">
+      <div className="flex gap-2 mb-5 sm:mb-6 border-b border-slate-800/80 pb-2 overflow-x-auto scrollbar-hide">
         <button
           onClick={() => setActiveTab("overview")}
-          className={`px-3.5 sm:px-4 py-2 text-xs sm:text-sm font-semibold rounded-xl transition-all flex items-center gap-1.5 shrink-0 ${
+          className={`px-3 sm:px-4 py-2 text-xs sm:text-sm font-semibold rounded-xl transition-all flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer ${
             activeTab === "overview" 
               ? "bg-blue-600 text-white shadow-lg shadow-blue-600/20" 
               : "text-slate-400 hover:text-white hover:bg-slate-900"
           }`}
         >
-          <BarChart3 className="w-4 h-4" />
+          <BarChart3 className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
           {t("Strategy Performance", "策略胜率看板")}
         </button>
         <button
           onClick={() => setActiveTab("timeline")}
-          className={`px-3.5 sm:px-4 py-2 text-xs sm:text-sm font-semibold rounded-xl transition-all flex items-center gap-1.5 shrink-0 ${
+          className={`px-3 sm:px-4 py-2 text-xs sm:text-sm font-semibold rounded-xl transition-all flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer ${
             activeTab === "timeline" 
               ? "bg-blue-600 text-white shadow-lg shadow-blue-600/20" 
               : "text-slate-400 hover:text-white hover:bg-slate-900"
           }`}
         >
-          <Zap className="w-4 h-4" />
+          <Zap className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
           {t("Self-Healing Timeline", "AI 自愈进化日志")}
         </button>
         <button
           onClick={() => setActiveTab("showcase")}
-          className={`px-3.5 sm:px-4 py-2 text-xs sm:text-sm font-semibold rounded-xl transition-all flex items-center gap-1.5 shrink-0 ${
+          className={`px-3 sm:px-4 py-2 text-xs sm:text-sm font-semibold rounded-xl transition-all flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer ${
             activeTab === "showcase" 
               ? "bg-blue-600 text-white shadow-lg shadow-blue-600/20" 
               : "text-slate-400 hover:text-white hover:bg-slate-900"
           }`}
         >
-          <History className="w-4 h-4" />
+          <History className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
           {t("Winners & Losers Audit", "标的复盘红黑榜")}
         </button>
       </div>
 
       {/* TAB 1: Strategy Performance Overview */}
       {activeTab === "overview" && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
           {winRates.map((strategy) => (
             <div 
               key={strategy.id}
-              className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800 hover:border-slate-700 transition-all backdrop-blur-md flex flex-col justify-between"
+              className="p-4 sm:p-6 rounded-2xl bg-slate-900/70 border border-slate-800 hover:border-slate-700 transition-all backdrop-blur-md flex flex-col justify-between"
             >
               <div>
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2.5 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-400">
-                      {strategy.id === "value" && <ShieldCheck className="w-5 h-5" />}
-                      {strategy.id === "large_growth" && <TrendingUp className="w-5 h-5" />}
-                      {strategy.id === "small_growth" && <Rocket className="w-5 h-5" />}
-                      {strategy.id === "garp" && <Activity className="w-5 h-5" />}
+                <div className="flex items-center justify-between gap-2 mb-3 sm:mb-4">
+                  <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+                    <div className="p-2 sm:p-2.5 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-400 shrink-0">
+                      {strategy.id === "value" && <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5" />}
+                      {strategy.id === "large_growth" && <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5" />}
+                      {strategy.id === "small_growth" && <Rocket className="w-4 h-4 sm:w-5 sm:h-5" />}
+                      {strategy.id === "garp" && <Activity className="w-4 h-4 sm:w-5 sm:h-5" />}
                     </div>
-                    <div>
-                      <h3 className="text-lg font-bold text-white">
+                    <div className="min-w-0">
+                      <h3 className="text-base sm:text-lg font-bold text-white truncate">
                         {isZh ? strategy.nameZh : strategy.name}
                       </h3>
-                      <span className="text-xs text-slate-400">
+                      <span className="text-[11px] sm:text-xs text-slate-400">
                         {t("Total Recommendations", "累计推荐标的")}: {strategy.totalRecommendations} {t("stocks", "只")}
                       </span>
                     </div>
                   </div>
 
-                  <span className={`px-3 py-1 text-xs font-bold rounded-full border ${
+                  <span className={`px-2.5 py-0.5 sm:px-3 sm:py-1 text-[11px] sm:text-xs font-bold rounded-full border whitespace-nowrap shrink-0 ${
                     strategy.status === "OPTIMAL" 
                       ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/30"
                       : "bg-amber-500/10 text-amber-400 border-amber-500/30"
@@ -259,22 +278,22 @@ export default function AuditDashboardPage() {
                   </span>
                 </div>
 
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 my-4 p-4 rounded-xl bg-slate-950/60 border border-slate-800/80 text-center sm:text-left">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3 my-3 sm:my-4 p-3 sm:p-4 rounded-xl bg-slate-950/70 border border-slate-800/80 text-center sm:text-left">
                   <div>
-                    <div className="text-xs text-slate-400"><TermTooltip term="T+5">{t("T+5 Win Rate", "T+5 短线")}</TermTooltip></div>
-                    <div className="text-lg font-bold text-emerald-400 mt-1">{strategy.t5WinRate}%</div>
+                    <div className="text-[11px] sm:text-xs text-slate-400 whitespace-nowrap"><TermTooltip term="T+5">{t("T+5 Win Rate", "T+5 短线")}</TermTooltip></div>
+                    <div className="text-base sm:text-lg font-bold text-emerald-400 mt-0.5 sm:mt-1">{strategy.t5WinRate}%</div>
                   </div>
                   <div>
-                    <div className="text-xs text-slate-400">{t("T+20 Win Rate", "T+20 月线")}</div>
-                    <div className="text-lg font-bold text-blue-400 mt-1">{strategy.t20WinRate}%</div>
+                    <div className="text-[11px] sm:text-xs text-slate-400 whitespace-nowrap">{t("T+20 Win Rate", "T+20 月线")}</div>
+                    <div className="text-base sm:text-lg font-bold text-blue-400 mt-0.5 sm:mt-1">{strategy.t20WinRate}%</div>
                   </div>
                   <div>
-                    <div className="text-xs text-slate-400">{t("T+60 Win Rate", "T+60 季线(3M)")}</div>
-                    <div className="text-lg font-bold text-indigo-400 mt-1">{strategy.t60WinRate}%</div>
+                    <div className="text-[11px] sm:text-xs text-slate-400 whitespace-nowrap">{t("T+60 Win Rate", "T+60 季线(3M)")}</div>
+                    <div className="text-base sm:text-lg font-bold text-indigo-400 mt-0.5 sm:mt-1">{strategy.t60WinRate}%</div>
                   </div>
                   <div>
-                    <div className="text-xs text-slate-400">{t("Avg Return", "平均收益率")}</div>
-                    <div className="text-lg font-bold text-purple-400 mt-1">+{strategy.avgReturn}%</div>
+                    <div className="text-[11px] sm:text-xs text-slate-400 whitespace-nowrap">{t("Avg Return", "平均收益率")}</div>
+                    <div className="text-base sm:text-lg font-bold text-purple-400 mt-0.5 sm:mt-1">+{strategy.avgReturn}%</div>
                   </div>
                 </div>
 

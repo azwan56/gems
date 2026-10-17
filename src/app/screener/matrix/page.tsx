@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import PremiumGate from "@/components/PremiumGate";
+import UserMenu from "@/components/UserMenu";
 
 // Mock data fallback if fetch fails
 const FALLBACK_STOCKS: StockMetrics[] = [];
@@ -205,24 +206,22 @@ export default function SuperScreenerMatrix() {
     <div className="min-h-screen bg-slate-950 text-slate-200">
       {/* Header */}
       <header className="sticky top-0 z-40 bg-slate-950/80 backdrop-blur-xl border-b border-slate-800">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Link href="/" className="text-slate-400 hover:text-white transition-colors">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 h-14 sm:h-16 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2.5 sm:gap-4 min-w-0">
+            <Link href="/" className="text-slate-400 hover:text-white transition-colors shrink-0">
               <ChevronRight className="w-5 h-5 rotate-180" />
             </Link>
-            <div>
-              <h1 className="text-lg font-semibold text-white flex items-center gap-2">
-                <Activity className="w-5 h-5 text-indigo-400" />
-                {t("Super Screener Matrix", "多策略共振矩阵")}
-              </h1>
-            </div>
+            <h1 className="text-sm sm:text-lg font-bold text-white flex items-center gap-1.5 sm:gap-2 truncate whitespace-nowrap">
+              <Activity className="w-4 h-4 sm:w-5 sm:h-5 text-indigo-400 shrink-0" />
+              <span className="truncate">{t("Super Screener Matrix", "多策略共振矩阵")}</span>
+            </h1>
           </div>
-          {/* Stock count + Watchlist link in header */}
-          <div className="flex items-center gap-3">
+          {/* Stock count + Watchlist link + UserMenu in header */}
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
             {!loading && matrixStocks.length > 0 && (
-              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-500/20">
-                <Activity className="w-3.5 h-3.5 text-indigo-400" />
-                <span className="text-sm font-semibold text-indigo-400">
+              <div className="hidden xs:flex sm:flex items-center gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full bg-indigo-500/10 border border-indigo-500/20 whitespace-nowrap">
+                <Activity className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
+                <span className="text-xs sm:text-sm font-semibold text-indigo-400">
                   {matrixStocks.length} {t("stocks", "只")}
                 </span>
               </div>
@@ -230,12 +229,13 @@ export default function SuperScreenerMatrix() {
             {watchlist.size > 0 && (
               <Link
                 href="/watchlist"
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/20 transition-colors"
+                className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/20 transition-colors whitespace-nowrap"
               >
-                <Briefcase className="w-3.5 h-3.5" />
-                <span className="text-sm font-semibold">{watchlist.size}</span>
+                <Briefcase className="w-3.5 h-3.5 shrink-0" />
+                <span className="text-xs sm:text-sm font-semibold">{watchlist.size}</span>
               </Link>
             )}
+            <UserMenu />
           </div>
         </div>
       </header>
