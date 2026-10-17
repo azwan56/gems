@@ -330,12 +330,12 @@ export default function StockChatAssistant({
   };
 
   return (
-    <div className="fixed bottom-6 right-6 z-[10000] print:hidden">
+    <div className="fixed bottom-20 md:bottom-6 right-4 md:right-6 z-[10000] print:hidden">
       {/* Floating Action Button */}
       {!isOpen && (
         <button
           onClick={() => setIsOpen(true)}
-          className="w-14 h-14 bg-gradient-to-br from-emerald-500 to-teal-600 text-white rounded-full flex items-center justify-center shadow-xl shadow-teal-500/20 hover:shadow-teal-400/30 transition-all hover:scale-105 border border-white/20 group relative"
+          className="w-13 h-13 sm:w-14 sm:h-14 bg-gradient-to-br from-emerald-500 to-teal-600 text-white rounded-full flex items-center justify-center shadow-xl shadow-teal-500/20 hover:shadow-teal-400/30 transition-all hover:scale-105 border border-white/20 group relative"
         >
           <Sparkles className="w-6 h-6 animate-pulse group-hover:rotate-12 transition-transform" />
           <span className="absolute -top-1 -right-1 flex h-3 w-3">
@@ -349,12 +349,12 @@ export default function StockChatAssistant({
       {isOpen && (
         <div
           className={
-            `ai-assistant-panel ${
+            `ai-assistant-panel overscroll-contain ${
               position
-                ? "fixed z-[10000] w-[420px] max-w-[calc(100vw-32px)] h-[620px] max-h-[85vh] bg-slate-950/98 border border-emerald-500/40 rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in fade-in duration-200"
+                ? "fixed z-[10000] w-[420px] max-w-[calc(100vw-32px)] h-[620px] max-h-[85dvh] bg-slate-950/98 border border-emerald-500/40 rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in fade-in duration-200"
                 : layoutMode === "sidebar"
-                ? "fixed top-0 right-0 bottom-0 z-[10000] w-full sm:w-[380px] md:w-[25vw] min-w-[320px] h-screen bg-slate-950/98 backdrop-blur-2xl border-l border-emerald-500/30 shadow-2xl flex flex-col animate-in slide-in-from-right duration-200"
-                : "fixed bottom-6 right-6 z-[10000] w-[400px] max-w-[calc(100vw-32px)] h-[600px] max-h-[85vh] bg-slate-950/95 border border-slate-800/80 rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in fade-in slide-in-from-bottom-5 duration-200"
+                ? "fixed top-0 right-0 bottom-0 z-[10000] w-full sm:w-[380px] md:w-[25vw] min-w-[320px] h-[100dvh] bg-slate-950/98 backdrop-blur-2xl border-l border-emerald-500/30 shadow-2xl flex flex-col animate-in slide-in-from-right duration-200"
+                : "fixed bottom-20 md:bottom-6 right-3 md:right-6 z-[10000] w-[400px] max-w-[calc(100vw-24px)] h-[600px] max-h-[80dvh] bg-slate-950/95 border border-slate-800/80 rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in fade-in slide-in-from-bottom-5 duration-200"
             }`
           }
           style={

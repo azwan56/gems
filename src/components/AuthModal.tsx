@@ -63,22 +63,29 @@ export default function AuthModal({ onClose }: AuthModalProps) {
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/70 backdrop-blur-md">
+    <div
+      onClick={onClose}
+      className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/75 backdrop-blur-md overflow-hidden overscroll-contain"
+    >
       <div
-        className="relative w-full max-w-md bg-slate-900 border border-slate-700/50 rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200"
+        className="relative w-full max-w-md max-h-[92dvh] overflow-y-auto overscroll-contain bg-slate-900 border-t sm:border border-slate-700/60 rounded-t-3xl sm:rounded-2xl shadow-2xl animate-in fade-in slide-in-from-bottom-4 sm:zoom-in-95 duration-200 pb-[max(1rem,env(safe-area-inset-bottom))] sm:pb-0"
         onClick={(e) => e.stopPropagation()}
       >
+        {/* Mobile drag handle */}
+        <div className="w-11 h-1.5 bg-slate-700/80 rounded-full mx-auto mt-3 sm:hidden" />
+
         {/* Close button */}
         <button
           onClick={onClose}
+          aria-label="Close login modal"
           className="absolute top-4 right-4 p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl transition-colors z-10"
         >
           <X className="w-5 h-5" />
         </button>
 
         {/* Header */}
-        <div className="px-6 sm:px-8 pt-8 sm:pt-10 pb-6 text-center">
-          <div className="inline-flex items-center justify-center p-3 bg-blue-500/10 border border-blue-500/20 rounded-2xl mb-5">
+        <div className="px-6 sm:px-8 pt-5 sm:pt-10 pb-5 text-center">
+          <div className="inline-flex items-center justify-center p-3 bg-blue-500/10 border border-blue-500/20 rounded-2xl mb-4">
             <Gem className="w-8 h-8 text-blue-400" />
           </div>
           <h2 className="text-2xl font-bold tracking-tight mb-2">

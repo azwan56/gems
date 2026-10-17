@@ -1,11 +1,12 @@
 "use client";
 
-import { ShieldCheck, TrendingUp, Activity, Gem, Rocket, Languages, BookOpen, Castle, Zap, ChevronRight, Cpu, Sparkles } from "lucide-react";
+import { ShieldCheck, TrendingUp, Activity, Gem, Rocket, Languages, BookOpen, Castle, Zap, ChevronRight, Cpu, Sparkles, Network, Layers, Presentation, Briefcase } from "lucide-react";
 import Link from "next/link";
 import { useLanguage } from "@/lib/language-context";
 import { useAuth } from "@/lib/auth-context";
 import UserMenu from "@/components/UserMenu";
 import PremiumGate from "@/components/PremiumGate";
+import { TermTooltip } from "@/components/TermTooltip";
 
 
 const strategies = [
@@ -18,9 +19,9 @@ const strategies = [
     icon: ShieldCheck,
     color: "blue",
     metrics: [
-      { label: "P/E Ratio", value: "< 15.0" },
-      { label: "P/B Ratio", value: "< 1.5" },
-      { label: "FCF Yield", value: "> 5.0%" },
+      { label: "P/E Ratio", term: "P/E Ratio", value: "< 15.0" },
+      { label: "P/B Ratio", term: "P/B Ratio", value: "< 1.5" },
+      { label: "FCF Yield", term: "FCF Yield", value: "> 5.0%" },
     ],
   },
   {
@@ -34,7 +35,7 @@ const strategies = [
     metrics: [
       { label: "Market Cap", value: "> $100B" },
       { label: "Rev Growth", value: "> 15%" },
-      { label: "FCF Yield", value: "> 3%" },
+      { label: "FCF Yield", term: "FCF Yield", value: "> 3%" },
     ],
   },
   {
@@ -48,7 +49,7 @@ const strategies = [
     metrics: [
       { label: "Market Cap", value: "< $10B" },
       { label: "Rev Growth", value: "> 30%" },
-      { label: "Momentum", value: "vs 50SMA > 0" },
+      { label: "Momentum (50SMA)", term: "50SMA", value: "vs 50SMA > 0" },
     ],
   },
   {
@@ -75,7 +76,7 @@ const strategies = [
     color: "emerald",
     metrics: [
       { label: "EPS Growth", value: "> 20%" },
-      { label: "PEG Ratio", value: "< 1.0" },
+      { label: "PEG Ratio", term: "PEG Ratio", value: "< 1.0" },
       { label: "Market Cap", value: "> $500M" },
     ],
   },
@@ -88,9 +89,9 @@ const strategies = [
     icon: Castle,
     color: "slate",
     metrics: [
-      { label: "ROE", value: "> 15%" },
-      { label: "Gross Margin", value: "> 40%" },
-      { label: "D/E Ratio", value: "< 1.0" },
+      { label: "ROE", term: "ROE", value: "> 15%" },
+      { label: "Gross Margin", term: "Gross Margin", value: "> 40%" },
+      { label: "D/E Ratio", term: "D/E Ratio", value: "< 1.0" },
     ],
   },
   {
@@ -102,8 +103,8 @@ const strategies = [
     icon: Zap,
     color: "rose",
     metrics: [
-      { label: "Price vs 50SMA", value: "> 0%" },
-      { label: "Price vs 200SMA", value: "> 0%" },
+      { label: "Price vs 50SMA", term: "50SMA", value: "> 0%" },
+      { label: "Price vs 200SMA", term: "200SMA", value: "> 0%" },
       { label: "Rev Growth", value: "> 5%" },
     ],
   },
@@ -116,43 +117,77 @@ export default function Home() {
   return (
     <main className="min-h-screen flex flex-col">
       {/* Header */}
-      <header className="border-b border-slate-800 px-4 sm:px-6 py-3 sm:py-4">
-        <div className="max-w-[1400px] mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-2">
+      <header className="sticky top-0 z-30 bg-[#0f172a]/90 backdrop-blur-xl border-b border-slate-800/80 px-3 sm:px-6 py-2.5 sm:py-4">
+        <div className="max-w-[1400px] mx-auto flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 shrink-0">
             <Gem className="w-5 h-5 sm:w-6 sm:h-6 text-blue-400" />
-            <span className="text-lg sm:text-xl font-bold tracking-tight">Gems</span>
-            <span className="text-xs text-slate-500 ml-2 hidden sm:inline">
-              {t("US Stock Screener", "美股量化筛选器")}
+            <span className="text-base sm:text-xl font-bold tracking-tight">Gems</span>
+            <span className="px-1.5 py-0.5 rounded bg-cyan-500/15 border border-cyan-500/30 text-[10px] font-mono font-bold text-cyan-300">
+              v3.0
+            </span>
+            <span className="text-xs text-slate-500 ml-1 hidden lg:inline">
+              {t("Financial Ontology & Quant Screener", "金融本体与量化选股终端")}
             </span>
           </div>
-          <nav className="flex items-center gap-2 sm:gap-4">
-            <Link href="/audit" className="text-sm text-purple-300 hover:text-purple-200 transition-colors flex items-center gap-1.5 px-3 py-1.5 bg-purple-500/10 border border-purple-500/30 rounded-lg font-medium">
+
+          <nav className="flex items-center gap-1.5 sm:gap-3">
+            {/* Desktop links (Mobile uses persistent bottom dock) */}
+            <Link
+              href="/audit"
+              className="hidden md:flex text-xs sm:text-sm text-purple-300 hover:text-purple-200 transition-colors items-center gap-1.5 px-3 py-1.5 bg-purple-500/10 border border-purple-500/30 rounded-lg font-medium"
+            >
               <Cpu className="w-4 h-4 text-purple-400" />
               <span>{t("AI Audit & Win Rate", "AI 胜率与自愈")}</span>
             </Link>
-            <a href="/value-proposition.html" target="_blank" rel="noreferrer" className="text-sm text-slate-400 hover:text-cyan-400 transition-colors flex items-center gap-1.5 px-3 py-1.5 bg-slate-800/60 border border-slate-700/50 rounded-lg">
-              <BookOpen className="w-4 h-4 text-cyan-400" />
-              <span>{t("Value Guide", "平台价值白皮书")}</span>
+
+            <Link
+              href="/whitepaper"
+              className="flex text-xs sm:text-sm text-amber-300 hover:text-amber-200 transition-colors items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 bg-amber-500/10 border border-amber-500/30 rounded-lg font-medium"
+              title={t("v3.0 Ontology Whitepaper", "v3.0 金融本体白皮书")}
+            >
+              <Network className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-400 shrink-0" />
+              <span className="hidden sm:inline">{t("v3.0 Ontology", "v3.0 架构白皮书")}</span>
+              <span className="sm:hidden">{t("Ontology", "白皮书")}</span>
+            </Link>
+
+            <a
+              href="/gems_architecture_presentation.html"
+              target="_blank"
+              rel="noreferrer"
+              className="flex text-xs sm:text-sm text-cyan-300 hover:text-cyan-200 transition-colors items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 bg-cyan-500/10 border border-cyan-500/30 rounded-lg font-medium"
+              title={t("13-Slide Architecture Deck", "13页交互式架构演播厅")}
+            >
+              <Presentation className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-cyan-400 shrink-0" />
+              <span className="hidden lg:inline">{t("Architecture Slides", "架构演播厅")}</span>
+              <span className="lg:hidden">{t("Slides", "演播")}</span>
             </a>
+
+            <a
+              href="/value-proposition.html"
+              target="_blank"
+              rel="noreferrer"
+              className="hidden xl:flex text-xs sm:text-sm text-slate-300 hover:text-white transition-colors items-center gap-1.5 px-3 py-1.5 bg-slate-800/60 border border-slate-700/50 rounded-lg"
+            >
+              <BookOpen className="w-4 h-4 text-cyan-400" />
+              <span>{t("Value Guide", "价值指南")}</span>
+            </a>
+
             {user?.isPremium && (
-              <Link href="/whitepaper" className="text-sm text-amber-300 hover:text-amber-200 transition-colors flex items-center gap-1.5 px-3 py-1.5 bg-amber-500/10 border border-amber-500/30 rounded-lg font-medium">
-                <Cpu className="w-4 h-4 text-amber-400" />
-                <span>{t("Data Architecture", "数据架构白皮书")}</span>
+              <Link
+                href="/watchlist"
+                className="hidden md:flex items-center gap-1.5 text-xs sm:text-sm text-indigo-300 hover:text-white px-3 py-1.5 rounded-lg bg-indigo-500/10 border border-indigo-500/30 transition-colors font-medium"
+              >
+                <Briefcase className="w-3.5 h-3.5 text-indigo-400" />
+                <span>{t("Watchlist", "投资组合")}</span>
               </Link>
             )}
 
-
-            {user?.isPremium && (
-              <Link href="/watchlist" className="text-sm text-slate-400 hover:text-white transition-colors hidden sm:inline">
-                {t("Watchlist", "自选股")}
-              </Link>
-            )}
             {/* Language Toggle */}
             <button
               onClick={() => setLang(lang === "en" ? "zh" : "en")}
-              className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-sm transition-all border border-slate-700 hover:border-slate-600"
+              className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs sm:text-sm transition-all border border-slate-700 hover:border-slate-600"
             >
-              <Languages className="w-4 h-4 text-blue-400" />
+              <Languages className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-blue-400" />
               <span className="font-medium">{lang === "en" ? "中文" : "EN"}</span>
             </button>
             <UserMenu />
@@ -161,16 +196,16 @@ export default function Home() {
       </header>
 
       {/* Hero */}
-      <section className="flex-1 flex flex-col items-center justify-center px-4 sm:px-6 py-8 sm:py-16">
-        <div className="max-w-[1400px] w-full flex flex-col items-center text-center mb-8 sm:mb-16">
-          <div className="inline-flex items-center justify-center px-3 sm:px-4 py-1.5 mb-5 sm:mb-8 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400">
+      <section className="flex-1 flex flex-col items-center justify-center px-3 sm:px-6 py-6 sm:py-14">
+        <div className="max-w-[1400px] w-full flex flex-col items-center text-center mb-6 sm:mb-12">
+          <div className="inline-flex items-center justify-center px-3 sm:px-4 py-1.5 mb-4 sm:mb-6 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400">
             <Activity className="w-3.5 h-3.5 mr-2" />
             <span className="text-[10px] sm:text-xs font-semibold tracking-widest uppercase">
-              {t("Quantitative Screener", "量化选股系统")}
+              {t("v3.0 Financial Ontology Quant Engine", "v3.0 金融领域本体驱动 · 量化选股系统")}
             </span>
           </div>
 
-          <h1 className="text-3xl sm:text-5xl md:text-7xl font-bold tracking-tight mb-4 sm:mb-6 leading-[1.1]">
+          <h1 className="text-3xl sm:text-5xl md:text-7xl font-bold tracking-tight mb-3 sm:mb-6 leading-[1.1]">
             {lang === "en" ? (
               <>
                 Find your next{" "}
@@ -190,22 +225,22 @@ export default function Home() {
             )}
           </h1>
 
-          <p className="text-sm sm:text-lg text-slate-400 max-w-2xl mb-8 leading-relaxed px-2">
+          <p className="text-xs sm:text-lg text-slate-400 max-w-2xl mb-6 leading-relaxed px-2">
             {t(
-              "Professional-grade stock screening powered by quantitative analysis. Choose a strategy below to start filtering US equities.",
-              "专业级量化分析驱动的股票筛选平台。选择以下策略，开始筛选美股标的。"
+              "Institutional stock screening powered by a Three-Layer Financial Domain Ontology, 27-Sector RRG rotation, and T+5 self-healing AI audit. Tap any indicator with '?' for instant ontology explanations.",
+              "由三层金融领域本体 (Ontology)、27 板块 RRG 轮动引擎与 T+5 自愈审计驱动的机构级选股平台。点击或悬停带“?”指标即可查看本体定义与公式。"
             )}
           </p>
 
-          <div className="flex flex-wrap items-center justify-center gap-3 mb-8">
-
+          {/* Live Status Action Pills */}
+          <div className="flex flex-wrap items-center justify-center gap-2.5 sm:gap-3 mb-6">
             <Link
               href="/updates"
-              className="inline-flex items-center gap-2.5 px-4 py-2.5 rounded-xl bg-slate-900/80 hover:bg-slate-800/90 border border-emerald-500/40 text-xs sm:text-sm transition-all hover:scale-[1.02] shadow-lg backdrop-blur-md"
+              className="inline-flex items-center gap-2 px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-xl bg-slate-900/80 hover:bg-slate-800/90 border border-emerald-500/40 text-xs sm:text-sm transition-all hover:scale-[1.02] shadow-lg backdrop-blur-md"
             >
-              <span className="flex h-2.5 w-2.5 relative shrink-0">
+              <span className="flex h-2 w-2 sm:h-2.5 sm:w-2.5 relative shrink-0">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-400"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 sm:h-2.5 sm:w-2.5 bg-emerald-400"></span>
               </span>
               <span className="text-emerald-400 font-bold">{t("LIVE UPDATES", "更替记录")}</span>
               <span className="text-slate-300">{t("Model Additions & Removals", "最新成分股更替")}</span>
@@ -213,12 +248,104 @@ export default function Home() {
 
             <Link
               href="/audit"
-              className="inline-flex items-center gap-2.5 px-4 py-2.5 rounded-xl bg-slate-900/80 hover:bg-slate-800/90 border border-purple-500/40 text-xs sm:text-sm transition-all hover:scale-[1.02] shadow-lg backdrop-blur-md"
+              className="inline-flex items-center gap-2 px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-xl bg-slate-900/80 hover:bg-slate-800/90 border border-purple-500/40 text-xs sm:text-sm transition-all hover:scale-[1.02] shadow-lg backdrop-blur-md"
             >
-              <Sparkles className="w-4 h-4 text-purple-400 animate-pulse" />
+              <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-purple-400 animate-pulse" />
               <span className="text-purple-400 font-bold">{t("LIVE WIN-RATE", "实时胜率战报")}</span>
               <span className="text-slate-300">{t("AI Self-Healing Audit", "AI 策略门槛自愈审计")}</span>
             </Link>
+          </div>
+
+          {/* v3.0 Three-Layer Financial Domain Ontology Strip */}
+          <div className="w-full max-w-[1400px] rounded-2xl bg-gradient-to-r from-slate-900/90 via-indigo-950/30 to-slate-900/90 border border-cyan-500/25 p-3.5 sm:p-5 text-left shadow-xl">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 pb-3 mb-3 border-b border-slate-800/80">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-lg bg-cyan-500/15 border border-cyan-500/30 text-cyan-400">
+                  <Layers className="w-4 h-4 sm:w-5 sm:h-5" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-xs sm:text-sm font-extrabold text-white">
+                      {t("Three-Layer Financial Domain Ontology Architecture v3.0", "三层金融领域本体架构 (Financial Domain Ontology v3.0)")}
+                    </span>
+                    <TermTooltip term="Ontology" className="text-[11px] text-cyan-300 font-semibold">
+                      {t("What is Ontology?", "什么是金融本体？")}
+                    </TermTooltip>
+                  </div>
+                  <p className="text-[11px] sm:text-xs text-slate-400 mt-0.5">
+                    {t(
+                      "Bridging deterministic quantitative data contracts, Neo4j graph memory, and closed-loop AI execution.",
+                      "打通确定性数据契约、Neo4j 五维知识图谱与 T+5 自愈动力算子的机构级认知底座。"
+                    )}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <Link
+                  href="/whitepaper"
+                  className="text-xs font-semibold text-amber-300 hover:text-amber-200 px-3 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/30 transition-colors"
+                >
+                  {t("Read v3.0 Whitepaper →", "阅读 v3.0 完整白皮书 →")}
+                </Link>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5 sm:gap-3 text-xs">
+              <div className="rounded-xl bg-slate-950/60 border border-slate-800/80 p-3">
+                <div className="text-[10px] font-bold uppercase tracking-wider text-cyan-400 mb-1">
+                  {t("Layer 1 · Semantic Graph", "第一层 · 语义与知识本体")}
+                </div>
+                <div className="font-semibold text-slate-200 mb-0.5">
+                  {t("Neo4j 5-Node Graph + 1,500+ Research Vault", "Neo4j 五维图谱 + 1,500+ 阿里云研报库")}
+                </div>
+                <p className="text-[11px] text-slate-400 leading-relaxed">
+                  {t(
+                    "Links Stock, Sector, Strategy, AI Reflection & Audit with 82-year macro history.",
+                    "连接股票、板块、策略、AI错题本与审计节点，融合82年宏观与1500+深度研报。"
+                  )}
+                </p>
+              </div>
+
+              <div className="rounded-xl bg-slate-950/60 border border-slate-800/80 p-3">
+                <div className="text-[10px] font-bold uppercase tracking-wider text-indigo-400 mb-1">
+                  {t("Layer 2 · Data Contract & Lexicon", "第二层 · 数据契约与双语词典")}
+                </div>
+                <div className="font-semibold text-slate-200 mb-0.5">
+                  {t("Pydantic Contracts + Bilingual Term Tooltips", "Pydantic 强类型契约 + 术语即时弹窗")}
+                </div>
+                <p className="text-[11px] text-slate-400 leading-relaxed">
+                  {t(
+                    "Standardizes 5-tier storage schemas and provides instant formulas for ",
+                    "统一五层存储结构，并为 "
+                  )}
+                  <TermTooltip term="FCF Yield" showIcon={false} className="text-cyan-300">FCF Yield</TermTooltip>
+                  {" / "}
+                  <TermTooltip term="PEG Ratio" showIcon={false} className="text-cyan-300">PEG</TermTooltip>
+                  {" / "}
+                  <TermTooltip term="ROE" showIcon={false} className="text-cyan-300">ROE</TermTooltip>
+                  {t(" across all views.", " 等核心指标提供即时公式解释。")}
+                </p>
+              </div>
+
+              <div className="rounded-xl bg-slate-950/60 border border-slate-800/80 p-3">
+                <div className="text-[10px] font-bold uppercase tracking-wider text-purple-400 mb-1">
+                  {t("Layer 3 · Kinetic Operators", "第三层 · 动力与决策算子")}
+                </div>
+                <div className="font-semibold text-slate-200 mb-0.5">
+                  <TermTooltip term="RRG" showIcon={false} className="text-purple-300">27-Sector RRG</TermTooltip>
+                  {" + "}
+                  <TermTooltip term="Walk-Forward" showIcon={false} className="text-purple-300">Walk-Forward</TermTooltip>
+                  {" & "}
+                  <TermTooltip term="T+5" showIcon={false} className="text-purple-300">T+5</TermTooltip>
+                </div>
+                <p className="text-[11px] text-slate-400 leading-relaxed">
+                  {t(
+                    "Couples 27-sector rotation tailwinds with Lo (2002) Sharpe backtests and autonomous parameter self-healing.",
+                    "联动 27 板块顺逆风象限、无前视偏差回测与周日 AI 策略阈值闭环自愈。"
+                  )}
+                </p>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -310,7 +437,13 @@ export default function Home() {
                       key={metric.label}
                       className="flex items-center justify-between px-2.5 sm:px-3 py-2 sm:py-2.5 rounded-lg bg-slate-900/60 border border-slate-700/40"
                     >
-                      <span className="text-xs font-medium text-slate-300">{metric.label}</span>
+                      <span className="text-xs font-medium text-slate-300">
+                        {"term" in metric && metric.term ? (
+                          <TermTooltip term={metric.term}>{metric.label}</TermTooltip>
+                        ) : (
+                          metric.label
+                        )}
+                      </span>
                       <span className={`text-xs font-mono font-semibold ${colorClass.split(" ")[0]}`}>
                         {metric.value}
                       </span>

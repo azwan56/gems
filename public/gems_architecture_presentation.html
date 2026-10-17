@@ -1,0 +1,1039 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>企业级 Agentic AI 生产落地架构与金融领域本体论白皮书 v3.0 - DailyStock & Gems</title>
+  <!-- Mermaid.js for interactive diagrams -->
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <style>
+    :root {
+      --bg-dark: #0b0f19;
+      --card-bg: rgba(26, 36, 54, 0.88);
+      --border-color: rgba(255, 255, 255, 0.15);
+      --accent-cyan: #38bdf8;
+      --accent-indigo: #818cf8;
+      --accent-purple: #c084fc;
+      --accent-green: #34d399;
+      --accent-amber: #fbbf24;
+      --accent-red: #f87171;
+      --text-main: #f8fafc;
+      --text-muted: #cbd5e1;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      overflow: hidden;
+      height: 100vh;
+      width: 100vw;
+    }
+
+    #progress-bar {
+      position: absolute;
+      top: 0;
+      left: 0;
+      height: 5px;
+      background: linear-gradient(90deg, var(--accent-cyan), var(--accent-indigo), var(--accent-purple));
+      width: 0%;
+      transition: width 0.3s ease;
+      z-index: 100;
+    }
+
+    .lang-switch {
+      position: absolute;
+      top: 15px;
+      right: 25px;
+      z-index: 200;
+      display: flex;
+      gap: 8px;
+    }
+
+    .lang-btn {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      padding: 6px 14px;
+      border-radius: 16px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all 0.2s ease;
+    }
+
+    .lang-btn:hover, .lang-btn.active {
+      background: var(--accent-cyan);
+      color: #0b0f19;
+      border-color: var(--accent-cyan);
+    }
+
+    .slides-container {
+      position: relative;
+      width: 100%;
+      height: calc(100vh - 65px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .slide {
+      position: absolute;
+      width: 92%;
+      max-width: 1400px;
+      height: 86vh;
+      background: var(--card-bg);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid var(--border-color);
+      border-radius: 24px;
+      padding: 32px 46px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      opacity: 0;
+      transform: scale(0.96) translateY(20px);
+      transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      pointer-events: none;
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.6);
+    }
+
+    .slide.active {
+      opacity: 1;
+      transform: scale(1) translateY(0);
+      pointer-events: auto;
+    }
+
+    .slide-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 18px;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 12px;
+    }
+
+    .slide-title {
+      font-size: clamp(1.3rem, 2.2vw, 1.95rem);
+      font-weight: 800;
+      background: linear-gradient(135deg, #ffffff 40%, var(--accent-cyan));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-wrap: balance;
+    }
+
+    .slide-act {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--accent-indigo);
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      background: rgba(129, 140, 248, 0.12);
+      padding: 6px 16px;
+      border-radius: 12px;
+      border: 1px solid rgba(129, 140, 248, 0.3);
+      white-space: nowrap;
+    }
+
+    .slide-body {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 18px;
+      overflow-y: auto;
+    }
+
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; }
+    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+    .grid-4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 18px; }
+
+    .card {
+      background: rgba(15, 23, 42, 0.68);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 20px 22px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      transition: transform 0.2s ease, border-color 0.2s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-3px);
+      border-color: var(--accent-cyan);
+    }
+
+    .card-title {
+      font-size: 1.22rem;
+      font-weight: 700;
+      color: var(--accent-cyan);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .card p, ul li {
+      font-size: 0.98rem;
+      color: var(--text-muted);
+      line-height: 1.58;
+    }
+
+    ul {
+      list-style-type: none;
+      padding-left: 0;
+    }
+
+    ul li {
+      position: relative;
+      padding-left: 22px;
+      margin-bottom: 8px;
+    }
+
+    ul li::before {
+      content: "➔";
+      position: absolute;
+      left: 0;
+      color: var(--accent-cyan);
+      font-weight: bold;
+    }
+
+    code {
+      background: rgba(56, 189, 248, 0.12);
+      color: #7dd3fc;
+      padding: 2px 6px;
+      border-radius: 5px;
+      font-family: "Fira Code", monospace, Consolas;
+      font-size: 0.88em;
+    }
+
+    .code-snippet {
+      background: #050811;
+      border: 1px solid rgba(56, 189, 248, 0.25);
+      border-radius: 10px;
+      padding: 12px 14px;
+      font-family: "Fira Code", monospace, Consolas;
+      font-size: 0.86rem;
+      color: #38bdf8;
+      overflow-x: auto;
+    }
+
+    /* Enhanced Large Diagram Container */
+    .mermaid-box {
+      background: rgba(11, 15, 25, 0.85);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      min-height: 440px;
+      height: 100%;
+      width: 100%;
+      overflow: auto;
+      position: relative;
+      cursor: zoom-in;
+      transition: border-color 0.2s ease, background-color 0.2s ease;
+    }
+
+    .mermaid-box:hover {
+      border-color: var(--accent-cyan);
+      background: rgba(15, 23, 42, 0.95);
+    }
+
+    .mermaid-zoom-hint {
+      position: absolute;
+      top: 14px;
+      right: 18px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--accent-cyan);
+      background: rgba(56, 189, 248, 0.15);
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      padding: 5px 14px;
+      border-radius: 14px;
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    .mermaid {
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .mermaid svg {
+      width: 100% !important;
+      max-width: 1320px !important;
+      height: auto !important;
+      min-height: 380px;
+    }
+
+    /* Fullscreen Modal Zoom Mode */
+    .mermaid-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(5, 8, 17, 0.96);
+      backdrop-filter: blur(16px);
+      z-index: 1000;
+      padding: 30px;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .mermaid-modal.active {
+      display: flex;
+    }
+
+    .mermaid-modal-content {
+      width: 96%;
+      height: 90%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow: auto;
+    }
+
+    .mermaid-modal-content svg {
+      width: 100% !important;
+      height: auto !important;
+      max-height: 86vh !important;
+    }
+
+    .mermaid-modal-close {
+      position: absolute;
+      top: 20px;
+      right: 30px;
+      font-size: 1rem;
+      font-weight: 700;
+      color: #fff;
+      background: rgba(255, 255, 255, 0.15);
+      border: 1px solid var(--border-color);
+      padding: 8px 20px;
+      border-radius: 20px;
+      cursor: pointer;
+      z-index: 1010;
+      transition: background 0.2s ease;
+    }
+
+    .mermaid-modal-close:hover {
+      background: var(--accent-red);
+      border-color: var(--accent-red);
+    }
+
+    .controls {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 65px;
+      background: rgba(11, 15, 25, 0.95);
+      border-top: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 40px;
+      z-index: 90;
+    }
+
+    .nav-btn {
+      background: linear-gradient(135deg, var(--accent-cyan), var(--accent-indigo));
+      color: #0b0f19;
+      border: none;
+      padding: 10px 24px;
+      border-radius: 12px;
+      font-weight: 700;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: opacity 0.2s ease, transform 0.1s ease;
+    }
+
+    .nav-btn:hover {
+      opacity: 0.9;
+      transform: scale(1.02);
+    }
+
+    .counter {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--text-muted);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: rgba(15, 23, 42, 0.6);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    th, td {
+      padding: 12px 16px;
+      text-align: left;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    th {
+      background: rgba(30, 41, 59, 0.85);
+      color: var(--accent-cyan);
+      font-size: 1.0rem;
+    }
+
+    td {
+      color: var(--text-muted);
+      font-size: 0.92rem;
+    }
+
+    .cover-slide {
+      text-align: center;
+      align-items: center;
+      justify-content: center;
+      gap: 18px;
+    }
+
+    .cover-title {
+      font-size: clamp(1.7rem, 3.6vw, 2.9rem);
+      font-weight: 900;
+      line-height: 1.22;
+      background: linear-gradient(135deg, #ffffff 30%, var(--accent-cyan) 70%, var(--accent-purple));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-wrap: balance;
+    }
+
+    .cover-subtitle {
+      font-size: clamp(0.95rem, 1.6vw, 1.35rem);
+      color: var(--accent-indigo);
+      font-weight: 700;
+    }
+
+    .badge-group {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      margin-top: 12px;
+      flex-wrap: wrap;
+      max-width: 1100px;
+    }
+
+    .badge {
+      background: rgba(56, 189, 248, 0.12);
+      border: 1px solid var(--accent-cyan);
+      padding: 7px 16px;
+      border-radius: 20px;
+      font-size: 0.92rem;
+      font-weight: 600;
+      color: var(--text-main);
+    }
+
+    .table-responsive {
+      width: 100%;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    @media (max-width: 768px) {
+      body { overflow: hidden; height: 100dvh; }
+      .slides-container { height: calc(100dvh - 60px); }
+      .slide { width: 95%; height: 88dvh; padding: 18px 14px; border-radius: 16px; }
+      .slide-header { flex-direction: column; align-items: flex-start; gap: 4px; margin-bottom: 10px; padding-bottom: 6px; }
+      .slide-title { font-size: 1.18rem; line-height: 1.35; }
+      .slide-act { font-size: 0.72rem; padding: 3px 10px; border-radius: 10px; }
+      .cover-title { font-size: 1.55rem; line-height: 1.3; }
+      .cover-subtitle { font-size: 0.92rem; }
+      .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; gap: 10px; }
+      .card { padding: 12px 14px; border-radius: 12px; }
+      .card-title { font-size: 1.02rem; }
+      .card p, ul li, td, th { font-size: 0.84rem; line-height: 1.48; }
+      .controls { height: 60px; padding: 0 16px; }
+      .nav-btn { padding: 8px 16px; font-size: 0.85rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <div id="progress-bar"></div>
+
+  <div class="lang-switch">
+    <a href="gems_architecture_presentation.html" class="lang-btn active">中文</a>
+    <a href="gems_architecture_presentation_en.html" class="lang-btn">English</a>
+  </div>
+
+  <div class="slides-container">
+
+    <!-- Slide 1: 封面 -->
+    <div class="slide cover-slide active">
+      <div class="cover-subtitle">🚀 企业级 Agentic AI 生产落地架构与金融本体论白皮书 v3.0</div>
+      <h1 class="cover-title">云原生全栈 Agentic AI 落地架构<br>三层金融领域本体论 + Neo4j GraphRAG + 七重 SRE 自治闭环</h1>
+      <p style="color: var(--text-muted); font-size: 1.12rem; max-width: 980px; margin-top: 5px; line-height: 1.6;">
+        面向 AI 架构师与量化投研团队：三层金融领域本体 (Ontology) ➔ 定向上下文路由 ➔ Neo4j 图谱与 ADK 编排 ➔ 五层异构存储与 1,500+ 研报金库 ➔ 27 板块 RRG 与样本外回测实验室 ➔ 七重自愈 SRE 闭环
+      </p>
+      <div class="badge-group">
+        <span class="badge">1. 三层金融领域本体论 (Ontology)</span>
+        <span class="badge">2. Neo4j GraphRAG 与 ADK 编排</span>
+        <span class="badge">3. 五层异构存储与 1,500+ 研报金库</span>
+        <span class="badge">4. 27 板块 RRG 与样本外回测实验室</span>
+        <span class="badge">5. 零信任 RBAC 与七重 SRE 闭环</span>
+        <span class="badge">6. 移动端 UX 2.0 与内联本体词典</span>
+      </div>
+    </div>
+
+    <!-- Slide 2: 痛点与挑战 -->
+    <div class="slide">
+      <div class="slide-header">
+        <div class="slide-title">1. 企业级金融 AI 落地四大命门与挑战</div>
+        <div class="slide-act">Part I: 痛点与挑战</div>
+      </div>
+      <div class="slide-body grid-4">
+        <div class="card" style="border-top: 4px solid var(--accent-red);">
+          <div class="card-title" style="color: var(--accent-red);">1. 概念漂移与数字幻觉</div>
+          <p>缺乏形式化领域本体（Ontology）约束的纯 Prompt 极易引发产业链因果错乱、财务指标伪造与支撑/阻力位虚构，带来致命合规风险。</p>
+        </div>
+        <div class="card" style="border-top: 4px solid var(--accent-purple);">
+          <div class="card-title" style="color: var(--accent-purple);">2. Token 爆炸与高延迟</div>
+          <p>缺乏定向上下文剪枝路由，将用户所有持仓全量塞入 Prompt 动辄消耗 30k+ Token，导致首字响应延迟高达 12 秒且算力成本失控。</p>
+        </div>
+        <div class="card" style="border-top: 4px solid var(--accent-indigo);">
+          <div class="card-title" style="color: var(--accent-indigo);">3. 多租户数据越权风险</div>
+          <p>若缺乏数据库规则层物理约束与敏感凭证单向脱敏，用户的持仓组合、Webhook 私钥与私有对话历史极易发生跨租户越权泄露。</p>
+        </div>
+        <div class="card" style="border-top: 4px solid var(--accent-cyan);">
+          <div class="card-title" style="color: var(--accent-cyan);">4. 前视偏差与外部噪音</div>
+          <p>回测中混入未来函数（Look-Ahead Bias）或未经清洗将社交平台（Reddit/X）传闻与官方定量数据混杂，导致回测虚高与实盘亏损。</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 3: 三层金融领域本体论架构 (NEW) -->
+    <div class="slide">
+      <div class="slide-header">
+        <div class="slide-title">2. 核心基石：三层金融领域本体论架构 (Financial Domain Ontology)</div>
+        <div class="slide-act">Part II: 金融领域本体论</div>
+      </div>
+      <div class="slide-body grid-3">
+        <div class="card" style="border-top: 4px solid var(--accent-cyan);">
+          <div class="card-title">Layer 1: 语义实体与图谱本体</div>
+          <p><b>领域的“名词与动词” (<code>neo4j_service.py</code>)</b></p>
+          <ul>
+            <li><b>5 大形式化实体类</b>：<code>:Stock</code>（上市公司）、<code>:ResearchReport</code>（深度研报）、<code>:InvestmentRationale</code>（看多逻辑）、<code>:RiskFactor</code>（风险因子）、<code>:MarketCatalyst</code>（事件催化剂）。</li>
+            <li><b>9 大有向语义谓词</b>：<code>[:SUPPLIES_TO]</code>、<code>[:CUSTOMER_OF]</code>、<code>[:COMPETES_WITH]</code>、<code>[:PARTNER_WITH]</code>、<code>[:BELONGS_TO]</code> 等，支撑 1~3 跳 Cypher 产业链传导检索。</li>
+          </ul>
+        </div>
+        <div class="card" style="border-top: 4px solid var(--accent-indigo);">
+          <div class="card-title">Layer 2: 形式化契约与认知本体</div>
+          <p><b>领域的“语法与词典” (<code>models.py</code> & <code>TermTooltip.jsx</code>)</b></p>
+          <ul>
+            <li><b>Pydantic 强契约本体</b>：<code>StockAnalysisContract</code> 与 <code>MarketBriefingContract</code> 强制绑定支撑位、阻力位与催化剂，违约即触发 Reflection 自愈。</li>
+            <li><b>双语认知本体词典 (<code>FINANCIAL_GLOSSARY</code>)</b>：将 40+ 核心概念按 5 大本体域标准化为 <code>{summary, practical, formula, category}</code>，通过 React Portal 注入内联解释卡片。</li>
+          </ul>
+        </div>
+        <div class="card" style="border-top: 4px solid var(--accent-amber);">
+          <div class="card-title" style="color: var(--accent-amber);">Layer 3: 动力学与决策行动本体</div>
+          <p><b>领域的“决策与自愈” (Action & Kinetic Ontology)</b></p>
+          <ul>
+            <li><b>9:30 AM 盘前战术算子</b>：将 <code>|Gap| ≥ 2%</code> 与 <code>RVOL ≥ 1.5x</code> 映射为 <code>SHORT_SQUEEZE</code> / <code>GAP_AND_GO</code> 剧本及保守/稳健/激进三档止损止盈位。</li>
+            <li><b>27 板块 RRG 象限跃迁算子</b>：将 <code>RS-Ratio</code> 与 <code>RS-Momentum</code> 映射为四象限轮动指令与 60/40 股债再平衡动作。</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 4: 三层金融领域本体论协同拓扑图 (NEW) -->
+    <div class="slide">
+      <div class="slide-header">
+        <div class="slide-title">3. 神经符号学（Neuro-Symbolic）三层金融本体协同拓扑</div>
+        <div class="slide-act">Part II: 金融领域本体论</div>
+      </div>
+      <div class="slide-body">
+        <div class="mermaid-box">
+          <div class="mermaid-zoom-hint">🔍 点击放大查看</div>
+          <pre class="mermaid">
+flowchart LR
+    subgraph L1["Layer 1: 语义实体与图谱本体 (Neo4j)"]
+        S[":Stock 标的实体"]
+        R[":ResearchReport 研报实例"]
+        I[":InvestmentRationale 看多逻辑"]
+        K[":RiskFactor 风险因子"]
+        C[":MarketCatalyst 催化剂"]
+        S -->|"[:SUPPLIES_TO / COMPETES_WITH]"| S
+        S -->|"[:HAS_REPORT]"| R
+        R -->|"[:HAS_RATIONALE]"| I
+        R -->|"[:HAS_RISK]"| K
+        R -->|"[:HAS_CATALYST]"| C
+    end
+
+    subgraph L2["Layer 2: 形式化契约与认知本体 (Schema & Lexicon)"]
+        PC["Pydantic 契约本体 (StockAnalysisContract)"]
+        FG["双语术语词典本体 (40+ 概念 / 5 大分类域)"]
+        RF["Reflection Error 自愈重试环"]
+        PC -->|"Schema 校验失败"| RF
+        RF -->|"重推理修正"| PC
+    end
+
+    subgraph L3["Layer 3: 动力学与行动本体 (Kinetic Operators)"]
+        ACT1["9:30 AM 盘前剧本算子 (三档风险偏好)"]
+        ACT2["27 板块 RRG 轮动算子 (四象限 + 60/40 调仓)"]
+        ACT3["Walk-Forward 样本外回测与 T+5 参数自愈"]
+    end
+
+    L1 ==>|"1~3 跳 GraphRAG 锚定"| L2
+    L2 ==>|"零幻觉结构化状态输出"| L3
+    L3 -.->|"T+5 实盘反馈修正权重"| L1
+          </pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 5: 场景驱动模型分工与定向路由 -->
+    <div class="slide">
+      <div class="slide-header">
+        <div class="slide-title">4. 场景驱动的大模型分工与定向上下文剪枝路由</div>
+        <div class="slide-act">Part III: 模型分工与路由</div>
+      </div>
+      <div class="slide-body grid-3">
+        <div class="card" style="border-top: 4px solid var(--accent-cyan);">
+          <div class="card-title">Gemini 2.5 Flash</div>
+          <p><b>多轮对话、ADK 工具调用与定向上下文路由</b></p>
+          <ul>
+            <li><b>定向剪枝路由</b>：正则提取用户询问标的（如 <code>NVDA</code>），精准剪枝其余 18 只无关持仓股票，Token 消耗骤降 <b>>80%</b>（2.8万 ➔ 2500 Token），延迟从 12s 降至 1.8s。</li>
+            <li><b>应用场景</b>：实时 AI 选股问答、盘前执行简报、盘后复盘快讯。</li>
+          </ul>
+        </div>
+        <div class="card" style="border-top: 4px solid var(--accent-purple);">
+          <div class="card-title">Gemini 2.5 Flash-Lite</div>
+          <p><b>高并发量化风险拟合与预热</b></p>
+          <ul>
+            <li><b>优势</b>：推理成本降低 70%，极高并发吞吐耐受度，适于批量高频任务。</li>
+            <li><b>应用场景</b>：组合压力测试、板块暴露计算、Cloud Scheduler 定时缓存预热。</li>
+          </ul>
+        </div>
+        <div class="card" style="border-top: 4px solid var(--accent-indigo);">
+          <div class="card-title">Gemini 2.5 Pro</div>
+          <p><b>机构级深度定性推演</b></p>
+          <ul>
+            <li><b>优势</b>：超长上下文与多因子因果推理能力，支持解构多财季 10-K/10-Q 财报与电话会。</li>
+            <li><b>应用场景</b>：宏观催化动因归因、美联储决议深度研报、跨周期估值建模。</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 6: Google ADK Harness 编排 -->
+    <div class="slide">
+      <div class="slide-header">
+        <div class="slide-title">5. Google ADK 原生 Agent Harness 编排与事实回填</div>
+        <div class="slide-act">Part III: Harness 架构</div>
+      </div>
+      <div class="slide-body">
+        <div class="mermaid-box">
+          <div class="mermaid-zoom-hint">🔍 点击放大查看</div>
+          <pre class="mermaid">
+sequenceDiagram
+    actor User as 用户 (投资提问)
+    participant ADK as Google ADK Agent Harness
+    participant Gemini as Gemini 2.5 Flash 模型
+    participant Engine as [ADK Tool] 17财季 TTM 引擎 + Neo4j 本体图谱
+
+    User->>ADK: "PATH 近年历史 P/E 估值区间与产业链上下游风险如何？"
+    ADK->>Gemini: 注入本体 Schema 契约与注册工具集
+    Gemini->>ADK: 触发 Tool Call: get_stock_historical_valuations('PATH')
+    ADK->>Engine: 提取连续 17 财季真实 TTM 财务指标 + Neo4j 2-Hop 供应链拓扑
+    Engine-->>ADK: 返回真实市盈率 18.5x、市净率 3.2x、FCF 收益率 6.51% 与上下游节点
+    ADK->>Gemini: 将可信事实数据与图谱本体回填至模型上下文
+    Gemini-->>User: 输出无幻觉、严谨锚定硬数据的结构化解答
+          </pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 7: Neo4j GraphRAG 与五层异构存储基座 -->
+    <div class="slide">
+      <div class="slide-header">
+        <div class="slide-title">6. Neo4j GraphRAG 图谱与五层异构存储基座（含 1,500+ 研报金库）</div>
+        <div class="slide-act">Part IV: GraphRAG & 五层存储</div>
+      </div>
+      <div class="slide-body grid-2">
+        <div class="card">
+          <div class="card-title">🌐 Neo4j 2-Hop 产业链图谱与强制 OHLCV 看板</div>
+          <ul>
+            <li><b>多跳拓扑提取</b>：封装于 <code>neo4j_service.py</code>，自动执行 Cypher 提取 <code>1~3 hop</code> 产业链上下游（如 <code>TSMC -[:SUPPLIES_TO]-> NVDA -[:CUSTOMER_OF]-> MSFT</code>）。</li>
+            <li><b>强制输出 OHLCV 技术看板</b>：解答个股行情时，强制优先列出开高低收、涨跌幅、成交量、10日均量、VWAP、RSI(14)、SMA(20/50)。</li>
+            <li><b>严格事实锚定</b>：缺漏指标回答“暂无官方最新披露数据”，彻底杜绝主观捏造。</li>
+          </ul>
+        </div>
+        <div class="card">
+          <div class="card-title">🗄️ 五层异构存储拓扑与 1,500+ 机构研报金库</div>
+          <ul>
+            <li><b>L1 进程内高速缓存</b>：行情 60s TTL、FRED 宏观 15m TTL，微秒级响应并防上游雪崩。</li>
+            <li><b>L2 Firestore 状态库 + L3 Neo4j 图数据库 + L4 GCS 多模态 CDN</b>：支撑多租户配置、关系图谱与 24fps 视频简报分发。</li>
+            <li><b>L5 阿里云深度研报金库 (<code>47.110.155.86</code>)</b>：SQLite + FTS 全文检索，沉淀 <b>1,500+ 篇</b>中英文机构级长篇个股深度研报，支持按股票代码、行业与关键词秒级调阅。</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 8: 27 板块 RRG、9:30 开盘剧本与样本外回测实验室 (NEW) -->
+    <div class="slide">
+      <div class="slide-header">
+        <div class="slide-title">7. 27 板块 RRG 轮动、9:30 战术剧本与机构级样本外回测实验室</div>
+        <div class="slide-act">Part V: 量化与回测引擎</div>
+      </div>
+      <div class="slide-body grid-3">
+        <div class="card" style="border-top: 4px solid var(--accent-cyan);">
+          <div class="card-title">🔄 27 板块 RRG 轮动与 60/40 调仓</div>
+          <ul>
+            <li><b>全谱系覆盖</b>：11 大 GICS 一级板块 + 16 个高 Alpha 主题 ETF（<code>SMH</code> 半导体、<code>IGV</code> 软件、<code>ITA</code> 国防、<code>URA</code> 铀矿、<code>IBIT</code> 比特币等）。</li>
+            <li><b>四象限轨迹追踪</b>：实时计算相对 SPY 的 <code>RS-Ratio</code> 与 <code>RS-Momentum</code>，划分领涨、改善、转弱、落后四象限，并触发 60/40 股债偏离预警。</li>
+          </ul>
+        </div>
+        <div class="card" style="border-top: 4px solid var(--accent-amber);">
+          <div class="card-title" style="color: var(--accent-amber);">⚡ 9:30 AM 盘前异动雷达与剧本</div>
+          <ul>
+            <li><b>双阈值过滤</b>：锁定 <code>|Gap| ≥ 2.0%</code> 且 <code>RVOL ≥ 1.5x</code> 的盘前异动标的，穿透核查 SEC 8-K、期权异动与空头比例。</li>
+            <li><b>三档风险偏好剧本</b>：针对保守型、稳健型、激进型分别生成 <code>SHORT_SQUEEZE</code> / <code>GAP_AND_GO</code> 入场触发价、ATR 止损位与止盈目标。</li>
+          </ul>
+        </div>
+        <div class="card" style="border-top: 4px solid var(--accent-green);">
+          <div class="card-title" style="color: var(--accent-green);">🧪 样本外回测实验室 (Backtest Lab)</div>
+          <ul>
+            <li><b>零前视偏差 (Walk-Forward)</b>：严格执行 <code>Signal(t) ➔ Execution(t+1)</code>，扣除双边滑点与佣金成本。</li>
+            <li><b>机构级风险归因</b>：输出 <b>Lo (2002) 自相关修正夏普比率</b>、Newey-West $t\text{-stat}$、95% VaR/CVaR、Sortino、Calmar 及单股 52 周历史评分回测。</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 9: 多租户 RBAC 与隐私防泄露体系 -->
+    <div class="slide">
+      <div class="slide-header">
+        <div class="slide-title">8. 多租户分级权限 (RBAC) 与零信任数据隐私安全隔离</div>
+        <div class="slide-act">Part VI: 权限与隐私安全</div>
+      </div>
+      <div class="slide-body grid-2">
+        <div class="card">
+          <div class="card-title">🛡️ Firestore 规则层物理隔离 (firestore.rules)</div>
+          <ul>
+            <li><b>数据库物理防护</b>：部署规则强制限制 <code>request.auth.uid == userId</code>，客户端 SDK 只能读写自己的私有文档。</li>
+            <li><b>杜绝前端传参 UID</b>：后台所有操作严格从 Google 签名的 Firebase ID Token 中解密身份，杜绝越权扫描。</li>
+            <li><b>零 Key 云原生鉴权</b>：全面采用 GCP ADC + IAM 角色授权与 <code>SensitiveDataFilter</code> 日志脱敏拦截器。</li>
+          </ul>
+        </div>
+        <div class="card">
+          <div class="card-title">🔑 敏感 Webhook 令牌单向脱敏与配额矩阵</div>
+          <ul>
+            <li><b>动态脱敏显示</b>：企业微信（<code>key=36a2****6987</code>）与 Discord（<code>.../f0C3****q6tk</code>）密钥返回前端时自动打码。</li>
+            <li><b>非破坏性保存</b>：用户提交包含 <code>****</code> 的表单时，后台智能保留原真实私钥，防止密钥丢失或被截获。</li>
+            <li><b>多等级权益配额</b>：Free (1持仓)、Trial (5持仓, 2观察)、Paid/Pro (15持仓, 15天宽限期)、Super/Admin (无限制)。</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 10: 外部多源数据严谨性治理流水线 -->
+    <div class="slide">
+      <div class="slide-header">
+        <div class="slide-title">9. 外部多源数据获取、校准与严谨性治理流水线</div>
+        <div class="slide-act">Part VI: 数据工程治理</div>
+      </div>
+      <div class="slide-body grid-3">
+        <div class="card" style="border-top: 4px solid var(--accent-cyan);">
+          <div class="card-title">FMP & yfinance 黄金定量源</div>
+          <ul>
+            <li><b>FMP 核心基座</b>：实时行情、VWAP、均线、RSI、13F 机构持仓、内幕交易、SEC 电话会。</li>
+            <li><b>复权与有效性强校验</b>：基于 <code>Adj Close</code> 拆股除权对齐，拦截 $P \le 0$ 与越界数据，校验 $RSI \in [0, 100]$。</li>
+            <li><b>yfinance 保底</b>：大盘 ETF 连续行情与 FMP 超限时的自动熔断切换。</li>
+          </ul>
+        </div>
+        <div class="card" style="border-top: 4px solid var(--accent-indigo);">
+          <div class="card-title">FRED 联储官方源与 P1/P2 分级</div>
+          <ul>
+            <li><b>9 大核心宏观序列</b>：10Y-2Y 利差 (<code>T10Y2Y</code>)、美债收益率、联邦基金利率 (<code>FEDFUNDS</code>)、核心 PCE、CPI、非农就业、失业率、密歇根消费信心。</li>
+            <li><b>P1/P2 市场反应分级</b>：基于 20 日回报分位数动态判定 <code>P1</code>（$\ge 80\%$ 分位主驱动）与 <code>P2</code>（次要背景）。</li>
+          </ul>
+        </div>
+        <div class="card" style="border-top: 4px solid var(--accent-purple);">
+          <div class="card-title">权威媒体白名单与传闻嗅探</div>
+          <ul>
+            <li><b>主流财经媒体优先</b>：定向白名单抓取 Bloomberg、Reuters、WSJ、CNBC、Seeking Alpha 深度研评。</li>
+            <li><b>社交情绪分流</b>：独立隔离 Reddit WSB 与 X 散户情绪。</li>
+            <li><b>谣言强警告标识</b>：自动为未经证实的传闻添加 <code>⚠️ [社交舆情/未经证实消息]</code> 警示。</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 11: 七重自主自愈 SRE 闭环 -->
+    <div class="slide">
+      <div class="slide-header">
+        <div class="slide-title">10. 七重自主自愈 SRE 闭环矩阵 (MAPE-K 与文档演进)</div>
+        <div class="slide-act">Part VII: 自愈闭环架构</div>
+      </div>
+      <div class="slide-body grid-3">
+        <div class="card">
+          <div class="card-title">🤖 1. 结构自审与反思闭环</div>
+          <p>Pydantic 本体契约拦截大模型输出，校验失败自动组装 Reflection Error Prompt 二次反思推理（最多重试 3 次）。</p>
+        </div>
+        <div class="card">
+          <div class="card-title">⚡ 2. 状态机熔断降级闭环</div>
+          <p>FMP 出现故障时熔断器跳闸（CLOSED ➔ OPEN），无缝平滑回退至 yfinance 历史镜像与多级缓存。</p>
+        </div>
+        <div class="card">
+          <div class="card-title">🔍 3. 缓存缺失自填补闭环</div>
+          <p>Cloud Scheduler 定时扫描 Firestore 缺失缓存，在每周研报推送前自动触发预热任务（Prewarm）。</p>
+        </div>
+        <div class="card">
+          <div class="card-title">📊 4. 策略胜率演化闭环</div>
+          <p>扫描过去 30 天选股信号与 T+5 真实走势，实时计算盈亏比并动态修正 <code>strategy_params</code> 阈值。</p>
+        </div>
+        <div class="card">
+          <div class="card-title">🚨 5. 异常告警反馈闭环</div>
+          <p>FastAPI 全局拦截异常直连 GCP Error Reporting，并在 Discord/企微自动发送带代码修复建议的告警。</p>
+        </div>
+        <div class="card">
+          <div class="card-title">🛡️ 6. 字符清洗与金丝雀回滚环</div>
+          <p>自动清洗表格失控字符，限制单次推送 5 个 Chunk（0.35s 间隔），配合 Cloud Run 10% Canary 流量探针自动回滚。</p>
+        </div>
+        <div class="card" style="grid-column: 1 / -1; background: rgba(56, 189, 248, 0.08); border-color: rgba(56, 189, 248, 0.4); padding: 14px 20px;">
+          <div class="card-title">📝 7. 文档与本体自适应同步演进环 (Ontology & Doc-Sync Loop)</div>
+          <p>将三层金融领域本体、算法白皮书、系统架构说明书与中英双语用户手册纳入自动化治理闭环，确保代码契约与线上文档 100% 同步演进。</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 12: 熔断状态机与自愈拓扑 -->
+    <div class="slide">
+      <div class="slide-header">
+        <div class="slide-title">11. 状态机熔断与自愈闭环拓扑</div>
+        <div class="slide-act">Part VII: 自愈闭环架构</div>
+      </div>
+      <div class="slide-body">
+        <div class="mermaid-box">
+          <div class="mermaid-zoom-hint">🔍 点击放大查看</div>
+          <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant CS as GCP Cloud Scheduler
+    participant BE as Cloud Run 后端服务
+    participant CB as 熔断器 (Circuit Breaker)
+    participant FMP as FMP 黄金行情源
+    participant Gemini as Gemini 2.5 Flash (Reflection)
+    participant Webhook as 企微与 Discord 机器人
+
+    CS->>BE: 1. 触发盘前策略简报 / 量化审计定时任务
+    BE->>CB: 2. 请求多源量化、RRG 与 FRED 宏观数据
+    alt FMP 数据源健康
+        CB->>FMP: 3a. 查询实时行情、均线与财务指标
+        FMP-->>CB: 4a. 返回校验后的可信数据
+    else FMP 连续失败 3 次 (跳闸为 OPEN)
+        CB-->>BE: 3b. 降级切换至 yfinance 与 Firestore 缓存
+    end
+    BE->>Gemini: 5. 注入定向持仓上下文、Neo4j 本体图谱与 Pydantic 契约
+    Gemini-->>BE: 6. 生成通过 Schema 校验的盘前策略与开盘剧本
+    BE->>BE: 7. 失控字符自愈清洗与分块限频保护 (最多 5 块)
+    BE-->>Webhook: 8. 匀速推送 (0.35秒间隔) 至企微与 Discord 频道
+          </pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 13: 权威 Benchmark、移动端 UX 2.0 与跨领域扩展 -->
+    <div class="slide">
+      <div class="slide-header">
+        <div class="slide-title">12. 权威 Benchmark、移动端 UX 2.0 与跨领域本体复制指南</div>
+        <div class="slide-act">Part VIII: 落地指标与跨界扩展</div>
+      </div>
+      <div class="slide-body">
+        <div class="table-responsive">
+          <table>
+            <thead>
+              <tr>
+                <th>核心架构 / 技术维度</th>
+                <th>实测指标 / 验证结果</th>
+                <th>工程实现方案与架构价值</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><b>首字生成延迟 (TTFT) & 定向路由</b></td>
+                <td><b style="color: var(--accent-green);">< 450 ms / 节省 >80% Token</b></td>
+                <td>HTTP/2 流式管道 + 股票代码正则剪枝，单次问答从 2.8万 压缩至 2500 Token，延迟降至 1.8s。</td>
+              </tr>
+              <tr>
+                <td><b>五层异构存储与深度研报金库</b></td>
+                <td><b style="color: var(--accent-cyan);">1,500+ 篇长篇机构研报</b></td>
+                <td>L1 内存 + L2 Firestore + L3 Neo4j + L4 GCS + L5 阿里云 FTS 全文检索研报金库秒级调阅。</td>
+              </tr>
+              <tr>
+                <td><b>量化轮动与样本外回测实验室</b></td>
+                <td><b style="color: var(--accent-amber);">27 板块 RRG + Lo(2002) 夏普</b></td>
+                <td>11 GICS + 16 主题 ETF 四象限追踪；严格 <code>T+1</code> 零前视偏差回测、Newey-West $t\text{-stat}$ 与 52 周单股回测。</td>
+              </tr>
+              <tr>
+                <td><b>移动端 UX 2.0 与认知本体词典</b></td>
+                <td><b style="color: var(--accent-purple);">40+ 双语术语 / 9 大导航舱</b></td>
+                <td>底部抽屉式登录 (Bottom-Sheet Auth)、粘性九大栏目导航舱 (<code>.section-hub-bar</code>)、React Portal 视口自适应术语弹窗。</td>
+              </tr>
+              <tr>
+                <td><b>跨领域本体迁移 (Universal Ontology)</b></td>
+                <td><b style="color: var(--accent-green);">FinTech ➔ MedTech / LegalTech</b></td>
+                <td>「图谱实体本体 + Pydantic 契约本体 + 行动算子本体 + 七重自愈环」可零缝隙迁移至医疗、法律与企业级知识工程。</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="controls">
+    <button class="nav-btn" id="prev-btn">← 上一页</button>
+    <div class="counter" id="slide-counter">1 / 13</div>
+    <button class="nav-btn" id="next-btn">下一页 →</button>
+  </div>
+
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: 'dark',
+      sequence: {
+        diagramMarginX: 25,
+        diagramMarginY: 20,
+        actorMargin: 80,
+        width: 190,
+        height: 60,
+        boxMargin: 10,
+        boxTextMargin: 5,
+        noteMargin: 10,
+        messageMargin: 45,
+        messageFontSize: 16,
+        actorFontSize: 16,
+        actorFontWeight: 700,
+        noteFontSize: 14,
+        useMaxWidth: true
+      }
+    });
+
+    const slides = document.querySelectorAll('.slide');
+    const counter = document.getElementById('slide-counter');
+    const progressBar = document.getElementById('progress-bar');
+    const prevBtn = document.getElementById('prev-btn');
+    const nextBtn = document.getElementById('next-btn');
+
+    let currentIndex = 0;
+
+    function updateSlides() {
+      slides.forEach((slide, index) => {
+        if (index === currentIndex) {
+          slide.classList.add('active');
+        } else {
+          slide.classList.remove('active');
+        }
+      });
+
+      counter.textContent = `${currentIndex + 1} / ${slides.length}`;
+      progressBar.style.width = `${((currentIndex + 1) / slides.length) * 100}%`;
+    }
+
+    prevBtn.addEventListener('click', () => {
+      if (currentIndex > 0) {
+        currentIndex--;
+        updateSlides();
+      }
+    });
+
+    nextBtn.addEventListener('click', () => {
+      if (currentIndex < slides.length - 1) {
+        currentIndex++;
+        updateSlides();
+      }
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight' || e.key === 'Space' || e.key === 'PageDown') {
+        if (currentIndex < slides.length - 1) {
+          currentIndex++;
+          updateSlides();
+        }
+      } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+        if (currentIndex > 0) {
+          currentIndex--;
+          updateSlides();
+        }
+      }
+    });
+
+    // Touch Swipe Gesture Support for Mobile Devices
+    let touchStartX = 0;
+    let touchEndX = 0;
+
+    document.addEventListener('touchstart', (e) => {
+      touchStartX = e.changedTouches[0].screenX;
+    }, { passive: true });
+
+    document.addEventListener('touchend', (e) => {
+      touchEndX = e.changedTouches[0].screenX;
+      handleSwipe();
+    }, { passive: true });
+
+    function handleSwipe() {
+      const swipeThreshold = 40;
+      if (touchEndX < touchStartX - swipeThreshold) {
+        if (currentIndex < slides.length - 1) {
+          currentIndex++;
+          updateSlides();
+        }
+      } else if (touchEndX > touchStartX + swipeThreshold) {
+        if (currentIndex > 0) {
+          currentIndex--;
+          updateSlides();
+        }
+      }
+    }
+
+    // Add Click to Zoom Modal Overlay
+    const mermaidBoxes = document.querySelectorAll('.mermaid-box');
+    const modal = document.createElement('div');
+    modal.className = 'mermaid-modal';
+    modal.innerHTML = `
+      <button class="mermaid-modal-close">✕ 关闭全屏</button>
+      <div class="mermaid-modal-content"></div>
+    `;
+    document.body.appendChild(modal);
+
+    const modalContent = modal.querySelector('.mermaid-modal-content');
+    const modalClose = modal.querySelector('.mermaid-modal-close');
+
+    mermaidBoxes.forEach(box => {
+      box.addEventListener('click', () => {
+        const svg = box.querySelector('.mermaid');
+        if (svg) {
+          modalContent.innerHTML = svg.outerHTML;
+          modal.classList.add('active');
+        }
+      });
+    });
+
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal || e.target === modalClose) {
+        modal.classList.remove('active');
+      }
+    });
+
+    updateSlides();
+  </script>
+</body>
+</html>

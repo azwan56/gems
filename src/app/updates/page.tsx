@@ -266,9 +266,9 @@ export default function UpdatesPage() {
         </div>
 
         {/* Filter bar */}
-        <div className="flex flex-col sm:flex-row gap-4 justify-between items-stretch sm:items-center mb-8 bg-slate-900/20 p-4 rounded-xl border border-slate-900">
+        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-between items-stretch sm:items-center mb-8 bg-slate-900/20 p-3 sm:p-4 rounded-xl border border-slate-900">
           {/* Strategy Selectors */}
-          <div className="flex flex-wrap gap-2">
+          <div className="flex overflow-x-auto pb-1 sm:pb-0 sm:flex-wrap gap-2">
             {[
               { id: "all", name: t("All Strategies", "全部策略") },
               { id: "value", name: t("Value", "价值投资") },
@@ -282,7 +282,7 @@ export default function UpdatesPage() {
               <button
                 key={tab.id}
                 onClick={() => setSelectedStrategy(tab.id)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition-all border ${
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition-all border shrink-0 ${
                   selectedStrategy === tab.id
                     ? "bg-indigo-600 border-indigo-500 text-white shadow-lg shadow-indigo-500/20"
                     : "bg-slate-900/60 border-slate-800 text-slate-400 hover:text-white hover:border-slate-700"

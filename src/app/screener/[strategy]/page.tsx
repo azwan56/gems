@@ -18,6 +18,7 @@ import PremiumGate from "@/components/PremiumGate";
 import StockChatAssistant from "@/components/StockChatAssistant";
 import { SectorWindBadge } from "@/components/SectorWindBadge";
 import RrgQuadrantChart from "@/components/RrgQuadrantChart";
+import { TermTooltip, TextWithTooltips } from "@/components/TermTooltip";
 
 import { DEFAULT_STRATEGY_PRESETS } from "@/lib/strategy-constants";
 
@@ -519,34 +520,34 @@ export default function FunnelScreenerPage() {
 
   const step1Columns = useMemo(() => {
     if (isValue) return [
-      { key: "peRatio", label: t("P/E", "市盈率 (P/E)"), suffix: "x", desc: t("Price to Earnings ratio. A lower value may indicate undervaluation.", "市盈率：公司市值与净利润的比例，较低通常代表估值较便宜。") },
-      { key: "pbRatio", label: t("P/B", "市净率 (P/B)"), suffix: "x", desc: t("Price to Book ratio. Useful for valuing asset-heavy companies.", "市净率：公司市值与净资产的比例，常用于评估重资产公司。") },
-      { key: "freeCashFlowYield", label: t("FCF Yield", "自由现金流收益率"), suffix: "%", desc: t("Free cash flow per share divided by share price. Shows cash generation efficiency.", "自由现金流收益率：公司每股自由现金流与股价的比例，代表产生真实现金的能力。") },
-      { key: "dividendYield", label: t("Div Yield", "股息率"), suffix: "%", desc: t("Annual dividend compared to share price. Shows dividend return.", "股息率：年度分红与股价的比率，体现分红回报水平。") },
+      { key: "peRatio", term: "P/E Ratio", label: t("P/E", "市盈率 (P/E)"), suffix: "x", desc: t("Price to Earnings ratio. A lower value may indicate undervaluation.", "市盈率：公司市值与净利润的比例，较低通常代表估值较便宜。") },
+      { key: "pbRatio", term: "P/B Ratio", label: t("P/B", "市净率 (P/B)"), suffix: "x", desc: t("Price to Book ratio. Useful for valuing asset-heavy companies.", "市净率：公司市值与净资产的比例，常用于评估重资产公司。") },
+      { key: "freeCashFlowYield", term: "FCF Yield", label: t("FCF Yield", "自由现金流收益率"), suffix: "%", desc: t("Free cash flow per share divided by share price. Shows cash generation efficiency.", "自由现金流收益率：公司每股自由现金流与股价的比例，代表产生真实现金的能力。") },
+      { key: "dividendYield", term: "", label: t("Div Yield", "股息率"), suffix: "%", desc: t("Annual dividend compared to share price. Shows dividend return.", "股息率：年度分红与股价的比率，体现分红回报水平。") },
     ];
     if (isLarge) return [
-      { key: "revenueGrowthYoY", label: t("Rev Growth", "营收增长"), suffix: "%", desc: t("Revenue growth year-over-year. Indicates business expansion.", "营收增长：营业收入同比上一年的增长率，反映业务扩张速度。") },
-      { key: "epsGrowthYoY", label: t("EPS Growth", "EPS增长"), suffix: "%", desc: t("Earnings per share growth. Shows profitability growth.", "EPS增长：每股收益同比增长率，反映盈利增长速度。") },
-      { key: "freeCashFlowYield", label: t("FCF Yield", "自由现金流收益率"), suffix: "%", desc: t("Free cash flow per share divided by share price. Shows cash generation efficiency.", "自由现金流收益率：公司每股自由现金流与股价的比例，代表产生真实现金的能力。") },
-      { key: "roe", label: t("ROE", "净资产收益率"), suffix: "%", desc: t("Return on Equity. Measures profitability relative to shareholder's equity.", "净资产收益率：净利润与股东权益的比率，衡量资本运作效率。") },
+      { key: "revenueGrowthYoY", term: "", label: t("Rev Growth", "营收增长"), suffix: "%", desc: t("Revenue growth year-over-year. Indicates business expansion.", "营收增长：营业收入同比上一年的增长率，反映业务扩张速度。") },
+      { key: "epsGrowthYoY", term: "", label: t("EPS Growth", "EPS增长"), suffix: "%", desc: t("Earnings per share growth. Shows profitability growth.", "EPS增长：每股收益同比增长率，反映盈利增长速度。") },
+      { key: "freeCashFlowYield", term: "FCF Yield", label: t("FCF Yield", "自由现金流收益率"), suffix: "%", desc: t("Free cash flow per share divided by share price. Shows cash generation efficiency.", "自由现金流收益率：公司每股自由现金流与股价的比例，代表产生真实现金的能力。") },
+      { key: "roe", term: "ROE", label: t("ROE", "净资产收益率"), suffix: "%", desc: t("Return on Equity. Measures profitability relative to shareholder's equity.", "净资产收益率：净利润与股东权益的比率，衡量资本运作效率。") },
     ];
     if (isWideMoat) return [
-      { key: "roe", label: t("ROE", "净资产收益率"), suffix: "%", desc: t("Return on Equity. High ROE indicates strong competitive advantage.", "净资产收益率：高ROE通常意味着强大的竞争优势。") },
-      { key: "grossMargin", label: t("Gross Margin", "毛利率"), suffix: "%", desc: t("Gross profit margin. Higher margin indicates pricing power.", "毛利率：较高的毛利率意味着较强的定价权。") },
-      { key: "debtToEquity", label: t("D/E Ratio", "债务股权比"), suffix: "x", desc: t("Debt to Equity ratio. Lower means less financial leverage risk.", "债务股权比：较低意味着更少的财务杠杆风险。") },
-      { key: "netMargin", label: t("Net Margin", "净利率"), suffix: "%", desc: t("Net profit margin after all expenses.", "净利率：扣除所有费用后的利润率。") },
+      { key: "roe", term: "ROE", label: t("ROE", "净资产收益率"), suffix: "%", desc: t("Return on Equity. High ROE indicates strong competitive advantage.", "净资产收益率：高ROE通常意味着强大的竞争优势。") },
+      { key: "grossMargin", term: "Gross Margin", label: t("Gross Margin", "毛利率"), suffix: "%", desc: t("Gross profit margin. Higher margin indicates pricing power.", "毛利率：较高的毛利率意味着较强的定价权。") },
+      { key: "debtToEquity", term: "D/E Ratio", label: t("D/E Ratio", "债务股权比"), suffix: "x", desc: t("Debt to Equity ratio. Lower means less financial leverage risk.", "债务股权比：较低意味着更少的财务杠杆风险。") },
+      { key: "netMargin", term: "", label: t("Net Margin", "净利率"), suffix: "%", desc: t("Net profit margin after all expenses.", "净利率：扣除所有费用后的利润率。") },
     ];
     if (isShortCatalyst) return [
-      { key: "priceVs50SMA", label: t("vs 50SMA", "相对50日均线"), suffix: "%", desc: t("Price relative to 50-day SMA. Positive means short-term uptrend.", "相对50日均线：正值代表短期上升趋势。") },
-      { key: "priceVs200SMA", label: t("vs 200SMA", "相对200日均线"), suffix: "%", desc: t("Price relative to 200-day SMA. Positive means long-term uptrend.", "相对200日均线：正值代表长期上升趋势。") },
-      { key: "revenueGrowthYoY", label: t("Rev Growth", "营收增长"), suffix: "%", desc: t("Revenue growth year-over-year.", "营收增长：营业收入同比增长率。") },
-      { key: "epsGrowthYoY", label: t("EPS Growth", "EPS增长"), suffix: "%", desc: t("Earnings per share growth.", "EPS增长：每股收益同比增长率。") },
+      { key: "priceVs50SMA", term: "50SMA", label: t("vs 50SMA", "相对50日均线"), suffix: "%", desc: t("Price relative to 50-day SMA. Positive means short-term uptrend.", "相对50日均线：正值代表短期上升趋势。") },
+      { key: "priceVs200SMA", term: "200SMA", label: t("vs 200SMA", "相对200日均线"), suffix: "%", desc: t("Price relative to 200-day SMA. Positive means long-term uptrend.", "相对200日均线：正值代表长期上升趋势。") },
+      { key: "revenueGrowthYoY", term: "", label: t("Rev Growth", "营收增长"), suffix: "%", desc: t("Revenue growth year-over-year.", "营收增长：营业收入同比增长率。") },
+      { key: "epsGrowthYoY", term: "", label: t("EPS Growth", "EPS增长"), suffix: "%", desc: t("Earnings per share growth.", "EPS增长：每股收益同比增长率。") },
     ];
     return [
-      { key: "revenueGrowthYoY", label: t("Rev Growth", "营收增长"), suffix: "%", desc: t("Revenue growth year-over-year. Indicates business expansion.", "营收增长：营业收入同比上一年的增长率，反映业务扩张速度。") },
-      { key: "epsGrowthYoY", label: t("EPS Growth", "EPS增长"), suffix: "%", desc: t("Earnings per share growth. Shows profitability growth.", "EPS增长：每股收益同比增长率，反映盈利增长速度。") },
-      { key: "pegRatio", label: t("PEG", "PEG比率"), suffix: "x", desc: t("P/E ratio divided by growth rate. A lower PEG suggests better value relative to growth.", "PEG比率：市盈率除以盈利增长率，综合考量估值与成长性。") },
-      { key: "priceVs50SMA", label: t("vs 50SMA", "相对50日均线"), suffix: "%", desc: t("Price relative to 50-day simple moving average. Positive means upward momentum.", "相对50日均线：当前股价高于过去50天平均价格的百分比，正值代表近期动量向上。") },
+      { key: "revenueGrowthYoY", term: "", label: t("Rev Growth", "营收增长"), suffix: "%", desc: t("Revenue growth year-over-year. Indicates business expansion.", "营收增长：营业收入同比上一年的增长率，反映业务扩张速度。") },
+      { key: "epsGrowthYoY", term: "", label: t("EPS Growth", "EPS增长"), suffix: "%", desc: t("Earnings per share growth. Shows profitability growth.", "EPS增长：每股收益同比增长率，反映盈利增长速度。") },
+      { key: "pegRatio", term: "PEG Ratio", label: t("PEG", "PEG比率"), suffix: "x", desc: t("P/E ratio divided by growth rate. A lower PEG suggests better value relative to growth.", "PEG比率：市盈率除以盈利增长率，综合考量估值与成长性。") },
+      { key: "priceVs50SMA", term: "50SMA", label: t("vs 50SMA", "相对50日均线"), suffix: "%", desc: t("Price relative to 50-day simple moving average. Positive means upward momentum.", "相对50日均线：当前股价高于过去50天平均价格的百分比，正值代表近期动量向上。") },
     ];
   }, [isValue, isLarge, isWideMoat, isShortCatalyst, t]);
 
@@ -880,21 +881,16 @@ export default function FunnelScreenerPage() {
                           {!isSA && <th className="p-4 font-semibold">{t("Latest Rebalance", "最新调仓(日期/价)")}</th>}
                           <th className="p-4 font-semibold">{t("Current Price", "当前现价")}</th>
                           <th className="p-4 font-semibold">{t("Market Cap", "市值")}</th>
-                          {step1Columns.map((c, i) => (
-                            <th key={c.key} className={`p-4 font-semibold ${i === step1Columns.length - 1 ? 'rounded-tr-xl' : ''}`}>
-                              <div className="flex items-center gap-1.5 group relative">
-                                {c.label}
-                                {c.desc && (
-                                  <>
-                                    <HelpCircle className="w-3.5 h-3.5 text-slate-500 hover:text-slate-300 cursor-help transition-colors" />
-                                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-56 p-3 bg-slate-800 text-slate-200 text-xs rounded-lg shadow-xl border border-slate-700 opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 font-normal leading-relaxed text-left whitespace-normal">
-                                      {c.desc}
-                                    </div>
-                                  </>
-                                )}
-                              </div>
+                          {step1Columns.map((c) => (
+                            <th key={c.key} className="p-4 font-semibold">
+                              {c.term ? (
+                                <TermTooltip term={c.term}>{c.label}</TermTooltip>
+                              ) : (
+                                <span>{c.label}</span>
+                              )}
                             </th>
                           ))}
+                          <th className="p-4 font-semibold rounded-tr-xl text-right">{t("Quick Dive", "快捷研报")}</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-800/50">
@@ -906,7 +902,6 @@ export default function FunnelScreenerPage() {
                           const latestEntryPrice = saEntryPrices[s.symbol.toUpperCase()] || historicalPrices[s.symbol]?.[latestEntryDate] || entryInfo.latestEntryPrice;
                           
                           const totalReturnPct = firstEntryPrice > 0 ? (((s.price - firstEntryPrice) / firstEntryPrice) * 100) : 0;
-                          const latestReturnPct = latestEntryPrice > 0 ? (((s.price - latestEntryPrice) / latestEntryPrice) * 100) : 0;
 
                           return (
                             <tr key={s.symbol} className={`hover:bg-slate-800/30 transition-colors ${selectedInStep1.has(s.symbol) ? 'bg-blue-900/10' : ''} last:[&>td:first-child]:rounded-bl-xl last:[&>td:last-child]:rounded-br-xl`}>
@@ -963,25 +958,34 @@ export default function FunnelScreenerPage() {
                                   {formatNum(s[c.key as keyof StockMetrics] as number, c.suffix)}
                                 </td>
                               ))}
+                              <td className="p-4 text-right">
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    openAnalysis(s);
+                                  }}
+                                  className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/30 text-blue-300 text-xs font-semibold transition-colors whitespace-nowrap"
+                                >
+                                  <FileText className="w-3.5 h-3.5" />
+                                  <span>{t("AI Report", "AI 研报")}</span>
+                                </button>
+                              </td>
                             </tr>
                           );
                         })}
-
-
                       </tbody>
                     </table>
                   </div>
 
                   {/* Mobile Card View */}
-                  <div className="md:hidden space-y-3">
+                  <div className="md:hidden space-y-3 pb-16">
                     {displayedStocks.map(s => {
                       const isSelected = selectedInStep1.has(s.symbol);
                       const entryInfo = getStockEntryInfo(s, isSA, undefined, saEntryDates, saEntryPrices);
                       const entryDate = entryInfo.firstEntryDate;
                       const entryPrice = saEntryPrices[s.symbol.toUpperCase()] || historicalPrices[s.symbol]?.[entryDate] || entryInfo.entryPrice;
                       const returnPct = entryPrice > 0 ? (((s.price - entryPrice) / entryPrice) * 100) : 0;
-
-
 
                       return (
                         <div 
@@ -992,15 +996,15 @@ export default function FunnelScreenerPage() {
                           }`}
                         >
                           <div className="flex items-start justify-between mb-3 border-b border-slate-800/60 pb-3">
-                            <div className="flex items-center gap-3">
-                              <div className="pt-0.5">
+                            <div className="flex items-center gap-3 min-w-0">
+                              <div className="pt-0.5 shrink-0">
                                 <div className={`w-5 h-5 rounded-md flex items-center justify-center border ${isSelected ? 'bg-blue-500 border-blue-500' : 'bg-slate-800 border-slate-600'}`}>
                                   {isSelected && <CheckCircle2 className="w-3.5 h-3.5 text-white" />}
                                 </div>
                               </div>
-                              <div>
-                                <h3 className="text-base font-bold text-white flex flex-wrap items-center gap-2">
-                                  {s.symbol}
+                              <div className="min-w-0">
+                                <h3 className="text-base font-bold text-white flex flex-wrap items-center gap-1.5">
+                                  <span>{s.symbol}</span>
                                   <SectorWindBadge
                                     wind={s.sectorWind}
                                     quadrant={s.sectorQuadrant}
@@ -1020,29 +1024,45 @@ export default function FunnelScreenerPage() {
                                 <p className="text-xs text-slate-400 line-clamp-1">{s.companyName}</p>
                               </div>
                             </div>
-                            <span className="text-xs font-mono text-slate-400 bg-slate-800 px-2 py-1 rounded">
-                              {formatMarketCap(s.marketCap)}
-                            </span>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openAnalysis(s);
+                              }}
+                              className="shrink-0 inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-blue-500/15 hover:bg-blue-500/25 border border-blue-500/40 text-blue-300 text-xs font-semibold transition-colors"
+                            >
+                              <FileText className="w-3.5 h-3.5" />
+                              <span>{t("AI Report", "AI 研报")}</span>
+                            </button>
                           </div>
 
-                          <div className="grid grid-cols-2 gap-2 mb-2 p-2 rounded-lg bg-slate-950/60 border border-slate-800/60 text-xs">
+                          <div className="grid grid-cols-3 gap-2 mb-2 p-2 rounded-lg bg-slate-950/60 border border-slate-800/60 text-xs">
                             <div>
                               <span className="text-slate-500 text-[10px] block">{t("Entry Date", "入选日期")}</span>
                               <span className="text-slate-300 font-mono font-medium">{entryDate}</span>
                             </div>
                             <div>
-                              <span className="text-slate-500 text-[10px] block">{t("Entry / Current", "入选价 / 现价")}</span>
-                              <span className="text-slate-200 font-mono font-semibold">${entryPrice.toFixed(2)} &rarr; ${s.price.toFixed(2)}</span>
+                              <span className="text-slate-500 text-[10px] block">{t("Entry → Now", "入选 → 现价")}</span>
+                              <span className="text-slate-200 font-mono font-semibold">${entryPrice.toFixed(1)} → ${s.price.toFixed(1)}</span>
+                            </div>
+                            <div>
+                              <span className="text-slate-500 text-[10px] block">{t("Market Cap", "总市值")}</span>
+                              <span className="text-slate-300 font-mono font-medium">{formatMarketCap(s.marketCap)}</span>
                             </div>
                           </div>
                           
                           <div className="grid grid-cols-2 gap-2">
                             {step1Columns.map(c => (
                               <div key={c.key} className="bg-slate-800/40 rounded-lg px-2.5 py-1.5 flex flex-col">
-                                <span className="text-[10px] text-slate-500 uppercase tracking-wider mb-0.5 flex items-center gap-1">
-                                  {c.label}
+                                <span className="text-[10px] text-slate-400 uppercase tracking-wider mb-0.5 flex items-center gap-1">
+                                  {c.term ? (
+                                    <TermTooltip term={c.term}>{c.label}</TermTooltip>
+                                  ) : (
+                                    c.label
+                                  )}
                                 </span>
-                                <span className="text-sm font-mono text-slate-300 font-semibold">
+                                <span className="text-sm font-mono text-slate-200 font-semibold">
                                   {formatNum(s[c.key as keyof StockMetrics] as number, c.suffix)}
                                 </span>
                               </div>
@@ -1051,6 +1071,40 @@ export default function FunnelScreenerPage() {
                         </div>
                       );
                     })}
+                  </div>
+
+                  {/* Mobile Floating Sticky Step 1 Action Bar */}
+                  <div className="md:hidden fixed bottom-[68px] left-3 right-3 z-30 rounded-2xl bg-slate-900/95 backdrop-blur-xl border border-blue-500/40 shadow-[0_10px_30px_rgba(0,0,0,0.8)] p-2.5 flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 pl-1">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (selectedInStep1.size === displayedStocks.length) {
+                            setSelectedInStep1(new Set());
+                          } else {
+                            setSelectedInStep1(new Set(displayedStocks.map((s) => s.symbol)));
+                          }
+                        }}
+                        className="px-2.5 py-1.5 rounded-lg bg-slate-800 border border-slate-700 text-xs font-medium text-slate-300"
+                      >
+                        {selectedInStep1.size === displayedStocks.length
+                          ? t("Clear", "清空")
+                          : t("Select All", "全选")}
+                      </button>
+                      <span className="text-xs text-slate-300 font-medium">
+                        {t("Selected:", "已选:")}{" "}
+                        <strong className="text-blue-400 font-mono">{selectedInStep1.size}</strong>
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      disabled={selectedInStep1.size === 0}
+                      onClick={() => setCurrentStep(2)}
+                      className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:bg-slate-800 disabled:text-slate-500 text-white text-xs font-bold flex items-center gap-1.5 shadow-lg shadow-blue-600/20"
+                    >
+                      <span>{t("Step 2: Deep Dive", "下一步：定性深研")} ({selectedInStep1.size})</span>
+                      <ChevronRight className="w-4 h-4" />
+                    </button>
                   </div>
 
                 </div>
@@ -1203,7 +1257,7 @@ export default function FunnelScreenerPage() {
                     </div>
                   )}
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 pb-16 md:pb-0">
                     {stocks.filter(s => selectedInStep1.has(s.symbol)).map(s => {
                       const isSelected = selectedInStep2.has(s.symbol);
                       const moatScore = (s.symbol.length * 2) % 10 + 6;
@@ -1218,7 +1272,20 @@ export default function FunnelScreenerPage() {
                               </h3>
                               <p className="text-xs text-slate-400 line-clamp-1">{s.companyName}</p>
                             </div>
-                            <span className="text-xs font-mono bg-slate-800 px-2 py-1 rounded text-slate-300">{t(s.sector, s.sector)}</span>
+                            <div className="flex items-center gap-2">
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  openAnalysis(s);
+                                }}
+                                className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-blue-500/15 hover:bg-blue-500/25 border border-blue-500/30 text-blue-300 text-xs font-semibold transition-colors"
+                              >
+                                <FileText className="w-3 h-3" />
+                                <span>{t("AI Report", "AI 研报")}</span>
+                              </button>
+                              <span className="text-xs font-mono bg-slate-800 px-2 py-1 rounded text-slate-300">{t(s.sector, s.sector)}</span>
+                            </div>
                           </div>
                           
                           <div className="space-y-4 mb-4">
@@ -1233,7 +1300,9 @@ export default function FunnelScreenerPage() {
                             </div>
                             <div>
                               <div className="flex justify-between text-xs mb-1">
-                                <span className="text-slate-400">{t("TAM Expansion", "潜在市场扩张")}</span>
+                                <span className="text-slate-400">
+                                  <TermTooltip term="TAM">{t("TAM Expansion", "潜在市场扩张 (TAM)")}</TermTooltip>
+                                </span>
                                 <span className="font-mono text-indigo-400">{tamScore}/10</span>
                               </div>
                               <div className="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden">
@@ -1251,6 +1320,34 @@ export default function FunnelScreenerPage() {
                         </div>
                       );
                     })}
+                  </div>
+
+                  {/* Mobile Floating Sticky Step 2 Action Bar */}
+                  <div className="md:hidden fixed bottom-[68px] left-3 right-3 z-30 rounded-2xl bg-slate-900/95 backdrop-blur-xl border border-indigo-500/40 shadow-[0_10px_30px_rgba(0,0,0,0.8)] p-2.5 flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 pl-1">
+                      {!isSA && (
+                        <button
+                          type="button"
+                          onClick={() => setCurrentStep(1)}
+                          className="px-2.5 py-1.5 rounded-lg bg-slate-800 border border-slate-700 text-xs font-medium text-slate-300"
+                        >
+                          {t("← Step 1", "← 上一步")}
+                        </button>
+                      )}
+                      <span className="text-xs text-slate-300 font-medium">
+                        {t("Selected:", "已选:")}{" "}
+                        <strong className="text-indigo-400 font-mono">{selectedInStep2.size}</strong>
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      disabled={selectedInStep2.size === 0}
+                      onClick={() => setCurrentStep(3)}
+                      className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-800 disabled:text-slate-500 text-white text-xs font-bold flex items-center gap-1.5 shadow-lg shadow-indigo-600/20"
+                    >
+                      <span>{t("Step 3: Technical", "下一步：技术校验")} ({selectedInStep2.size})</span>
+                      <ChevronRight className="w-4 h-4" />
+                    </button>
                   </div>
                 </div>
               )}
@@ -1352,9 +1449,9 @@ export default function FunnelScreenerPage() {
 
       {/* AI Deep Analysis Slide-out Panel */}
       {analyzingStock && (
-        <div className="fixed inset-0 z-[100] flex justify-end">
+        <div className="fixed inset-0 z-[100] flex justify-end overflow-hidden overscroll-contain">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setAnalyzingStock(null)} />
-          <div className="relative w-full sm:max-w-2xl h-full bg-slate-900 border-l border-slate-800 shadow-2xl overflow-y-auto animate-in slide-in-from-right duration-300">
+          <div className="relative w-full sm:max-w-2xl h-full bg-slate-900 border-l border-slate-800 shadow-2xl overflow-y-auto overscroll-contain animate-in slide-in-from-right duration-300">
             {/* Panel Header */}
             <div className="sticky top-0 z-10 bg-slate-900/80 backdrop-blur-md border-b border-slate-800 px-4 sm:px-8 py-4 sm:py-6 flex justify-between items-start">
               <div>
@@ -1537,7 +1634,9 @@ export default function FunnelScreenerPage() {
                     <h3 className="text-sm font-bold text-slate-300 uppercase tracking-widest mb-3 flex items-center gap-2">
                       <FileText className="w-4 h-4 text-blue-400" /> {t("Company Overview", "公司概况")}
                     </h3>
-                    <p className="text-slate-400 text-sm leading-relaxed">{analysisReport.overview}</p>
+                    <p className="text-slate-400 text-sm leading-relaxed">
+                      <TextWithTooltips text={analysisReport.overview} />
+                    </p>
                   </section>
 
                   {/* Fundamentals */}
@@ -1545,7 +1644,9 @@ export default function FunnelScreenerPage() {
                     <h3 className="text-sm font-bold text-slate-300 uppercase tracking-widest mb-3 flex items-center gap-2">
                       <TrendingUp className="w-4 h-4 text-emerald-400" /> {t("Fundamentals", "基本面")}
                     </h3>
-                    <p className="text-slate-400 text-sm leading-relaxed">{analysisReport.fundamentals}</p>
+                    <p className="text-slate-400 text-sm leading-relaxed">
+                      <TextWithTooltips text={analysisReport.fundamentals} />
+                    </p>
                   </section>
 
                   {/* Products & Services */}
@@ -1553,7 +1654,9 @@ export default function FunnelScreenerPage() {
                     <h3 className="text-sm font-bold text-slate-300 uppercase tracking-widest mb-3 flex items-center gap-2">
                       <Activity className="w-4 h-4 text-purple-400" /> {t("Products & Services", "产品与服务")}
                     </h3>
-                    <p className="text-slate-400 text-sm leading-relaxed">{analysisReport.products}</p>
+                    <p className="text-slate-400 text-sm leading-relaxed">
+                      <TextWithTooltips text={analysisReport.products} />
+                    </p>
                   </section>
 
                   {/* Top-Down Sector Rotation Validation */}
@@ -1592,7 +1695,7 @@ export default function FunnelScreenerPage() {
                         </div>
                       </div>
                       <p className="text-slate-300 text-sm leading-relaxed mb-3">
-                        {analysisReport.sectorRotation.advice}
+                        <TextWithTooltips text={analysisReport.sectorRotation.advice} />
                       </p>
                       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs pt-2 border-t border-slate-800/80">
                         <div>
@@ -1637,7 +1740,9 @@ export default function FunnelScreenerPage() {
                         {analysisReport.rationale.map((line, i) => (
                           <li key={i} className="flex gap-2">
                             <span className="text-emerald-500 mt-0.5">•</span>
-                            <span className="leading-relaxed">{line}</span>
+                            <span className="leading-relaxed">
+                              <TextWithTooltips text={line} />
+                            </span>
                           </li>
                         ))}
                       </ul>
@@ -1652,7 +1757,9 @@ export default function FunnelScreenerPage() {
                         {analysisReport.risks.map((line, i) => (
                           <li key={i} className="flex gap-2">
                             <span className="text-red-500 mt-0.5">•</span>
-                            <span className="leading-relaxed">{line}</span>
+                            <span className="leading-relaxed">
+                              <TextWithTooltips text={line} />
+                            </span>
                           </li>
                         ))}
                       </ul>
@@ -1668,7 +1775,9 @@ export default function FunnelScreenerPage() {
                           {analysisReport.catalysts.map((line, i) => (
                             <li key={i} className="flex gap-2">
                               <span className="text-blue-500 mt-0.5">•</span>
-                              <span className="leading-relaxed">{line}</span>
+                              <span className="leading-relaxed">
+                                <TextWithTooltips text={line} />
+                              </span>
                             </li>
                           ))}
                         </ul>

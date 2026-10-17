@@ -1,0 +1,1039 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Enterprise Agentic AI & Financial Domain Ontology Architecture White Paper v3.0 - DailyStock & Gems</title>
+  <!-- Mermaid.js for interactive diagrams -->
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <style>
+    :root {
+      --bg-dark: #0b0f19;
+      --card-bg: rgba(26, 36, 54, 0.88);
+      --border-color: rgba(255, 255, 255, 0.15);
+      --accent-cyan: #38bdf8;
+      --accent-indigo: #818cf8;
+      --accent-purple: #c084fc;
+      --accent-green: #34d399;
+      --accent-amber: #fbbf24;
+      --accent-red: #f87171;
+      --text-main: #f8fafc;
+      --text-muted: #cbd5e1;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      overflow: hidden;
+      height: 100vh;
+      width: 100vw;
+    }
+
+    #progress-bar {
+      position: absolute;
+      top: 0;
+      left: 0;
+      height: 5px;
+      background: linear-gradient(90deg, var(--accent-cyan), var(--accent-indigo), var(--accent-purple));
+      width: 0%;
+      transition: width 0.3s ease;
+      z-index: 100;
+    }
+
+    .lang-switch {
+      position: absolute;
+      top: 15px;
+      right: 25px;
+      z-index: 200;
+      display: flex;
+      gap: 8px;
+    }
+
+    .lang-btn {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      padding: 6px 14px;
+      border-radius: 16px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all 0.2s ease;
+    }
+
+    .lang-btn:hover, .lang-btn.active {
+      background: var(--accent-cyan);
+      color: #0b0f19;
+      border-color: var(--accent-cyan);
+    }
+
+    .slides-container {
+      position: relative;
+      width: 100%;
+      height: calc(100vh - 65px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .slide {
+      position: absolute;
+      width: 92%;
+      max-width: 1400px;
+      height: 86vh;
+      background: var(--card-bg);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid var(--border-color);
+      border-radius: 24px;
+      padding: 32px 46px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      opacity: 0;
+      transform: scale(0.96) translateY(20px);
+      transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      pointer-events: none;
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.6);
+    }
+
+    .slide.active {
+      opacity: 1;
+      transform: scale(1) translateY(0);
+      pointer-events: auto;
+    }
+
+    .slide-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 18px;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 12px;
+    }
+
+    .slide-title {
+      font-size: clamp(1.3rem, 2.2vw, 1.95rem);
+      font-weight: 800;
+      background: linear-gradient(135deg, #ffffff 40%, var(--accent-cyan));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-wrap: balance;
+    }
+
+    .slide-act {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--accent-indigo);
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      background: rgba(129, 140, 248, 0.12);
+      padding: 6px 16px;
+      border-radius: 12px;
+      border: 1px solid rgba(129, 140, 248, 0.3);
+      white-space: nowrap;
+    }
+
+    .slide-body {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 18px;
+      overflow-y: auto;
+    }
+
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; }
+    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+    .grid-4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 18px; }
+
+    .card {
+      background: rgba(15, 23, 42, 0.68);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 20px 22px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      transition: transform 0.2s ease, border-color 0.2s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-3px);
+      border-color: var(--accent-cyan);
+    }
+
+    .card-title {
+      font-size: 1.22rem;
+      font-weight: 700;
+      color: var(--accent-cyan);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .card p, ul li {
+      font-size: 0.98rem;
+      color: var(--text-muted);
+      line-height: 1.58;
+    }
+
+    ul {
+      list-style-type: none;
+      padding-left: 0;
+    }
+
+    ul li {
+      position: relative;
+      padding-left: 22px;
+      margin-bottom: 8px;
+    }
+
+    ul li::before {
+      content: "➔";
+      position: absolute;
+      left: 0;
+      color: var(--accent-cyan);
+      font-weight: bold;
+    }
+
+    code {
+      background: rgba(56, 189, 248, 0.12);
+      color: #7dd3fc;
+      padding: 2px 6px;
+      border-radius: 5px;
+      font-family: "Fira Code", monospace, Consolas;
+      font-size: 0.88em;
+    }
+
+    .code-snippet {
+      background: #050811;
+      border: 1px solid rgba(56, 189, 248, 0.25);
+      border-radius: 10px;
+      padding: 12px 14px;
+      font-family: "Fira Code", monospace, Consolas;
+      font-size: 0.86rem;
+      color: #38bdf8;
+      overflow-x: auto;
+    }
+
+    /* Enhanced Large Diagram Container */
+    .mermaid-box {
+      background: rgba(11, 15, 25, 0.85);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      min-height: 440px;
+      height: 100%;
+      width: 100%;
+      overflow: auto;
+      position: relative;
+      cursor: zoom-in;
+      transition: border-color 0.2s ease, background-color 0.2s ease;
+    }
+
+    .mermaid-box:hover {
+      border-color: var(--accent-cyan);
+      background: rgba(15, 23, 42, 0.95);
+    }
+
+    .mermaid-zoom-hint {
+      position: absolute;
+      top: 14px;
+      right: 18px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--accent-cyan);
+      background: rgba(56, 189, 248, 0.15);
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      padding: 5px 14px;
+      border-radius: 14px;
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    .mermaid {
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .mermaid svg {
+      width: 100% !important;
+      max-width: 1320px !important;
+      height: auto !important;
+      min-height: 380px;
+    }
+
+    /* Fullscreen Modal Zoom Mode */
+    .mermaid-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(5, 8, 17, 0.96);
+      backdrop-filter: blur(16px);
+      z-index: 1000;
+      padding: 30px;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .mermaid-modal.active {
+      display: flex;
+    }
+
+    .mermaid-modal-content {
+      width: 96%;
+      height: 90%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow: auto;
+    }
+
+    .mermaid-modal-content svg {
+      width: 100% !important;
+      height: auto !important;
+      max-height: 86vh !important;
+    }
+
+    .mermaid-modal-close {
+      position: absolute;
+      top: 20px;
+      right: 30px;
+      font-size: 1rem;
+      font-weight: 700;
+      color: #fff;
+      background: rgba(255, 255, 255, 0.15);
+      border: 1px solid var(--border-color);
+      padding: 8px 20px;
+      border-radius: 20px;
+      cursor: pointer;
+      z-index: 1010;
+      transition: background 0.2s ease;
+    }
+
+    .mermaid-modal-close:hover {
+      background: var(--accent-red);
+      border-color: var(--accent-red);
+    }
+
+    .controls {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 65px;
+      background: rgba(11, 15, 25, 0.95);
+      border-top: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 40px;
+      z-index: 90;
+    }
+
+    .nav-btn {
+      background: linear-gradient(135deg, var(--accent-cyan), var(--accent-indigo));
+      color: #0b0f19;
+      border: none;
+      padding: 10px 24px;
+      border-radius: 12px;
+      font-weight: 700;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: opacity 0.2s ease, transform 0.1s ease;
+    }
+
+    .nav-btn:hover {
+      opacity: 0.9;
+      transform: scale(1.02);
+    }
+
+    .counter {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--text-muted);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: rgba(15, 23, 42, 0.6);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    th, td {
+      padding: 12px 16px;
+      text-align: left;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    th {
+      background: rgba(30, 41, 59, 0.85);
+      color: var(--accent-cyan);
+      font-size: 1.0rem;
+    }
+
+    td {
+      color: var(--text-muted);
+      font-size: 0.92rem;
+    }
+
+    .cover-slide {
+      text-align: center;
+      align-items: center;
+      justify-content: center;
+      gap: 18px;
+    }
+
+    .cover-title {
+      font-size: clamp(1.7rem, 3.6vw, 2.9rem);
+      font-weight: 900;
+      line-height: 1.22;
+      background: linear-gradient(135deg, #ffffff 30%, var(--accent-cyan) 70%, var(--accent-purple));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-wrap: balance;
+    }
+
+    .cover-subtitle {
+      font-size: clamp(0.95rem, 1.6vw, 1.35rem);
+      color: var(--accent-indigo);
+      font-weight: 700;
+    }
+
+    .badge-group {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      margin-top: 12px;
+      flex-wrap: wrap;
+      max-width: 1100px;
+    }
+
+    .badge {
+      background: rgba(56, 189, 248, 0.12);
+      border: 1px solid var(--accent-cyan);
+      padding: 7px 16px;
+      border-radius: 20px;
+      font-size: 0.92rem;
+      font-weight: 600;
+      color: var(--text-main);
+    }
+
+    .table-responsive {
+      width: 100%;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    @media (max-width: 768px) {
+      body { overflow: hidden; height: 100dvh; }
+      .slides-container { height: calc(100dvh - 60px); }
+      .slide { width: 95%; height: 88dvh; padding: 18px 14px; border-radius: 16px; }
+      .slide-header { flex-direction: column; align-items: flex-start; gap: 4px; margin-bottom: 10px; padding-bottom: 6px; }
+      .slide-title { font-size: 1.18rem; line-height: 1.35; }
+      .slide-act { font-size: 0.72rem; padding: 3px 10px; border-radius: 10px; }
+      .cover-title { font-size: 1.55rem; line-height: 1.3; }
+      .cover-subtitle { font-size: 0.92rem; }
+      .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; gap: 10px; }
+      .card { padding: 12px 14px; border-radius: 12px; }
+      .card-title { font-size: 1.02rem; }
+      .card p, ul li, td, th { font-size: 0.84rem; line-height: 1.48; }
+      .controls { height: 60px; padding: 0 16px; }
+      .nav-btn { padding: 8px 16px; font-size: 0.85rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <div id="progress-bar"></div>
+
+  <div class="lang-switch">
+    <a href="gems_architecture_presentation.html" class="lang-btn">中文</a>
+    <a href="gems_architecture_presentation_en.html" class="lang-btn active">English</a>
+  </div>
+
+  <div class="slides-container">
+
+    <!-- Slide 1: Cover -->
+    <div class="slide cover-slide active">
+      <div class="cover-subtitle">🚀 Enterprise Agentic AI & Financial Domain Ontology Architecture v3.0</div>
+      <h1 class="cover-title">Full-Stack Cloud-Native AI Architecture<br>Three-Layer Financial Ontology + Neo4j GraphRAG + 7 SRE Loops</h1>
+      <p style="color: var(--text-muted); font-size: 1.12rem; max-width: 980px; margin-top: 5px; line-height: 1.6;">
+        For AI Architects & Quant Engineers: Three-Layer Financial Domain Ontology ➔ Targeted Context Routing ➔ Neo4j GraphRAG & ADK Harness ➔ 5-Tier Storage & 1,500+ Vault ➔ 27-Sector RRG & Walk-Forward Backtest Lab ➔ 7 Autonomous SRE Closed Loops
+      </p>
+      <div class="badge-group">
+        <span class="badge">1. Three-Layer Financial Ontology</span>
+        <span class="badge">2. Neo4j GraphRAG & ADK Harness</span>
+        <span class="badge">3. 5-Tier Storage & 1,500+ Vault</span>
+        <span class="badge">4. 27-Sector RRG & Backtest Lab</span>
+        <span class="badge">5. Zero-Trust RBAC & 7 SRE Loops</span>
+        <span class="badge">6. Mobile UX 2.0 & Inline Lexicon</span>
+      </div>
+    </div>
+
+    <!-- Slide 2: Pain Points & Challenges -->
+    <div class="slide">
+      <div class="slide-header">
+        <div class="slide-title">1. Four Critical Bottlenecks of Enterprise Financial AI</div>
+        <div class="slide-act">Part I: Pain Points & Challenges</div>
+      </div>
+      <div class="slide-body grid-4">
+        <div class="card" style="border-top: 4px solid var(--accent-red);">
+          <div class="card-title" style="color: var(--accent-red);">1. Hallucination & Drift</div>
+          <p>Without formal domain ontology constraints, pure prompting causes LLMs to fabricate financial metrics, support/resistance levels, and causal supply-chain links.</p>
+        </div>
+        <div class="card" style="border-top: 4px solid var(--accent-purple);">
+          <div class="card-title" style="color: var(--accent-purple);">2. Token Bloat & Latency</div>
+          <p>Feeding all user holdings (20+ tickers) into a single prompt consumes 30k+ tokens, causing 12s+ TTFT latency and runaway compute costs.</p>
+        </div>
+        <div class="card" style="border-top: 4px solid var(--accent-indigo);">
+          <div class="card-title" style="color: var(--accent-indigo);">3. Multi-Tenant Leakage</div>
+          <p>Without database security rules and one-way token masking, private portfolios, webhooks, and chat histories risk cross-tenant leakage.</p>
+        </div>
+        <div class="card" style="border-top: 4px solid var(--accent-cyan);">
+          <div class="card-title" style="color: var(--accent-cyan);">4. Look-Ahead Bias & Rumors</div>
+          <p>Look-ahead bias in backtests or mixing unverified Reddit/X chatter with official feeds destroys research rigor and live trading performance.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 3: Three-Layer Financial Domain Ontology (NEW) -->
+    <div class="slide">
+      <div class="slide-header">
+        <div class="slide-title">2. Core Foundation: Three-Layer Financial Domain Ontology</div>
+        <div class="slide-act">Part II: Financial Domain Ontology</div>
+      </div>
+      <div class="slide-body grid-3">
+        <div class="card" style="border-top: 4px solid var(--accent-cyan);">
+          <div class="card-title">Layer 1: Semantic Graph Ontology</div>
+          <p><b>Domain "Nouns & Verbs" (<code>neo4j_service.py</code>)</b></p>
+          <ul>
+            <li><b>5 Formal Entity Classes</b>: <code>:Stock</code>, <code>:ResearchReport</code>, <code>:InvestmentRationale</code>, <code>:RiskFactor</code>, <code>:MarketCatalyst</code>.</li>
+            <li><b>9 Directed Predicates</b>: <code>[:SUPPLIES_TO]</code>, <code>[:CUSTOMER_OF]</code>, <code>[:COMPETES_WITH]</code>, <code>[:PARTNER_WITH]</code>, <code>[:BELONGS_TO]</code>, enabling 1-to-3 hop Cypher causal graph traversal.</li>
+          </ul>
+        </div>
+        <div class="card" style="border-top: 4px solid var(--accent-indigo);">
+          <div class="card-title">Layer 2: Contract & Lexicon Ontology</div>
+          <p><b>Domain "Grammar & Dictionary" (<code>models.py</code> & <code>TermTooltip.jsx</code>)</b></p>
+          <ul>
+            <li><b>Pydantic Schema Ontology</b>: <code>StockAnalysisContract</code> & <code>MarketBriefingContract</code> enforce explicit support/resistance levels and trigger Reflection retries on violation.</li>
+            <li><b>Bilingual Cognitive Lexicon (<code>FINANCIAL_GLOSSARY</code>)</b>: Standardizes 40+ concepts across 5 domains into <code>{summary, practical, formula, category}</code> via React Portal tooltips.</li>
+          </ul>
+        </div>
+        <div class="card" style="border-top: 4px solid var(--accent-amber);">
+          <div class="card-title" style="color: var(--accent-amber);">Layer 3: Kinetic & Action Ontology</div>
+          <p><b>Domain "Decisions & Self-Healing" (Kinetic Operators)</b></p>
+          <ul>
+            <li><b>9:30 AM Pre-Market Operators</b>: Maps <code>|Gap| ≥ 2%</code> & <code>RVOL ≥ 1.5x</code> into <code>SHORT_SQUEEZE</code> / <code>GAP_AND_GO</code> playbooks across 3 risk profiles.</li>
+            <li><b>27-Sector RRG & Strategy Operators</b>: Maps <code>RS-Ratio</code> & <code>RS-Momentum</code> into quadrant transitions, 60/40 drift alerts, and T+5 parameter self-healing.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 4: Neuro-Symbolic Ontology Topology (NEW) -->
+    <div class="slide">
+      <div class="slide-header">
+        <div class="slide-title">3. Neuro-Symbolic Three-Layer Financial Ontology Topology</div>
+        <div class="slide-act">Part II: Financial Domain Ontology</div>
+      </div>
+      <div class="slide-body">
+        <div class="mermaid-box">
+          <div class="mermaid-zoom-hint">🔍 Click to Expand</div>
+          <pre class="mermaid">
+flowchart LR
+    subgraph L1["Layer 1: Semantic Graph Ontology (Neo4j)"]
+        S[":Stock Entity"]
+        R[":ResearchReport Instance"]
+        I[":InvestmentRationale"]
+        K[":RiskFactor"]
+        C[":MarketCatalyst"]
+        S -->|"[:SUPPLIES_TO / COMPETES_WITH]"| S
+        S -->|"[:HAS_REPORT]"| R
+        R -->|"[:HAS_RATIONALE]"| I
+        R -->|"[:HAS_RISK]"| K
+        R -->|"[:HAS_CATALYST]"| C
+    end
+
+    subgraph L2["Layer 2: Formal Contract & Lexicon Ontology"]
+        PC["Pydantic Schema Ontology (StockAnalysisContract)"]
+        FG["Bilingual Lexicon Ontology (40+ Terms / 5 Domains)"]
+        RF["Reflection Error Self-Healing Loop"]
+        PC -->|"Schema Validation Error"| RF
+        RF -->|"Re-Inference Correction"| PC
+    end
+
+    subgraph L3["Layer 3: Kinetic & Action Ontology"]
+        ACT1["9:30 AM Tactical Playbooks (3 Risk Profiles)"]
+        ACT2["27-Sector RRG Rotation + 60/40 Rebalance"]
+        ACT3["Walk-Forward Backtest Lab & T+5 Parameter Tuning"]
+    end
+
+    L1 ==>|"1-3 Hop GraphRAG Grounding"| L2
+    L2 ==>|"Hallucination-Free Structured State"| L3
+    L3 -.->|"T+5 Empirical Feedback"| L1
+          </pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 5: Model Choice & Targeted Routing -->
+    <div class="slide">
+      <div class="slide-header">
+        <div class="slide-title">4. Scenario-Driven LLM Division of Labor & Targeted Context Routing</div>
+        <div class="slide-act">Part III: Model Selection</div>
+      </div>
+      <div class="slide-body grid-3">
+        <div class="card" style="border-top: 4px solid var(--accent-cyan);">
+          <div class="card-title">Gemini 2.5 Flash</div>
+          <p><b>Multi-Turn Chat, ADK Tools & Targeted Routing</b></p>
+          <ul>
+            <li><b>Targeted Context Pruning</b>: Identifies asked ticker (e.g. <code>NVDA</code>) and prunes other 18 portfolio stocks, slashing tokens by <b>>80%</b> (28k ➔ 2.5k) and latency from 12s to 1.8s.</li>
+            <li><b>Use Cases</b>: Real-time stock assistant, pre-market briefings, instant interactive Q&A.</li>
+          </ul>
+        </div>
+        <div class="card" style="border-top: 4px solid var(--accent-purple);">
+          <div class="card-title">Gemini 2.5 Flash-Lite</div>
+          <p><b>High-Concurrency Quant Risk Fitting</b></p>
+          <ul>
+            <li><b>Advantage</b>: Ultra-low cost and throughput optimization (70% cost reduction), high concurrency tolerance.</li>
+            <li><b>Use Cases</b>: Batch portfolio stress testing, sector exposure calculation, scheduled cache prewarming.</li>
+          </ul>
+        </div>
+        <div class="card" style="border-top: 4px solid var(--accent-indigo);">
+          <div class="card-title">Gemini 2.5 Pro</div>
+          <p><b>Institutional-Grade Qualitative Research</b></p>
+          <ul>
+            <li><b>Advantage</b>: Deep multi-factor reasoning across multi-quarter 10-K/10-Q filings and earnings transcripts.</li>
+            <li><b>Use Cases</b>: Macro event attribution, Fed policy deep dives, cross-cycle valuation modeling.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 6: Google ADK Agent Harness Orchestration -->
+    <div class="slide">
+      <div class="slide-header">
+        <div class="slide-title">5. Native Google ADK Agent Harness & Grounded Tool Execution</div>
+        <div class="slide-act">Part III: Harness Architecture</div>
+      </div>
+      <div class="slide-body">
+        <div class="mermaid-box">
+          <div class="mermaid-zoom-hint">🔍 Click to Expand</div>
+          <pre class="mermaid">
+sequenceDiagram
+    actor User as User (Investment Query)
+    participant ADK as Google ADK Agent Harness
+    participant Gemini as Gemini 2.5 Flash Model
+    participant Engine as [ADK Tool] 17-Quarter TTM Engine + Neo4j Graph
+
+    User->>ADK: "What is PATH's historical P/E range and supply chain exposure?"
+    ADK->>Gemini: Inject Ontology Schema Contract & Registered Tools
+    Gemini->>ADK: Trigger Tool Call: get_stock_historical_valuations('PATH')
+    ADK->>Engine: Extract 17-quarter real TTM financials + Neo4j 2-Hop supply chain subgraph
+    Engine-->>ADK: Return P/E 18.5x, P/B 3.2x, FCF Yield 6.51% & supply chain nodes
+    ADK->>Gemini: Feed authentic Tool Response & Graph Ontology back to model
+    Gemini-->>User: Output hallucination-free, rigorously grounded structured answer
+          </pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 7: Neo4j GraphRAG & 5-Tier Storage -->
+    <div class="slide">
+      <div class="slide-header">
+        <div class="slide-title">6. Neo4j GraphRAG & 5-Tier Heterogeneous Storage (1,500+ Vault)</div>
+        <div class="slide-act">Part IV: GraphRAG & 5-Tier Storage</div>
+      </div>
+      <div class="slide-body grid-2">
+        <div class="card">
+          <div class="card-title">🌐 Neo4j 2-Hop Supply Chain Graph & Mandatory OHLCV</div>
+          <ul>
+            <li><b>Multi-Hop Topology Extraction</b>: <code>Neo4jGraphService</code> executes Cypher queries for <code>1-3 hop</code> supply chain relations (e.g., <code>TSMC -[:SUPPLIES_TO]-> NVDA -[:CUSTOMER_OF]-> MSFT</code>).</li>
+            <li><b>Mandatory OHLCV Dashboard</b>: Chatbot is forced to output Open, High, Low, Close, % Change, Volume, 10d Avg Vol, VWAP, RSI(14), SMA(20/50) before narrative text.</li>
+            <li><b>Strict Fact Grounding</b>: Missing metrics are stated as "No official data disclosed" rather than fabricated.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <div class="card-title">🗄️ 5-Tier Storage Topology & 1,500+ Research Vault</div>
+          <ul>
+            <li><b>L1 In-Memory TTL Cache</b>: 60s TTL for quotes, 15m TTL for FRED macro series, preventing upstream rate-limit cascades.</li>
+            <li><b>L2 Firestore + L3 Neo4j AuraDB + L4 GCS Multimodal CDN</b>: Powers multi-tenant state, graph topology, and 24fps video briefings.</li>
+            <li><b>L5 Aliyun Research Vault (<code>47.110.155.86</code>)</b>: SQLite + FTS full-text index hosting <b>1,500+</b> long-form bilingual institutional equity research reports.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 8: 27-Sector RRG, 9:30 AM Playbooks & Backtest Lab (NEW) -->
+    <div class="slide">
+      <div class="slide-header">
+        <div class="slide-title">7. 27-Sector RRG, 9:30 AM Playbooks & Walk-Forward Backtest Lab</div>
+        <div class="slide-act">Part V: Quant & Backtest Engine</div>
+      </div>
+      <div class="slide-body grid-3">
+        <div class="card" style="border-top: 4px solid var(--accent-cyan);">
+          <div class="card-title">🔄 27-Sector RRG & 60/40 Rebalance</div>
+          <ul>
+            <li><b>Full-Spectrum Universe</b>: 11 GICS sectors + 16 high-Alpha thematic ETFs (<code>SMH</code>, <code>IGV</code>, <code>ITA</code>, <code>URA</code>, <code>IBIT</code>, etc.).</li>
+            <li><b>4-Quadrant Trajectory</b>: Computes <code>RS-Ratio</code> & <code>RS-Momentum</code> vs SPY to classify Leading, Improving, Weakening, and Lagging quadrants + 60/40 drift alerts.</li>
+          </ul>
+        </div>
+        <div class="card" style="border-top: 4px solid var(--accent-amber);">
+          <div class="card-title" style="color: var(--accent-amber);">⚡ 9:30 AM Pre-Market Radar & Playbooks</div>
+          <ul>
+            <li><b>Dual-Threshold Filter</b>: Locks onto <code>|Gap| ≥ 2.0%</code> & <code>RVOL ≥ 1.5x</code> movers, cross-checking SEC 8-K filings, options sweeps, and short float.</li>
+            <li><b>3 Risk-Profile Playbooks</b>: Generates <code>SHORT_SQUEEZE</code> / <code>GAP_AND_GO</code> entry triggers, ATR stops, and targets for Conservative, Moderate, and Aggressive tiers.</li>
+          </ul>
+        </div>
+        <div class="card" style="border-top: 4px solid var(--accent-green);">
+          <div class="card-title" style="color: var(--accent-green);">🧪 Walk-Forward Backtest Lab</div>
+          <ul>
+            <li><b>Zero Look-Ahead Bias</b>: Strictly enforces <code>Signal(t) ➔ Execution(t+1)</code> with round-trip slippage and transaction cost deduction.</li>
+            <li><b>Institutional Attribution</b>: Outputs <b>Lo (2002) autocorrelation-adjusted Sharpe</b>, Newey-West $t\text{-stat}$, 95% VaR/CVaR, Sortino, Calmar, and 52-week single-stock signal backtests.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 9: Multi-Tenant RBAC & Privacy Defense -->
+    <div class="slide">
+      <div class="slide-header">
+        <div class="slide-title">8. Multi-Tenant RBAC & Zero-Trust Data Privacy Isolation</div>
+        <div class="slide-act">Part VI: Multi-Tenant & Security</div>
+      </div>
+      <div class="slide-body grid-2">
+        <div class="card">
+          <div class="card-title">🛡️ Cryptographic Firestore Isolation (firestore.rules)</div>
+          <ul>
+            <li><b>Strict Rule Enforcement</b>: Direct client SDK access is restricted to <code>request.auth.uid == userId</code>.</li>
+            <li><b>No Client User ID Parameter</b>: Backend extracts <code>uid</code> strictly from Google-signed JWT Bearer tokens; arbitrary <code>user_id</code> parameters are rejected.</li>
+            <li><b>Zero-Key Cloud-Native Auth</b>: Built on GCP ADC + IAM roles with <code>SensitiveDataFilter</code> log sanitization.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <div class="card-title">🔑 Dynamic Webhook Masking & Quota Matrix</div>
+          <ul>
+            <li><b>One-Way Masking</b>: WeChat Work (<code>key=36a2****6987</code>) and Discord (<code>.../f0C3****q6tk</code>) secrets are masked in API responses.</li>
+            <li><b>Non-Destructive Updates</b>: Submitting masked strings containing <code>****</code> preserves existing stored credentials on the backend.</li>
+            <li><b>Tier Matrix Quotas</b>: Free (1 holding), Trial (5 holdings, 2 observe), Paid/Pro (15 holdings, 5 observe, 15-day grace period), Super/Admin (unlimited).</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 10: Multi-Source External Data Rigor Pipeline -->
+    <div class="slide">
+      <div class="slide-header">
+        <div class="slide-title">9. Multi-Source External Data Rigor & Sanitization Pipeline</div>
+        <div class="slide-act">Part VI: Data Engineering</div>
+      </div>
+      <div class="slide-body grid-3">
+        <div class="card" style="border-top: 4px solid var(--accent-cyan);">
+          <div class="card-title">FMP & yfinance Golden Source</div>
+          <ul>
+            <li><b>FMP Primary</b>: Quotes, VWAP, technical indicators, 13F institutional ownership, insider trades, SEC transcripts.</li>
+            <li><b>Corporate Action & Bounds Check</b>: Aligns split/dividend-adjusted series (<code>Adj Close</code>), validates $P > 0$ and $RSI \in [0, 100]$.</li>
+            <li><b>yfinance Fallback</b>: Smooth circuit-breaker fallback for macro ETF continuity.</li>
+          </ul>
+        </div>
+        <div class="card" style="border-top: 4px solid var(--accent-indigo);">
+          <div class="card-title">FRED Official Series & P1/P2 Grading</div>
+          <ul>
+            <li><b>9 Core Series</b>: 10Y-2Y Spread (<code>T10Y2Y</code>), 10Y/2Y Yields, Fed Funds (<code>FEDFUNDS</code>), Core PCE, CPI, Nonfarm Payrolls, Unemployment Rate, Consumer Sentiment.</li>
+            <li><b>P1/P2 Reaction Grading</b>: Ranks 20-day return percentiles to tag <code>P1</code> ($\ge 80\text{th}$ percentile primary driver) vs <code>P2</code> (secondary context).</li>
+          </ul>
+        </div>
+        <div class="card" style="border-top: 4px solid var(--accent-purple);">
+          <div class="card-title">Media Whitelist & Rumor Filter</div>
+          <ul>
+            <li><b>Tier-1 Media</b>: Domain priority filtering for Bloomberg, Reuters, WSJ, CNBC, Seeking Alpha.</li>
+            <li><b>Social Pulse</b>: Demarcates Reddit WSB & X retail chatter.</li>
+            <li><b>Rumor Warning Badge</b>: Automatically prepends <code>⚠️ [Unverified Social Rumor]</code> to prevent misinformation.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 11: Seven SRE Closed Loops -->
+    <div class="slide">
+      <div class="slide-header">
+        <div class="slide-title">10. Seven-Fold Autonomous Self-Healing SRE Closed Loops (MAPE-K)</div>
+        <div class="slide-act">Part VII: Loop Architecture</div>
+      </div>
+      <div class="slide-body grid-3">
+        <div class="card">
+          <div class="card-title">🤖 1. AI Format Self-Audit Loop</div>
+          <p>Pydantic ontology contracts intercept Gemini output; validation failures assemble Reflection Error Prompts for re-reasoning (up to 3 retries).</p>
+        </div>
+        <div class="card">
+          <div class="card-title">⚡ 2. API State Machine Circuit Breaker</div>
+          <p>FMP failures trip breaker (CLOSED ➔ OPEN), triggering seamless fallback to yfinance or multi-tier Firestore cache.</p>
+        </div>
+        <div class="card">
+          <div class="card-title">🔍 3. Cache Miss Self-Fill Loop</div>
+          <p>Cloud Scheduler scans Firestore missing cache and executes Prewarm prior to weekly report dispatch.</p>
+        </div>
+        <div class="card">
+          <div class="card-title">📊 4. Gems Win Rate Evolution Loop</div>
+          <p>Scans past 30-day stock signals vs T+5 actual prices, calculating profit factor and tuning <code>strategy_params</code> thresholds.</p>
+        </div>
+        <div class="card">
+          <div class="card-title">🚨 5. Unhandled SRE Feedback Loop</div>
+          <p>FastAPI error interception connects to GCP Error Reporting and dispatches Discord alerts with code fix suggestions.</p>
+        </div>
+        <div class="card">
+          <div class="card-title">🛡️ 6. Runaway Sanitizer & Canary Loop</div>
+          <p>Eliminates degenerate table delimiter loops, enforces 5-chunk caps (0.35s pacing), and pairs with Cloud Run 10% Canary auto-rollback.</p>
+        </div>
+        <div class="card" style="grid-column: 1 / -1; background: rgba(56, 189, 248, 0.08); border-color: rgba(56, 189, 248, 0.4); padding: 14px 20px;">
+          <div class="card-title">📝 7. Ontology & Documentation Sync Loop (Doc-Sync Loop)</div>
+          <p>Keeps the Three-Layer Financial Domain Ontology, Algorithm Whitepaper, System Architecture, and Bilingual User Manuals 100% synchronized with production schemas.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 12: Circuit Breaker & Loop Topology -->
+    <div class="slide">
+      <div class="slide-header">
+        <div class="slide-title">11. Circuit Breaker State Machine & Self-Healing Loop Topology</div>
+        <div class="slide-act">Part VII: Loop Architecture</div>
+      </div>
+      <div class="slide-body">
+        <div class="mermaid-box">
+          <div class="mermaid-zoom-hint">🔍 Click to Expand</div>
+          <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant CS as GCP Cloud Scheduler
+    participant BE as Cloud Run Backend
+    participant CB as Circuit Breaker
+    participant FMP as FMP Primary API
+    participant Gemini as Gemini 2.5 Flash (Reflection)
+    participant Webhook as WeCom & Discord Webhooks
+
+    CS->>BE: 1. Trigger Pre-Market Briefing / Quant Audit Job
+    BE->>CB: 2. Request Multi-Source Quotes, RRG & FRED Macro
+    alt FMP Healthy
+        CB->>FMP: 3a. Query Quotes, Technicals & Fundamentals
+        FMP-->>CB: 4a. Return Verified Data
+    else FMP Fails 3x (Tripped to OPEN)
+        CB-->>BE: 3b. Fallback to yfinance / Firestore Cache
+    end
+    BE->>Gemini: 5. Inject Targeted Portfolio Context, Neo4j Ontology & Pydantic Contract
+    Gemini-->>BE: 6. Generate Schema-Validated Briefing & 9:30 AM Playbook
+    BE->>BE: 7. Runaway Cleaner & Chunk Capping (Max 5 chunks)
+    BE-->>Webhook: 8. Paced Delivery (0.35s delay) to WeCom & Discord
+          </pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 13: Verification, Mobile UX 2.0 & Cross-Domain Replication -->
+    <div class="slide">
+      <div class="slide-header">
+        <div class="slide-title">12. Benchmarks, Mobile UX 2.0 & Cross-Domain Ontology Replication</div>
+        <div class="slide-act">Part VIII: Benchmarks & Scaling</div>
+      </div>
+      <div class="slide-body">
+        <div class="table-responsive">
+          <table>
+            <thead>
+              <tr>
+                <th>Architecture / Technical Dimension</th>
+                <th>Measured Value / Result</th>
+                <th>Engineering Implementation & Value</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><b>Time to First Token (TTFT) & Routing</b></td>
+                <td><b style="color: var(--accent-green);">< 450 ms / >80% Token Savings</b></td>
+                <td>HTTP/2 streaming + ticker regex pruning drops single-query context from 28k to 2.5k tokens (12s ➔ 1.8s).</td>
+              </tr>
+              <tr>
+                <td><b>5-Tier Storage & Research Vault</b></td>
+                <td><b style="color: var(--accent-cyan);">1,500+ Institutional Reports</b></td>
+                <td>L1 Memory + L2 Firestore + L3 Neo4j + L4 GCS + L5 Aliyun SQLite FTS Research Vault with sub-second lookup.</td>
+              </tr>
+              <tr>
+                <td><b>Quant Rotation & Backtest Lab</b></td>
+                <td><b style="color: var(--accent-amber);">27-Sector RRG + Lo(2002) Sharpe</b></td>
+                <td>11 GICS + 16 thematic ETFs quadrant tracking; strict <code>T+1</code> walk-forward backtest, Newey-West $t\text{-stat}$, 52w stock backtest.</td>
+              </tr>
+              <tr>
+                <td><b>Mobile UX 2.0 & Cognitive Lexicon</b></td>
+                <td><b style="color: var(--accent-purple);">40+ Bilingual Terms / 9-Section Hub</b></td>
+                <td>Bottom-Sheet Auth Modal, sticky 9-section hub bar (<code>.section-hub-bar</code>), and React Portal viewport-aware glossary popovers.</td>
+              </tr>
+              <tr>
+                <td><b>Universal Ontology Replication</b></td>
+                <td><b style="color: var(--accent-green);">FinTech ➔ MedTech / LegalTech</b></td>
+                <td>"Graph Entity Ontology + Pydantic Contract Ontology + Kinetic Action Ontology + 7 SRE Loops" scales across regulated industries.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="controls">
+    <button class="nav-btn" id="prev-btn">← Previous</button>
+    <div class="counter" id="slide-counter">1 / 13</div>
+    <button class="nav-btn" id="next-btn">Next →</button>
+  </div>
+
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: 'dark',
+      sequence: {
+        diagramMarginX: 25,
+        diagramMarginY: 20,
+        actorMargin: 80,
+        width: 190,
+        height: 60,
+        boxMargin: 10,
+        boxTextMargin: 5,
+        noteMargin: 10,
+        messageMargin: 45,
+        messageFontSize: 16,
+        actorFontSize: 16,
+        actorFontWeight: 700,
+        noteFontSize: 14,
+        useMaxWidth: true
+      }
+    });
+
+    const slides = document.querySelectorAll('.slide');
+    const counter = document.getElementById('slide-counter');
+    const progressBar = document.getElementById('progress-bar');
+    const prevBtn = document.getElementById('prev-btn');
+    const nextBtn = document.getElementById('next-btn');
+
+    let currentIndex = 0;
+
+    function updateSlides() {
+      slides.forEach((slide, index) => {
+        if (index === currentIndex) {
+          slide.classList.add('active');
+        } else {
+          slide.classList.remove('active');
+        }
+      });
+
+      counter.textContent = `${currentIndex + 1} / ${slides.length}`;
+      progressBar.style.width = `${((currentIndex + 1) / slides.length) * 100}%`;
+    }
+
+    prevBtn.addEventListener('click', () => {
+      if (currentIndex > 0) {
+        currentIndex--;
+        updateSlides();
+      }
+    });
+
+    nextBtn.addEventListener('click', () => {
+      if (currentIndex < slides.length - 1) {
+        currentIndex++;
+        updateSlides();
+      }
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight' || e.key === 'Space' || e.key === 'PageDown') {
+        if (currentIndex < slides.length - 1) {
+          currentIndex++;
+          updateSlides();
+        }
+      } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+        if (currentIndex > 0) {
+          currentIndex--;
+          updateSlides();
+        }
+      }
+    });
+
+    // Touch Swipe Gesture Support for Mobile Devices
+    let touchStartX = 0;
+    let touchEndX = 0;
+
+    document.addEventListener('touchstart', (e) => {
+      touchStartX = e.changedTouches[0].screenX;
+    }, { passive: true });
+
+    document.addEventListener('touchend', (e) => {
+      touchEndX = e.changedTouches[0].screenX;
+      handleSwipe();
+    }, { passive: true });
+
+    function handleSwipe() {
+      const swipeThreshold = 40;
+      if (touchEndX < touchStartX - swipeThreshold) {
+        if (currentIndex < slides.length - 1) {
+          currentIndex++;
+          updateSlides();
+        }
+      } else if (touchEndX > touchStartX + swipeThreshold) {
+        if (currentIndex > 0) {
+          currentIndex--;
+          updateSlides();
+        }
+      }
+    }
+
+    // Add Click to Zoom Modal Overlay
+    const mermaidBoxes = document.querySelectorAll('.mermaid-box');
+    const modal = document.createElement('div');
+    modal.className = 'mermaid-modal';
+    modal.innerHTML = `
+      <button class="mermaid-modal-close">✕ Close Fullscreen</button>
+      <div class="mermaid-modal-content"></div>
+    `;
+    document.body.appendChild(modal);
+
+    const modalContent = modal.querySelector('.mermaid-modal-content');
+    const modalClose = modal.querySelector('.mermaid-modal-close');
+
+    mermaidBoxes.forEach(box => {
+      box.addEventListener('click', () => {
+        const svg = box.querySelector('.mermaid');
+        if (svg) {
+          modalContent.innerHTML = svg.outerHTML;
+          modal.classList.add('active');
+        }
+      });
+    });
+
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal || e.target === modalClose) {
+        modal.classList.remove('active');
+      }
+    });
+
+    updateSlides();
+  </script>
+</body>
+</html>

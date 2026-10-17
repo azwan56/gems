@@ -198,38 +198,38 @@ export default function ReportPage() {
 
       <div className="min-h-screen bg-slate-100 print:bg-white text-slate-900 font-sans pb-20 print:pb-0">
         {/* Floating Action Bar (hidden when printing) */}
-        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 p-4 flex justify-center gap-4 shadow-[0_-4px_10px_rgba(0,0,0,0.05)] print:hidden z-50">
+        <div className="fixed bottom-16 md:bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-slate-200 p-3 sm:p-4 flex justify-center gap-3 sm:gap-4 shadow-[0_-4px_10px_rgba(0,0,0,0.05)] print:hidden z-40">
           <button 
             onClick={() => window.history.length > 1 ? window.history.back() : window.close()} 
-            className="px-6 py-2.5 rounded-lg font-semibold text-slate-600 hover:bg-slate-100 flex items-center gap-2"
+            className="px-4 sm:px-6 py-2 sm:py-2.5 rounded-lg font-semibold text-slate-600 hover:bg-slate-100 flex items-center gap-1.5 sm:gap-2 text-sm sm:text-base"
           >
-            <ChevronLeft className="w-5 h-5" /> {t("Back", "返回")}
+            <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" /> {t("Back", "返回")}
           </button>
           <button 
             onClick={handleSaveAsPDF} 
             disabled={isGeneratingPDF}
-            className="px-8 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold flex items-center gap-2 shadow-lg shadow-blue-500/30 transition-all hover:scale-105 disabled:opacity-70 disabled:hover:scale-100 disabled:cursor-not-allowed"
+            className="px-5 sm:px-8 py-2 sm:py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold flex items-center gap-2 shadow-lg shadow-blue-500/30 transition-all hover:scale-105 disabled:opacity-70 disabled:hover:scale-100 disabled:cursor-not-allowed text-sm sm:text-base"
           >
-            {isGeneratingPDF ? <Loader2 className="w-5 h-5 animate-spin" /> : <Download className="w-5 h-5" />} 
+            {isGeneratingPDF ? <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 animate-spin" /> : <Download className="w-4 h-4 sm:w-5 sm:h-5" />} 
             {isGeneratingPDF ? t("Generating...", "生成中...") : t("Save as PDF", "保存为 PDF")}
           </button>
         </div>
 
         {/* A4 Page Container */}
-        <div id="report-content" className="max-w-[800px] mx-auto bg-white shadow-xl mt-8 mb-24 min-h-[1122px] p-10 relative print:shadow-none print:m-0 print:mt-0 print:mb-0 print:max-w-none print:min-h-0 print:p-0">
+        <div id="report-content" className="max-w-[800px] mx-auto bg-white shadow-xl mt-3 sm:mt-8 mb-28 sm:mb-24 min-h-[1122px] p-4 sm:p-10 relative print:shadow-none print:m-0 print:mt-0 print:mb-0 print:max-w-none print:min-h-0 print:p-0">
           
           {/* Header */}
-          <header className="report-section border-b-2 border-blue-900 pb-6 mb-8 flex justify-between items-end">
+          <header className="report-section border-b-2 border-blue-900 pb-4 sm:pb-6 mb-6 sm:mb-8 flex flex-col sm:flex-row sm:justify-between sm:items-end gap-2">
             <div>
               <div className="flex items-center gap-2 mb-2">
                 <div className="w-8 h-8 bg-blue-600 rounded-md flex items-center justify-center">
                   <Gem className="w-5 h-5 text-white" />
                 </div>
-                <h1 className="text-2xl font-black text-blue-900 tracking-tight">GEMS QUANT</h1>
+                <h1 className="text-xl sm:text-2xl font-black text-blue-900 tracking-tight">GEMS QUANT</h1>
               </div>
-              <p className="text-sm font-semibold text-slate-500 tracking-widest uppercase">{t("AI Investment Research Report", "AI 投资研究报告")}</p>
+              <p className="text-xs sm:text-sm font-semibold text-slate-500 tracking-widest uppercase">{t("AI Investment Research Report", "AI 投资研究报告")}</p>
             </div>
-            <div className="text-right">
+            <div className="sm:text-right">
               <p className="text-xs text-slate-400 font-mono">{t("Date", "日期")}: {new Date().toLocaleDateString(lang === "zh" ? "zh-CN" : "en-US")}</p>
               <p className="text-xs text-slate-400 font-mono mt-1">{t("Strategy", "策略")}: {strategyLabel}</p>
             </div>
@@ -238,8 +238,8 @@ export default function ReportPage() {
           {/* Company Title & Sector Badge */}
           <div className="report-section flex justify-between items-start mb-6">
             <div>
-              <div className="flex items-center gap-3">
-                <h2 className="text-4xl font-black text-slate-900 tracking-tight">
+              <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                <h2 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">
                   {report.symbol}
                 </h2>
                 {report.sectorRotation && (
@@ -271,7 +271,7 @@ export default function ReportPage() {
             const hasDual = Boolean(wsTarget && aiTarget && wsTarget !== aiTarget);
 
             return (
-              <div className={`report-section grid gap-4 mb-6 ${hasDual ? "grid-cols-3" : "grid-cols-2"}`}>
+              <div className={`report-section grid gap-3 sm:gap-4 mb-6 ${hasDual ? "grid-cols-1 sm:grid-cols-3 print:grid-cols-3" : "grid-cols-1 sm:grid-cols-2 print:grid-cols-2"}`}>
                 {/* Wall Street Consensus Target */}
                 <div className="border border-blue-200 bg-blue-50/40 rounded-xl p-4 flex flex-col justify-between">
                   <div>
@@ -362,7 +362,7 @@ export default function ReportPage() {
           })()}
 
           {/* Scores */}
-          <div className="report-section grid grid-cols-3 gap-4 mb-6">
+          <div className="report-section grid grid-cols-1 sm:grid-cols-3 print:grid-cols-3 gap-3 sm:gap-4 mb-6">
             <div className="border border-purple-200 rounded-xl p-4 bg-gradient-to-br from-purple-50 to-white relative overflow-hidden print:bg-purple-50">
               <div className="flex justify-between items-start mb-2">
                 <h3 className="text-xs font-bold text-slate-600 uppercase flex items-center gap-1.5">
@@ -442,8 +442,8 @@ export default function ReportPage() {
 
           {/* Top-Down Sector Rotation Context */}
           {report.sectorRotation && (
-            <div className="report-section mb-6 bg-blue-50/50 border border-blue-200 rounded-xl p-5 print:bg-blue-50/50">
-              <div className="flex items-center justify-between mb-2.5 pb-2 border-b border-blue-100">
+            <div className="report-section mb-6 bg-blue-50/50 border border-blue-200 rounded-xl p-4 sm:p-5 print:bg-blue-50/50">
+              <div className="flex flex-wrap items-center justify-between gap-2 mb-2.5 pb-2 border-b border-blue-100">
                 <h3 className="text-sm font-bold text-blue-900 uppercase tracking-widest flex items-center gap-2">
                   <Compass className="w-4 h-4 text-blue-600" /> {t("Sector Rotation Context", "自上而下板块大势与宏观契合度")}
                 </h3>
@@ -462,7 +462,7 @@ export default function ReportPage() {
               <p className="text-sm text-slate-700 leading-relaxed mb-4">
                 {report.sectorRotation.advice}
               </p>
-              <div className="grid grid-cols-4 gap-3 text-xs pt-3 border-t border-blue-100 bg-white/80 rounded-lg p-3">
+              <div className="grid grid-cols-2 sm:grid-cols-4 print:grid-cols-4 gap-3 text-xs pt-3 border-t border-blue-100 bg-white/80 rounded-lg p-3">
                 <div>
                   <span className="text-slate-500 block text-[10px] uppercase font-semibold">{t("Sector / Sub-Industry", "所属大类 / 细分")}</span>
                   <strong className="text-slate-800 text-xs">
@@ -496,7 +496,7 @@ export default function ReportPage() {
           )}
 
           {/* Detailed Analysis Grid */}
-          <div className="report-section grid grid-cols-2 gap-x-8 gap-y-6 mb-6">
+          <div className="report-section grid grid-cols-1 sm:grid-cols-2 print:grid-cols-2 gap-x-8 gap-y-6 mb-6">
             {/* Rationale */}
             <div>
               <h3 className="text-sm font-bold text-emerald-700 uppercase tracking-widest mb-3 flex items-center gap-2 border-b border-slate-200 pb-2">

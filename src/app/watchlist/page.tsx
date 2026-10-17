@@ -10,6 +10,7 @@ import { applyFilters } from "@/lib/screener-engine";
 import UserMenu from "@/components/UserMenu";
 import PremiumGate from "@/components/PremiumGate";
 import { SectorWindBadge } from "@/components/SectorWindBadge";
+import { TermTooltip, TextWithTooltips } from "@/components/TermTooltip";
 
 // Static badge colors for strategy tags
 const strategyBadgeColors: Record<string, string> = {
@@ -708,15 +709,14 @@ export default function WatchlistPage() {
                 <span>{t("Matched Strategies", "入选策略")}</span>
                 <span>{t("Prev Close Price", "前收盘价")}</span>
                 <span className="text-right">{t("Target Price", "目标价")}</span>
-                <span className="text-right">Beta</span>
+                <span className="text-right">
+                  <TermTooltip term="Beta">Beta</TermTooltip>
+                </span>
                 <span className="text-right">{t("Actions", "操作")}</span>
               </div>
 
               {watchlist.map((item, idx) => {
                 const q = quotes[item.symbol];
-                const hasQuote = q && q.price > 0;
-                const changeColor = q && q.change_percent > 0 ? "text-emerald-400" : q && q.change_percent < 0 ? "text-red-400" : "text-slate-400";
-                const changePrefix = q && q.change_percent > 0 ? "+" : "";
 
                 // Determine matched strategies from stock pool
                 const stockData = stockPool.find(s => s.symbol === item.symbol);
@@ -726,7 +726,7 @@ export default function WatchlistPage() {
                 const industry = stockData?.industry || "";
                 const isObserved = observeListSymbols.has(item.symbol);
                 const tp = targetPrices[item.symbol];
-                const prevClosePrice = stockData?.price || 0;
+                const prevClosePrice = stockData?.price || (q?.price ?? 0);
                 const upsidePercent = tp && prevClosePrice > 0 ? ((tp.targetConsensus - prevClosePrice) / prevClosePrice * 100) : null;
 
                 return (
@@ -738,25 +738,58 @@ export default function WatchlistPage() {
                         <span className="text-sm font-bold text-slate-600">#{idx + 1}</span>
                       </div>
 
-                      {/* Stock Info — enriched with company, sector/industry, observe status */}
-                      <div className="flex items-center gap-3">
-                        <span className="md:hidden text-xs font-bold text-slate-600">#{idx + 1}</span>
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-2">
-                            <span className="font-bold text-white text-base">{item.symbol}</span>
-                            {isObserved && (
-                              <span className="flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-cyan-500/10 border border-cyan-500/20" title={t("Synced to DailyStock observe list", "已同步至观察清单")}>
-                                <Eye className="w-3 h-3 text-cyan-400" />
-                                <span className="text-[9px] font-medium text-cyan-400 hidden sm:inline">{t("Observed", "观察中")}</span>
-                              </span>
+                      {/* Stock Info — enriched with company, sector/industry, observe status + Mobile quick actions */}
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <span className="md:hidden text-xs font-mono font-bold text-slate-500 bg-slate-800 px-1.5 py-0.5 rounded">#{idx + 1}</span>
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-2">
+                              <span className="font-bold text-white text-base">{item.symbol}</span>
+                              {isObserved && (
+                                <span className="flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-cyan-500/10 border border-cyan-500/20" title={t("Synced to DailyStock observe list", "已同步至观察清单")}>
+                                  <Eye className="w-3 h-3 text-cyan-400" />
+                                  <span className="text-[9px] font-medium text-cyan-400">{t("Observed", "观察中")}</span>
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-xs text-slate-400 line-clamp-1">{companyName}</p>
+                            {(sector || industry) && (
+                              <p className="text-[10px] text-slate-500 line-clamp-1 mt-0.5">
+                                {sector}{sector && industry ? " · " : ""}{industry}
+                              </p>
                             )}
                           </div>
-                          <p className="text-xs text-slate-400 line-clamp-1">{companyName}</p>
-                          {(sector || industry) && (
-                            <p className="text-[10px] text-slate-600 line-clamp-1 mt-0.5">
-                              {sector}{sector && industry ? " · " : ""}{industry}
-                            </p>
+                        </div>
+
+                        {/* Mobile Action Buttons */}
+                        <div className="flex md:hidden items-center gap-1.5 shrink-0">
+                          <button
+                            onClick={() => openAnalysis(item.symbol)}
+                            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-purple-500/15 hover:bg-purple-500/25 border border-purple-500/30 text-purple-300 text-xs font-semibold transition-colors"
+                          >
+                            <FileText className="w-3.5 h-3.5" />
+                            <span>{t("Report", "研报")}</span>
+                          </button>
+                          {syncState[item.symbol] === 'synced' || syncState[item.symbol] === 'already_exists' ? (
+                            <span className="p-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
+                              <Check className="w-3.5 h-3.5" />
+                            </span>
+                          ) : (
+                            <button
+                              onClick={() => openSyncConfirm(item.symbol)}
+                              className="p-1.5 rounded-lg bg-slate-800 border border-slate-700 text-slate-300 hover:text-blue-400"
+                              title={t("Sync to DailyStock", "同步到主站")}
+                            >
+                              <ArrowUpFromLine className="w-3.5 h-3.5" />
+                            </button>
                           )}
+                          <button
+                            onClick={() => removeItem(item.symbol)}
+                            className="p-1.5 rounded-lg bg-slate-800 border border-slate-700 text-slate-400 hover:text-red-400"
+                            title={t("Remove", "移除")}
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
                         </div>
                       </div>
 
@@ -776,19 +809,56 @@ export default function WatchlistPage() {
                         )}
                       </div>
 
-                      {/* Previous Close Price — from stock pool or live quote */}
-                      <div>
-                        {stockData?.price !== undefined ? (
-                          <span className="text-lg font-bold font-mono text-white">${stockData.price.toFixed(2)}</span>
-                        ) : quotes[item.symbol]?.price !== undefined && quotes[item.symbol]?.price > 0 ? (
-                          <span className="text-lg font-bold font-mono text-white">${quotes[item.symbol].price.toFixed(2)}</span>
+                      {/* Mobile 3-Column Labeled Metrics Strip */}
+                      <div className="grid grid-cols-3 gap-2 p-2.5 rounded-xl bg-slate-950/70 border border-slate-800/80 md:hidden">
+                        <div>
+                          <span className="text-[10px] text-slate-500 block mb-0.5">{t("Prev Close", "前收盘价")}</span>
+                          {prevClosePrice > 0 ? (
+                            <span className="text-sm font-bold font-mono text-white">${prevClosePrice.toFixed(2)}</span>
+                          ) : (
+                            <span className="text-xs text-slate-600">—</span>
+                          )}
+                        </div>
+                        <div>
+                          <span className="text-[10px] text-slate-500 block mb-0.5">{t("Wall St Target", "机构目标价")}</span>
+                          {tp ? (
+                            <div className="flex items-baseline gap-1 flex-wrap">
+                              <span className="text-sm font-bold font-mono text-blue-400">${tp.targetConsensus.toFixed(1)}</span>
+                              {upsidePercent !== null && (
+                                <span className={`text-[10px] font-semibold font-mono ${upsidePercent >= 0 ? "text-emerald-400" : "text-red-400"}`}>
+                                  {upsidePercent >= 0 ? "+" : "-"}{Math.abs(upsidePercent).toFixed(0)}%
+                                </span>
+                              )}
+                            </div>
+                          ) : (
+                            <span className="text-xs text-slate-600">—</span>
+                          )}
+                        </div>
+                        <div>
+                          <span className="text-[10px] text-slate-500 block mb-0.5">
+                            <TermTooltip term="Beta">Beta</TermTooltip>
+                          </span>
+                          {stockData?.beta !== undefined && stockData.beta !== null ? (
+                            <span className={`text-sm font-bold font-mono ${stockData.beta > 1.0 ? "text-orange-400" : "text-cyan-400"}`}>
+                              {stockData.beta.toFixed(2)}
+                            </span>
+                          ) : (
+                            <span className="text-xs text-slate-600">—</span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Desktop Previous Close Price */}
+                      <div className="hidden md:block">
+                        {prevClosePrice > 0 ? (
+                          <span className="text-lg font-bold font-mono text-white">${prevClosePrice.toFixed(2)}</span>
                         ) : (
                           <span className="text-sm text-slate-600">—</span>
                         )}
                       </div>
 
-                      {/* Target Price — from FMP analyst consensus */}
-                      <div className="md:text-right">
+                      {/* Desktop Target Price */}
+                      <div className="hidden md:block md:text-right">
                         {tp ? (
                           <div>
                             <span className="text-sm font-bold font-mono text-blue-400">
@@ -807,9 +877,8 @@ export default function WatchlistPage() {
                         )}
                       </div>
 
-                      {/* Beta Value Column */}
-                      <div className="md:text-right">
-                        <span className="text-xs font-semibold text-slate-500 md:hidden block mb-1">Beta</span>
+                      {/* Desktop Beta Value Column */}
+                      <div className="hidden md:block md:text-right">
                         {stockData?.beta !== undefined && stockData.beta !== null ? (
                           <span className={`text-base font-bold font-mono ${stockData.beta > 1.0 ? "text-orange-400" : "text-cyan-400"}`}>
                             {stockData.beta.toFixed(2)}
@@ -819,8 +888,8 @@ export default function WatchlistPage() {
                         )}
                       </div>
 
-                      {/* Actions */}
-                      <div className="flex items-center gap-1.5 md:justify-end">
+                      {/* Desktop Actions */}
+                      <div className="hidden md:flex items-center gap-1.5 md:justify-end">
                         {/* Sync to DailyStock */}
                         {syncState[item.symbol] === 'synced' ? (
                           <span className="p-1.5 rounded-md text-emerald-400" title={t("Synced to DailyStock", "已同步到 DailyStock")}>
@@ -984,9 +1053,9 @@ export default function WatchlistPage() {
       )}
       {/* AI Analysis Slide-out Panel */}
       {analysisPanel && (
-        <div className="fixed inset-0 z-[100] flex justify-end">
+        <div className="fixed inset-0 z-[100] flex justify-end overflow-hidden overscroll-contain">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setAnalysisPanel(null)} />
-          <div className="relative w-full sm:max-w-2xl h-full bg-slate-900 border-l border-slate-800 shadow-2xl overflow-y-auto animate-in slide-in-from-right duration-300">
+          <div className="relative w-full sm:max-w-2xl h-full bg-slate-900 border-l border-slate-800 shadow-2xl overflow-y-auto overscroll-contain animate-in slide-in-from-right duration-300">
             <div className="sticky top-0 z-10 bg-slate-900/80 backdrop-blur-md border-b border-slate-800 px-4 sm:px-8 py-4 sm:py-6 flex justify-between items-start">
               <div>
                 <h2 className="text-2xl sm:text-3xl font-bold text-white mb-0.5 sm:mb-1">{analysisPanel.symbol}</h2>
@@ -1157,7 +1226,9 @@ export default function WatchlistPage() {
                     <h3 className="text-sm font-bold text-slate-300 uppercase tracking-widest mb-3 flex items-center gap-2">
                       <FileText className="w-4 h-4 text-blue-400" /> {t("Company Overview", "公司概况")}
                     </h3>
-                    <p className="text-slate-400 text-sm leading-relaxed">{analysisPanel.report.overview}</p>
+                    <p className="text-slate-400 text-sm leading-relaxed">
+                      <TextWithTooltips text={analysisPanel.report.overview} />
+                    </p>
                   </section>
 
                   {/* Fundamentals */}
@@ -1165,7 +1236,9 @@ export default function WatchlistPage() {
                     <h3 className="text-sm font-bold text-slate-300 uppercase tracking-widest mb-3 flex items-center gap-2">
                       <TrendingUp className="w-4 h-4 text-emerald-400" /> {t("Fundamentals", "基本面")}
                     </h3>
-                    <p className="text-slate-400 text-sm leading-relaxed">{analysisPanel.report.fundamentals}</p>
+                    <p className="text-slate-400 text-sm leading-relaxed">
+                      <TextWithTooltips text={analysisPanel.report.fundamentals} />
+                    </p>
                   </section>
 
                   {/* Products & Services */}
@@ -1173,7 +1246,9 @@ export default function WatchlistPage() {
                     <h3 className="text-sm font-bold text-slate-300 uppercase tracking-widest mb-3 flex items-center gap-2">
                       <Activity className="w-4 h-4 text-purple-400" /> {t("Products & Services", "产品与服务")}
                     </h3>
-                    <p className="text-slate-400 text-sm leading-relaxed">{analysisPanel.report.products}</p>
+                    <p className="text-slate-400 text-sm leading-relaxed">
+                      <TextWithTooltips text={analysisPanel.report.products} />
+                    </p>
                   </section>
 
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 pt-2 sm:pt-4">
@@ -1186,7 +1261,9 @@ export default function WatchlistPage() {
                         {analysisPanel.report.rationale.map((line, i) => (
                           <li key={i} className="flex gap-2">
                             <span className="text-emerald-500 mt-0.5 shrink-0">•</span>
-                            <span className="leading-relaxed">{line}</span>
+                            <span className="leading-relaxed">
+                              <TextWithTooltips text={line} />
+                            </span>
                           </li>
                         ))}
                       </ul>
@@ -1201,7 +1278,9 @@ export default function WatchlistPage() {
                         {analysisPanel.report.risks.map((line, i) => (
                           <li key={i} className="flex gap-2">
                             <span className="text-red-500 mt-0.5 shrink-0">•</span>
-                            <span className="leading-relaxed">{line}</span>
+                            <span className="leading-relaxed">
+                              <TextWithTooltips text={line} />
+                            </span>
                           </li>
                         ))}
                       </ul>
@@ -1217,7 +1296,9 @@ export default function WatchlistPage() {
                           analysisPanel.report.catalysts.map((line, i) => (
                             <li key={i} className="flex gap-2">
                               <span className="text-blue-500 mt-0.5 shrink-0">•</span>
-                              <span className="leading-relaxed">{line}</span>
+                              <span className="leading-relaxed">
+                                <TextWithTooltips text={line} />
+                              </span>
                             </li>
                           ))
                         ) : (
