@@ -6,7 +6,8 @@
 
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useState, useEffect, type FormEvent } from "react";
+import { createPortal } from "react-dom";
 import { X, Gem, Mail, Eye, EyeOff, Loader2 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { useLanguage } from "@/lib/language-context";
@@ -21,11 +22,27 @@ export default function AuthModal({ onClose }: AuthModalProps) {
   const { signInWithGoogle, signInWithEmail, signUpWithEmail, error, clearError } = useAuth();
   const { t } = useLanguage();
 
+  const [mounted, setMounted] = useState(false);
   const [mode, setMode] = useState<Mode>("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [onClose]);
 
   const handleGoogleSignIn = async () => {
     setLoading(true);
@@ -62,15 +79,20 @@ export default function AuthModal({ onClose }: AuthModalProps) {
     clearError();
   };
 
-  return (
+  if (!mounted) return null;
+
+  return createPortal(
     <div
       onClick={onClose}
-      className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/75 backdrop-blur-md overflow-hidden overscroll-contain"
+      className="fixed inset-0 z-[99999] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-950/80 backdrop-blur-md overflow-hidden overscroll-contain"
     >
       <div
-        className="relative w-full max-w-md max-h-[92dvh] overflow-y-auto overscroll-contain bg-slate-900 border-t sm:border border-slate-700/60 rounded-t-3xl sm:rounded-2xl shadow-2xl animate-in fade-in slide-in-from-bottom-4 sm:zoom-in-95 duration-200 pb-[max(1rem,env(safe-area-inset-bottom))] sm:pb-0"
+        className="relative w-full max-w-md max-h-[92dvh] overflow-y-auto overscroll-contain bg-slate-900 border-t sm:border border-slate-700/80 rounded-t-3xl sm:rounded-2xl shadow-[0_24px_70px_rgba(0,0,0,0.85)] animate-in fade-in slide-in-from-bottom-4 sm:zoom-in-95 duration-200 pb-[max(1rem,env(safe-area-inset-bottom))] sm:pb-0 text-slate-100"
         onClick={(e) => e.stopPropagation()}
       >
+        {/* Top Accent Gradient Bar */}
+        <div className="h-1 w-full bg-gradient-to-r from-blue-500 via-indigo-500 to-emerald-400" />
+
         {/* Mobile drag handle */}
         <div className="w-11 h-1.5 bg-slate-700/80 rounded-full mx-auto mt-3 sm:hidden" />
 
@@ -222,6 +244,7 @@ export default function AuthModal({ onClose }: AuthModalProps) {
           </p>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

@@ -5,10 +5,11 @@
 
 "use client";
 
-import { type ReactNode } from "react";
-import { Lock, Crown, Gem, ArrowRight, Sparkles } from "lucide-react";
+import { useState, type ReactNode } from "react";
+import { Lock, Crown, Gem, ArrowRight, Sparkles, LogIn } from "lucide-react";
 import { useAuth, type PlanType } from "@/lib/auth-context";
 import { useLanguage } from "@/lib/language-context";
+import AuthModal from "./AuthModal";
 
 interface PremiumGateProps {
   children: ReactNode;
@@ -25,6 +26,7 @@ const PLAN_LABELS: Record<PlanType, { en: string; zh: string; color: string }> =
 export default function PremiumGate({ children, featureName }: PremiumGateProps) {
   const { user } = useAuth();
   const { t } = useLanguage();
+  const [showAuthModal, setShowAuthModal] = useState(false);
 
   // Paid/super users pass through
   if (user?.isPremium) {
@@ -35,7 +37,7 @@ export default function PremiumGate({ children, featureName }: PremiumGateProps)
   const planLabel = PLAN_LABELS[currentPlan];
 
   return (
-    <div className="min-h-[60vh] flex flex-col items-center justify-center px-4 sm:px-6 py-10 sm:py-16 text-center">
+    <div className="min-h-[55vh] flex flex-col items-center justify-center px-4 sm:px-6 py-10 sm:py-16 text-center">
       {/* Lock icon with glow */}
       <div className="relative mb-6 sm:mb-8">
         <div className="absolute inset-0 bg-blue-500/20 blur-3xl rounded-full scale-150" />
@@ -46,7 +48,7 @@ export default function PremiumGate({ children, featureName }: PremiumGateProps)
 
       {/* Title */}
       <h2 className="text-2xl sm:text-3xl font-bold tracking-tight mb-3">
-        {t("Premium Feature", "高级功能")}
+        {!user ? t("Sign In to Unlock", "请先登录以解锁高级功能") : t("Premium Feature", "高级功能")}
       </h2>
 
       {featureName && (
@@ -55,8 +57,13 @@ export default function PremiumGate({ children, featureName }: PremiumGateProps)
         </p>
       )}
 
-      <p className="text-slate-400 max-w-md mb-8 leading-relaxed">
-        {user?.isExpired
+      <p className="text-slate-400 max-w-md mb-6 leading-relaxed">
+        {!user
+          ? t(
+              "Sign in with your Gems or DailyStock account to access all 6 quantitative screening strategies, AI reports, and portfolio tracking.",
+              "使用您的 Gems 或 DailyStock 账号一键登录，即可解锁全部 6 大量化选股策略、AI 定性排雷与投资组合追踪。"
+            )
+          : user?.isExpired
           ? t(
               "Your plan has expired. Please renew to continue using quantitative screening, AI analysis, and portfolio management.",
               "您的计划已到期。请续费以继续使用量化选股、AI分析报告及投资组合管理。"
@@ -67,21 +74,36 @@ export default function PremiumGate({ children, featureName }: PremiumGateProps)
             )}
       </p>
 
-      {/* Current plan badge */}
-      <div className="flex items-center gap-2 mb-8 px-4 py-2 rounded-full bg-slate-800/60 border border-slate-700/50">
-        <Gem className="w-4 h-4 text-slate-500" />
-        <span className="text-sm text-slate-500">
-          {t("Current Plan:", "当前计划：")}
-        </span>
-        <span className={`text-sm font-bold ${planLabel.color}`}>
-          {t(planLabel.en, planLabel.zh)}
-        </span>
-        {user?.isExpired && (
-          <span className="text-[10px] text-red-400 bg-red-500/10 px-1.5 py-0.5 rounded font-bold">
-            {t("Expired", "已过期")}
+      {/* Primary Sign-In CTA when logged out */}
+      {!user && (
+        <div className="mb-8 flex flex-col sm:flex-row items-center gap-3">
+          <button
+            onClick={() => setShowAuthModal(true)}
+            className="inline-flex items-center justify-center gap-2.5 px-8 py-3.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold rounded-xl transition-all shadow-lg shadow-blue-600/30 hover:shadow-blue-500/40 hover:scale-105 cursor-pointer"
+          >
+            <LogIn className="w-5 h-5" />
+            {t("Sign In / Register Now", "立即登录 / 注册账号")}
+          </button>
+        </div>
+      )}
+
+      {/* Current plan badge (when logged in) */}
+      {user && (
+        <div className="flex items-center gap-2 mb-8 px-4 py-2 rounded-full bg-slate-800/60 border border-slate-700/50">
+          <Gem className="w-4 h-4 text-slate-500" />
+          <span className="text-sm text-slate-500">
+            {t("Current Plan:", "当前计划：")}
           </span>
-        )}
-      </div>
+          <span className={`text-sm font-bold ${planLabel.color}`}>
+            {t(planLabel.en, planLabel.zh)}
+          </span>
+          {user?.isExpired && (
+            <span className="text-[10px] text-red-400 bg-red-500/10 px-1.5 py-0.5 rounded font-bold">
+              {t("Expired", "已过期")}
+            </span>
+          )}
+        </div>
+      )}
 
       {/* Upgrade tiers */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full max-w-lg mb-8">
@@ -97,7 +119,7 @@ export default function PremiumGate({ children, featureName }: PremiumGateProps)
             </div>
           </div>
           <ul className="text-xs text-slate-400 space-y-1.5 text-left">
-            <li>✓ {t("4 Screening Strategies", "4种选股策略")}</li>
+            <li>✓ {t("6 Screening Strategies", "6大选股策略")}</li>
             <li>✓ {t("AI Analysis Reports", "AI分析报告")}</li>
             <li>✓ {t("Watchlist (20 stocks)", "自选股 (20只)")}</li>
           </ul>
@@ -130,11 +152,17 @@ export default function PremiumGate({ children, featureName }: PremiumGateProps)
         href="https://dailystock.vanpower.live"
         target="_blank"
         rel="noopener noreferrer"
-        className="inline-flex items-center gap-2 px-8 py-3.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold rounded-xl transition-all shadow-lg shadow-blue-600/25 hover:shadow-blue-500/35 hover:scale-105"
+        className={`inline-flex items-center gap-2 px-6 py-3 ${
+          !user
+            ? "bg-slate-800/80 hover:bg-slate-800 text-slate-300 border border-slate-700"
+            : "px-8 py-3.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white shadow-lg shadow-blue-600/25 hover:shadow-blue-500/35 hover:scale-105"
+        } font-bold rounded-xl transition-all`}
       >
-        {t("Upgrade Now", "立即升级")}
+        {t("Upgrade Plan on DailyStock", "前往 DailyStock 升级计划")}
         <ArrowRight className="w-4 h-4" />
       </a>
+
+      {showAuthModal && <AuthModal onClose={() => setShowAuthModal(false)} />}
     </div>
   );
 }
