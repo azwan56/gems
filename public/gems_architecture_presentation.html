@@ -49,8 +49,8 @@
 
     .lang-switch {
       position: absolute;
-      top: 15px;
-      right: 25px;
+      top: 10px;
+      right: 3vw;
       z-index: 200;
       display: flex;
       gap: 8px;
@@ -60,9 +60,9 @@
       background: rgba(255, 255, 255, 0.1);
       border: 1px solid var(--border-color);
       color: var(--text-main);
-      padding: 6px 14px;
-      border-radius: 16px;
-      font-size: 0.85rem;
+      padding: 4px 12px;
+      border-radius: 14px;
+      font-size: 0.8rem;
       font-weight: 600;
       text-decoration: none;
       transition: all 0.2s ease;
@@ -77,7 +77,8 @@
     .slides-container {
       position: relative;
       width: 100%;
-      height: calc(100vh - 65px);
+      height: calc(100dvh - 58px);
+      padding-top: 24px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -85,15 +86,15 @@
 
     .slide {
       position: absolute;
-      width: 92%;
-      max-width: 1400px;
-      height: 86vh;
+      width: 94%;
+      max-width: 1360px;
+      height: calc(100dvh - 94px);
       background: var(--card-bg);
       backdrop-filter: blur(20px);
       -webkit-backdrop-filter: blur(20px);
       border: 1px solid var(--border-color);
-      border-radius: 24px;
-      padding: 32px 46px;
+      border-radius: 20px;
+      padding: 22px 32px;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
@@ -102,6 +103,7 @@
       transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
       pointer-events: none;
       box-shadow: 0 25px 60px rgba(0, 0, 0, 0.6);
+      overflow: hidden;
     }
 
     .slide.active {
@@ -114,14 +116,17 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 18px;
+      gap: 14px;
+      margin-bottom: 14px;
       border-bottom: 1px solid var(--border-color);
-      padding-bottom: 12px;
+      padding-bottom: 10px;
+      flex-shrink: 0;
     }
 
     .slide-title {
-      font-size: clamp(1.3rem, 2.2vw, 1.95rem);
+      font-size: clamp(1.12rem, 0.75rem + 1.1vw, 1.62rem);
       font-weight: 800;
+      line-height: 1.3;
       background: linear-gradient(135deg, #ffffff 40%, var(--accent-cyan));
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
@@ -129,60 +134,69 @@
     }
 
     .slide-act {
-      font-size: 0.9rem;
+      font-size: 0.8rem;
       font-weight: 700;
       color: var(--accent-indigo);
       text-transform: uppercase;
-      letter-spacing: 1.2px;
+      letter-spacing: 1px;
       background: rgba(129, 140, 248, 0.12);
-      padding: 6px 16px;
-      border-radius: 12px;
+      padding: 5px 14px;
+      border-radius: 10px;
       border: 1px solid rgba(129, 140, 248, 0.3);
       white-space: nowrap;
+      flex-shrink: 0;
     }
 
     .slide-body {
       flex: 1;
+      min-height: 0;
+      width: 100%;
       display: flex;
       flex-direction: column;
       justify-content: center;
-      gap: 18px;
+      gap: 14px;
       overflow-y: auto;
+      overflow-x: hidden;
     }
 
-    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; }
-    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
-    .grid-4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 18px; }
+    .grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; align-content: center; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; align-content: center; }
+    .grid-4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; align-content: center; }
 
     .card {
+      min-width: 0;
       background: rgba(15, 23, 42, 0.68);
       border: 1px solid var(--border-color);
-      border-radius: 16px;
-      padding: 20px 22px;
+      border-radius: 14px;
+      padding: 16px 18px;
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 8px;
+      overflow-wrap: break-word;
+      word-break: break-word;
       transition: transform 0.2s ease, border-color 0.2s ease;
     }
 
     .card:hover {
-      transform: translateY(-3px);
+      transform: translateY(-2px);
       border-color: var(--accent-cyan);
     }
 
     .card-title {
-      font-size: 1.22rem;
+      font-size: clamp(0.98rem, 0.75rem + 0.45vw, 1.12rem);
       font-weight: 700;
+      line-height: 1.35;
       color: var(--accent-cyan);
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 8px;
     }
 
     .card p, ul li {
-      font-size: 0.98rem;
+      font-size: clamp(0.82rem, 0.7rem + 0.28vw, 0.91rem);
       color: var(--text-muted);
-      line-height: 1.58;
+      line-height: 1.5;
+      overflow-wrap: break-word;
     }
 
     ul {
@@ -192,8 +206,8 @@
 
     ul li {
       position: relative;
-      padding-left: 22px;
-      margin-bottom: 8px;
+      padding-left: 18px;
+      margin-bottom: 6px;
     }
 
     ul li::before {
@@ -207,19 +221,20 @@
     code {
       background: rgba(56, 189, 248, 0.12);
       color: #7dd3fc;
-      padding: 2px 6px;
-      border-radius: 5px;
+      padding: 1px 5px;
+      border-radius: 4px;
       font-family: "Fira Code", monospace, Consolas;
-      font-size: 0.88em;
+      font-size: 0.85em;
+      overflow-wrap: break-word;
     }
 
     .code-snippet {
       background: #050811;
       border: 1px solid rgba(56, 189, 248, 0.25);
       border-radius: 10px;
-      padding: 12px 14px;
+      padding: 10px 12px;
       font-family: "Fira Code", monospace, Consolas;
-      font-size: 0.86rem;
+      font-size: 0.82rem;
       color: #38bdf8;
       overflow-x: auto;
     }
@@ -228,13 +243,13 @@
     .mermaid-box {
       background: rgba(11, 15, 25, 0.85);
       border: 1px solid var(--border-color);
-      border-radius: 16px;
-      padding: 20px;
+      border-radius: 14px;
+      padding: 14px;
       display: flex;
       flex-direction: column;
       justify-content: center;
       align-items: center;
-      min-height: 440px;
+      min-height: 0;
       height: 100%;
       width: 100%;
       overflow: auto;
@@ -250,15 +265,15 @@
 
     .mermaid-zoom-hint {
       position: absolute;
-      top: 14px;
-      right: 18px;
-      font-size: 0.85rem;
+      top: 12px;
+      right: 16px;
+      font-size: 0.8rem;
       font-weight: 600;
       color: var(--accent-cyan);
       background: rgba(56, 189, 248, 0.15);
       border: 1px solid rgba(56, 189, 248, 0.35);
-      padding: 5px 14px;
-      border-radius: 14px;
+      padding: 4px 12px;
+      border-radius: 12px;
       pointer-events: none;
       z-index: 10;
     }
@@ -272,9 +287,9 @@
 
     .mermaid svg {
       width: 100% !important;
-      max-width: 1320px !important;
+      max-width: 1260px !important;
       height: auto !important;
-      min-height: 380px;
+      max-height: calc(100dvh - 220px) !important;
     }
 
     /* Fullscreen Modal Zoom Mode */
@@ -339,13 +354,13 @@
       bottom: 0;
       left: 0;
       width: 100%;
-      height: 65px;
+      height: 58px;
       background: rgba(11, 15, 25, 0.95);
       border-top: 1px solid var(--border-color);
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 0 40px;
+      padding: 0 36px;
       z-index: 90;
     }
 
@@ -353,10 +368,10 @@
       background: linear-gradient(135deg, var(--accent-cyan), var(--accent-indigo));
       color: #0b0f19;
       border: none;
-      padding: 10px 24px;
-      border-radius: 12px;
+      padding: 8px 20px;
+      border-radius: 10px;
       font-weight: 700;
-      font-size: 1rem;
+      font-size: 0.92rem;
       cursor: pointer;
       transition: opacity 0.2s ease, transform 0.1s ease;
     }
@@ -367,7 +382,7 @@
     }
 
     .counter {
-      font-size: 1.1rem;
+      font-size: 1rem;
       font-weight: 700;
       color: var(--text-muted);
     }
@@ -381,7 +396,7 @@
     }
 
     th, td {
-      padding: 12px 16px;
+      padding: 10px 14px;
       text-align: left;
       border-bottom: 1px solid var(--border-color);
     }
@@ -389,25 +404,26 @@
     th {
       background: rgba(30, 41, 59, 0.85);
       color: var(--accent-cyan);
-      font-size: 1.0rem;
+      font-size: 0.92rem;
     }
 
     td {
       color: var(--text-muted);
-      font-size: 0.92rem;
+      font-size: 0.85rem;
+      line-height: 1.45;
     }
 
     .cover-slide {
       text-align: center;
       align-items: center;
       justify-content: center;
-      gap: 18px;
+      gap: 16px;
     }
 
     .cover-title {
-      font-size: clamp(1.7rem, 3.6vw, 2.9rem);
+      font-size: clamp(1.55rem, 1rem + 2.2vw, 2.5rem);
       font-weight: 900;
-      line-height: 1.22;
+      line-height: 1.24;
       background: linear-gradient(135deg, #ffffff 30%, var(--accent-cyan) 70%, var(--accent-purple));
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
@@ -415,7 +431,7 @@
     }
 
     .cover-subtitle {
-      font-size: clamp(0.95rem, 1.6vw, 1.35rem);
+      font-size: clamp(0.92rem, 0.7rem + 0.8vw, 1.25rem);
       color: var(--accent-indigo);
       font-weight: 700;
     }
@@ -424,7 +440,7 @@
       display: flex;
       gap: 10px;
       justify-content: center;
-      margin-top: 12px;
+      margin-top: 10px;
       flex-wrap: wrap;
       max-width: 1100px;
     }
@@ -432,9 +448,9 @@
     .badge {
       background: rgba(56, 189, 248, 0.12);
       border: 1px solid var(--accent-cyan);
-      padding: 7px 16px;
-      border-radius: 20px;
-      font-size: 0.92rem;
+      padding: 6px 14px;
+      border-radius: 18px;
+      font-size: 0.86rem;
       font-weight: 600;
       color: var(--text-main);
     }
@@ -445,21 +461,25 @@
       -webkit-overflow-scrolling: touch;
     }
 
+    @media (max-width: 960px) {
+      .grid-3, .grid-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+
     @media (max-width: 768px) {
       body { overflow: hidden; height: 100dvh; }
-      .slides-container { height: calc(100dvh - 60px); }
-      .slide { width: 95%; height: 88dvh; padding: 18px 14px; border-radius: 16px; }
+      .slides-container { height: calc(100dvh - 54px); padding-top: 18px; }
+      .slide { width: 95%; height: calc(100dvh - 80px); padding: 16px 14px; border-radius: 16px; }
       .slide-header { flex-direction: column; align-items: flex-start; gap: 4px; margin-bottom: 10px; padding-bottom: 6px; }
-      .slide-title { font-size: 1.18rem; line-height: 1.35; }
-      .slide-act { font-size: 0.72rem; padding: 3px 10px; border-radius: 10px; }
-      .cover-title { font-size: 1.55rem; line-height: 1.3; }
-      .cover-subtitle { font-size: 0.92rem; }
-      .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; gap: 10px; }
+      .slide-title { font-size: 1.12rem; line-height: 1.32; }
+      .slide-act { font-size: 0.72rem; padding: 3px 10px; border-radius: 8px; }
+      .cover-title { font-size: 1.45rem; line-height: 1.3; }
+      .cover-subtitle { font-size: 0.88rem; }
+      .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; gap: 10px; align-content: flex-start; }
       .card { padding: 12px 14px; border-radius: 12px; }
-      .card-title { font-size: 1.02rem; }
-      .card p, ul li, td, th { font-size: 0.84rem; line-height: 1.48; }
-      .controls { height: 60px; padding: 0 16px; }
-      .nav-btn { padding: 8px 16px; font-size: 0.85rem; }
+      .card-title { font-size: 0.98rem; }
+      .card p, ul li, td, th { font-size: 0.82rem; line-height: 1.46; }
+      .controls { height: 54px; padding: 0 16px; }
+      .nav-btn { padding: 7px 14px; font-size: 0.82rem; }
     }
   </style>
 </head>
@@ -478,7 +498,7 @@
     <div class="slide cover-slide active">
       <div class="cover-subtitle">🚀 企业级 Agentic AI 生产落地架构与金融本体论白皮书 v3.0</div>
       <h1 class="cover-title">云原生全栈 Agentic AI 落地架构<br>三层金融领域本体论 + Neo4j GraphRAG + 七重 SRE 自治闭环</h1>
-      <p style="color: var(--text-muted); font-size: 1.12rem; max-width: 980px; margin-top: 5px; line-height: 1.6;">
+      <p style="color: var(--text-muted); font-size: 1.02rem; max-width: 960px; margin-top: 4px; line-height: 1.58;">
         面向 AI 架构师与量化投研团队：三层金融领域本体 (Ontology) ➔ 定向上下文路由 ➔ Neo4j 图谱与 ADK 编排 ➔ 五层异构存储与 1,500+ 研报金库 ➔ 27 板块 RRG 与样本外回测实验室 ➔ 七重自愈 SRE 闭环
       </p>
       <div class="badge-group">
@@ -528,13 +548,13 @@
           <div class="card-title">Layer 1: 语义实体与图谱本体</div>
           <p><b>领域的“名词与动词” (<code>neo4j_service.py</code>)</b></p>
           <ul>
-            <li><b>5 大形式化实体类</b>：<code>:Stock</code>（上市公司）、<code>:ResearchReport</code>（深度研报）、<code>:InvestmentRationale</code>（看多逻辑）、<code>:RiskFactor</code>（风险因子）、<code>:MarketCatalyst</code>（事件催化剂）。</li>
-            <li><b>9 大有向语义谓词</b>：<code>[:SUPPLIES_TO]</code>、<code>[:CUSTOMER_OF]</code>、<code>[:COMPETES_WITH]</code>、<code>[:PARTNER_WITH]</code>、<code>[:BELONGS_TO]</code> 等，支撑 1~3 跳 Cypher 产业链传导检索。</li>
+            <li><b>5 大形式化实体类</b>：<code>:Stock</code> (上市公司)、 <code>:ResearchReport</code> (深度研报)、 <code>:InvestmentRationale</code> (看多逻辑)、 <code>:RiskFactor</code> (风险因子)、 <code>:MarketCatalyst</code> (事件催化剂)。</li>
+            <li><b>9 大有向语义谓词</b>：<code>[:SUPPLIES_TO]</code>、 <code>[:CUSTOMER_OF]</code>、 <code>[:COMPETES_WITH]</code>、 <code>[:PARTNER_WITH]</code>、 <code>[:BELONGS_TO]</code> 等，支撑 1~3 跳 Cypher 产业链传导检索。</li>
           </ul>
         </div>
         <div class="card" style="border-top: 4px solid var(--accent-indigo);">
           <div class="card-title">Layer 2: 形式化契约与认知本体</div>
-          <p><b>领域的“语法与词典” (<code>models.py</code> & <code>TermTooltip.jsx</code>)</b></p>
+          <p><b>领域的“语法与词典” (<code>models.py</code> &amp; <code>TermTooltip.jsx</code>)</b></p>
           <ul>
             <li><b>Pydantic 强契约本体</b>：<code>StockAnalysisContract</code> 与 <code>MarketBriefingContract</code> 强制绑定支撑位、阻力位与催化剂，违约即触发 Reflection 自愈。</li>
             <li><b>双语认知本体词典 (<code>FINANCIAL_GLOSSARY</code>)</b>：将 40+ 核心概念按 5 大本体域标准化为 <code>{summary, practical, formula, category}</code>，通过 React Portal 注入内联解释卡片。</li>
@@ -542,7 +562,7 @@
         </div>
         <div class="card" style="border-top: 4px solid var(--accent-amber);">
           <div class="card-title" style="color: var(--accent-amber);">Layer 3: 动力学与决策行动本体</div>
-          <p><b>领域的“决策与自愈” (Action & Kinetic Ontology)</b></p>
+          <p><b>领域的“决策与自愈” (Action &amp; Kinetic Ontology)</b></p>
           <ul>
             <li><b>9:30 AM 盘前战术算子</b>：将 <code>|Gap| ≥ 2%</code> 与 <code>RVOL ≥ 1.5x</code> 映射为 <code>SHORT_SQUEEZE</code> / <code>GAP_AND_GO</code> 剧本及保守/稳健/激进三档止损止盈位。</li>
             <li><b>27 板块 RRG 象限跃迁算子</b>：将 <code>RS-Ratio</code> 与 <code>RS-Momentum</code> 映射为四象限轮动指令与 60/40 股债再平衡动作。</li>
