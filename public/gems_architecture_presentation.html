@@ -679,7 +679,7 @@ sequenceDiagram
           <ul>
             <li><b>L1 进程内高速缓存</b>：行情 60s TTL、FRED 宏观 15m TTL，微秒级响应并防上游雪崩。</li>
             <li><b>L2 Firestore 状态库 + L3 Neo4j 图数据库 + L4 GCS 多模态 CDN</b>：支撑多租户配置、关系图谱与 24fps 视频简报分发。</li>
-            <li><b>L5 阿里云深度研报金库 (<code>47.110.155.86</code>)</b>：SQLite + FTS 全文检索，沉淀 <b>1,500+ 篇</b>中英文机构级长篇个股深度研报，支持按股票代码、行业与关键词秒级调阅。</li>
+            <li><b>L5 GCP 深度研报金库 (Firebase Research Vault)</b>：SQLite + FTS 全文检索，沉淀 <b>1,500+ 篇</b>中英文机构级长篇个股深度研报，支持按股票代码、行业与关键词秒级调阅。</li>
           </ul>
         </div>
       </div>
@@ -874,7 +874,7 @@ sequenceDiagram
               <tr>
                 <td><b>五层异构存储与深度研报金库</b></td>
                 <td><b style="color: var(--accent-cyan);">1,500+ 篇长篇机构研报</b></td>
-                <td>L1 内存 + L2 Firestore + L3 Neo4j + L4 GCS + L5 阿里云 FTS 全文检索研报金库秒级调阅。</td>
+                <td>L1 内存 + L2 Firestore + L3 Neo4j + L4 GCS + L5 GCP FTS 全文检索研报金库秒级调阅。</td>
               </tr>
               <tr>
                 <td><b>量化轮动与样本外回测实验室</b></td>

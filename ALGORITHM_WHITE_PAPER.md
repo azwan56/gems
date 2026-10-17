@@ -63,7 +63,7 @@ flowchart TD
 | :--- | :--- | :--- |
 | **Google Cloud Firestore** | NoSQL 文档数据库 *(核心业务主库)* | • **用户与权限**：用户 Profile (`users/`)、Firebase 零信任鉴权、订阅等级与推送偏好。<br>• **研报与历史归档**：每日持仓与观察池简报 (`reports/`)、每周审计周报 (`weekly_cache/`)、宏观分析 (`macro_cache/`)、财报 NLP 深度拆解 (`earnings_archive/`)。<br>• **策略与快照**：Gems 策略快照 (`gems_rebalance_snapshots/`)、60/40 股债漂移监控、SRE 健康探针状态 (`system_status`)。 |
 | **Neo4j (AuraDB)** | 图数据库 *(GraphRAG 本体引擎)* | • **产业链上下游本体拓扑**：如 `NVDA → TSM → ASML`、`AAPL → Foxconn`。<br>• **多跳传导图谱 (1~3 Hops)**：板块溢出效应、竞争对手替代关系、战略合作同盟。<br>• **结构化研报认知图谱**：将非结构化研报拆解为 `:ResearchReport`、`:InvestmentRationale`、`:RiskFactor`、`:MarketCatalyst` 四类本体节点。 |
-| **阿里云私有投研库 (Aliyun Vault)** | 云端投研文档与向量检索库 | • **1500+ 篇机构级深度美股研报归档**：支持按股票代码、行业、日期与投研主题毫秒级全文检索、在线阅读与微信排版导出。 |
+| **GCP 机构投研金库 (GCP Research Vault)** | 云端投研文档与向量检索库 | • **1500+ 篇机构级深度美股研报归档**：支持按股票代码、行业、日期与投研主题毫秒级全文检索、在线阅读与微信排版导出。 |
 | **Firebase Storage** | 对象存储 (Object Storage) | • **多模态媒体与渲染产物**：Canvas 2.0 高清分享卡片 PNG、6-Slide 财报 PPT 海报、微信公众号 HTML 预览页。 |
 | **内存/本地熔断缓存** | In-Memory Stateful Cache | • **高频行情与问答热缓存**：FMP 实时报价、VWAP、SMA/RSI 缓存，以及 `UnifiedQAEngine` 5 分钟线程安全热缓存。<br>• **Circuit Breaker 状态机**：主数据源故障时的秒级无感降级保护。 |
 
@@ -76,7 +76,7 @@ graph TD
     
     Backend -->|3. 提取 1~3 Hop 产业链与研报本体| Neo4j[(Neo4j 本体图数据库)]
     Backend -->|4. 查询实时行情/财报/宏观利率| FMP[FMP 主力 API / FRED / yfinance]
-    Backend -->|5. 检索 1500+ 历史深度研报| Vault[(阿里云私有投研知识库)]
+    Backend -->|5. 检索 1500+ 历史深度研报| Vault[(GCP 机构投研知识库)]
     
     Neo4j -->|领域本体子图 Subgraph| Agent[Gemini 3.5 / 2.5 Flash + ADK]
     FMP -->|实时 OHLCV & 17季度财务面板| Agent

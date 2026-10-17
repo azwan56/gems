@@ -679,7 +679,7 @@ sequenceDiagram
           <ul>
             <li><b>L1 In-Memory TTL Cache</b>: 60s TTL for quotes, 15m TTL for FRED macro series, preventing upstream rate-limit cascades.</li>
             <li><b>L2 Firestore + L3 Neo4j AuraDB + L4 GCS Multimodal CDN</b>: Powers multi-tenant state, graph topology, and 24fps video briefings.</li>
-            <li><b>L5 Aliyun Research Vault (<code>47.110.155.86</code>)</b>: SQLite + FTS full-text index hosting <b>1,500+</b> long-form bilingual institutional equity research reports.</li>
+            <li><b>L5 GCP Research Vault (Firebase Cloud Archive)</b>: SQLite + FTS full-text index hosting <b>1,500+</b> long-form bilingual institutional equity research reports.</li>
           </ul>
         </div>
       </div>
@@ -874,7 +874,7 @@ sequenceDiagram
               <tr>
                 <td><b>5-Tier Storage & Research Vault</b></td>
                 <td><b style="color: var(--accent-cyan);">1,500+ Institutional Reports</b></td>
-                <td>L1 Memory + L2 Firestore + L3 Neo4j + L4 GCS + L5 Aliyun SQLite FTS Research Vault with sub-second lookup.</td>
+                <td>L1 Memory + L2 Firestore + L3 Neo4j + L4 GCS + L5 GCP / Firebase FTS Research Vault with sub-second lookup.</td>
               </tr>
               <tr>
                 <td><b>Quant Rotation & Backtest Lab</b></td>

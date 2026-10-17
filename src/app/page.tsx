@@ -117,11 +117,11 @@ export default function Home() {
   return (
     <main className="min-h-screen flex flex-col">
       {/* Header */}
-      <header className="sticky top-0 z-30 bg-slate-900/90 backdrop-blur-xl border-b border-slate-800/80 px-3 sm:px-6 py-2.5 sm:py-3.5">
-        <div className="max-w-[1400px] mx-auto flex items-center justify-between gap-1.5 sm:gap-3">
-          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-            <Gem className="w-5 h-5 sm:w-6 sm:h-6 text-blue-400 shrink-0" />
-            <span className="text-base sm:text-xl font-bold tracking-tight whitespace-nowrap">Gems</span>
+      <header className="sticky top-0 z-30 bg-slate-900/90 backdrop-blur-xl border-b border-slate-800/80 px-2.5 sm:px-6 py-2 sm:py-3.5">
+        <div className="max-w-[1400px] mx-auto flex items-center justify-between gap-1 sm:gap-3">
+          <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+            <Gem className="w-4 h-4 sm:w-6 sm:h-6 text-blue-400 shrink-0" />
+            <span className="text-sm sm:text-xl font-bold tracking-tight whitespace-nowrap">Gems</span>
             <span className="hidden sm:inline-flex px-1.5 py-0.5 rounded bg-cyan-500/15 border border-cyan-500/30 text-[10px] font-mono font-bold text-cyan-300 whitespace-nowrap">
               v3.0
             </span>
@@ -142,7 +142,7 @@ export default function Home() {
 
             <Link
               href="/whitepaper"
-              className="flex text-[11px] sm:text-sm text-amber-300 hover:text-amber-200 transition-colors items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 bg-amber-500/10 border border-amber-500/30 rounded-lg font-semibold whitespace-nowrap shrink-0"
+              className="flex text-[11px] sm:text-sm text-amber-300 hover:text-amber-200 transition-colors items-center gap-1 sm:gap-1.5 px-1.5 sm:px-3 py-1 sm:py-1.5 bg-amber-500/10 border border-amber-500/30 rounded-lg font-semibold whitespace-nowrap shrink-0"
               title={t("v3.0 Ontology Whitepaper", "v3.0 金融本体白皮书")}
             >
               <Network className="w-3 h-3 sm:w-4 sm:h-4 text-amber-400 shrink-0" />
@@ -154,7 +154,7 @@ export default function Home() {
               href="/gems_architecture_presentation.html"
               target="_blank"
               rel="noreferrer"
-              className="flex text-[11px] sm:text-sm text-cyan-300 hover:text-cyan-200 transition-colors items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 bg-cyan-500/10 border border-cyan-500/30 rounded-lg font-semibold whitespace-nowrap shrink-0"
+              className="flex text-[11px] sm:text-sm text-cyan-300 hover:text-cyan-200 transition-colors items-center gap-1 sm:gap-1.5 px-1.5 sm:px-3 py-1 sm:py-1.5 bg-cyan-500/10 border border-cyan-500/30 rounded-lg font-semibold whitespace-nowrap shrink-0"
               title={t("13-Slide Architecture Deck", "13页交互式架构演播厅")}
             >
               <Presentation className="w-3 h-3 sm:w-4 sm:h-4 text-cyan-400 shrink-0" />
@@ -185,7 +185,7 @@ export default function Home() {
             {/* Language Toggle */}
             <button
               onClick={() => setLang(lang === "en" ? "zh" : "en")}
-              className="flex items-center gap-1 px-2 sm:px-2.5 py-1 sm:py-1.5 bg-slate-800/80 hover:bg-slate-700 text-slate-300 rounded-lg text-[11px] sm:text-xs font-semibold transition-all border border-slate-700/80 hover:border-slate-600 whitespace-nowrap shrink-0 cursor-pointer"
+              className="flex items-center gap-1 px-1.5 sm:px-2.5 py-1 sm:py-1.5 bg-slate-800/80 hover:bg-slate-700 text-slate-300 rounded-lg text-[11px] sm:text-xs font-semibold transition-all border border-slate-700/80 hover:border-slate-600 whitespace-nowrap shrink-0 cursor-pointer"
             >
               <Languages className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-blue-400 shrink-0" />
               <span>{lang === "en" ? "中文" : "EN"}</span>
@@ -296,7 +296,7 @@ export default function Home() {
                   {t("Layer 1 · Semantic Graph", "第一层 · 语义与知识本体")}
                 </div>
                 <div className="text-xs font-bold text-slate-200 mb-0.5">
-                  {t("Neo4j 5-Node Graph + 1,500+ Research Vault", "Neo4j 五维图谱 + 1,500+ 阿里云研报库")}
+                  {t("Neo4j 5-Node Graph + GCP 1,500+ Research Vault", "Neo4j 五维图谱 + GCP 1,500+ 深度研报库")}
                 </div>
                 <p className="text-[11px] text-slate-400 leading-snug">
                   {t(

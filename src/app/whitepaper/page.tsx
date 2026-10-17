@@ -57,8 +57,8 @@ export default function AlgorithmWhitepaperPage() {
               </div>
               <p className="text-xs text-slate-400 mt-1">
                 {t(
-                  "3-Layer Financial Domain Ontology, 5-Tier Storage + 1,500+ Aliyun Research Vault, 27-Sector RRG & Walk-Forward Self-Healing Engine.",
-                  "三层金融领域本体 (Ontology)、五层异构存储与 1,500+ 阿里云研报金库、27 板块 RRG 轮动与 Walk-Forward 自愈进化体系"
+                  "3-Layer Financial Domain Ontology, 5-Tier GCP Storage + 1,500+ Research Vault, 27-Sector RRG & Walk-Forward Self-Healing Engine.",
+                  "三层金融领域本体 (Ontology)、GCP 五层异构存储与 1,500+ 机构研报金库、27 板块 RRG 轮动与 Walk-Forward 自愈进化体系"
                 )}
               </p>
             </div>
@@ -179,16 +179,16 @@ export default function AlgorithmWhitepaperPage() {
             </div>
           </div>
 
-          {/* Section 2: 5-Tier DB Synergy + Aliyun Vault */}
+          {/* Section 2: 5-Tier DB Synergy + GCP Research Vault */}
           <div className="p-4 sm:p-6 rounded-2xl bg-slate-900/60 border border-slate-800 backdrop-blur-md">
             <h2 className="text-lg sm:text-xl font-bold text-indigo-400 mb-2 flex items-center gap-2">
               <Database className="w-5 h-5 text-indigo-400 shrink-0" />
-              2. {t("5-Tier Heterogeneous Storage & 1,500+ Aliyun Research Vault", "五层异构存储体系与 1,500+ 阿里云机构研报金库")}
+              2. {t("5-Tier Heterogeneous Storage & GCP 1,500+ Research Vault", "五层异构存储体系与 GCP 1,500+ 机构研报金库")}
             </h2>
             <p className="text-xs text-slate-400 mb-5">
               {t(
-                "Combining NoSQL document stores, Neo4j graph RAG, Aliyun institutional research archives, object storage, and in-memory circuit breakers.",
-                "采用 NoSQL 实时文档库 + Neo4j 图数据库 + 阿里云 1,500+ 深度研报与 82 年宏观历史库 + 对象存储 + 内存熔断缓存的五层异构架构。"
+                "Combining Google Cloud Firestore, Neo4j graph RAG, GCP / Firebase 1,500+ institutional research archives, Cloud Storage, and in-memory circuit breakers.",
+                "采用 Google Cloud Firestore 实时文档库 + Neo4j 图数据库 + GCP 1,500+ 深度研报与 82 年宏观历史金库 + Cloud Storage 对象存储 + 内存熔断缓存的五层异构架构。"
               )}
             </p>
 
@@ -217,10 +217,10 @@ export default function AlgorithmWhitepaperPage() {
                     </td>
                   </tr>
                   <tr className="bg-cyan-950/15">
-                    <td className="p-3 font-semibold text-cyan-300 whitespace-nowrap">3. Aliyun Research Vault</td>
-                    <td className="p-3 text-cyan-400/80 whitespace-nowrap">Cloud Archive + SQLite</td>
+                    <td className="p-3 font-semibold text-cyan-300 whitespace-nowrap">3. GCP Research Vault (Firebase)</td>
+                    <td className="p-3 text-cyan-400/80 whitespace-nowrap">GCP Cloud Archive + FTS</td>
                     <td className="p-3">
-                      沉淀 <strong>1,500+ 篇华尔街与顶级机构深度研报</strong> 结构化切片，以及 <strong>1944–2026 (82年) 宏观经济与市场危机全量历史序列</strong>，支撑跨周期相似行情匹配。
+                      沉淀于 Google Cloud / Firebase 的 <strong>1,500+ 篇华尔街与顶级机构深度研报</strong> 全文与结构化切片，以及 <strong>1944–2026 (82年) 宏观经济与市场危机全量历史序列</strong>，支撑跨周期相似行情匹配。
                     </td>
                   </tr>
                   <tr>
