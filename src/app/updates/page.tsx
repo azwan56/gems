@@ -222,53 +222,53 @@ export default function UpdatesPage() {
     <div className="min-h-screen bg-slate-950 text-slate-200 flex flex-col">
       {/* Header */}
       <header className="sticky top-0 z-40 bg-slate-950/80 backdrop-blur-xl border-b border-slate-800">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Link href="/" className="text-slate-400 hover:text-white transition-colors">
-              <ArrowLeft className="w-5 h-5" />
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 h-12 sm:h-16 flex items-center justify-between">
+          <div className="flex items-center gap-2.5 sm:gap-4 min-w-0">
+            <Link href="/" className="text-slate-400 hover:text-white transition-colors shrink-0">
+              <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
             </Link>
-            <div>
-              <h1 className="text-lg font-bold text-white flex items-center gap-2">
-                <Activity className="w-5 h-5 text-indigo-400" />
-                {t("Quantitative Strategy Updates", "策略选股动态更新")}
+            <div className="min-w-0">
+              <h1 className="text-sm sm:text-lg font-bold text-white flex items-center gap-1.5 sm:gap-2 truncate">
+                <Activity className="w-4 h-4 sm:w-5 sm:h-5 text-indigo-400 shrink-0" />
+                <span className="truncate">{t("Quantitative Strategy Updates", "策略选股动态更新")}</span>
               </h1>
             </div>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
             <UserMenu />
           </div>
         </div>
       </header>
 
       {/* Main container */}
-      <main className="flex-1 max-w-4xl w-full mx-auto px-4 sm:px-6 py-8">
+      <main className="flex-1 max-w-4xl w-full mx-auto px-3 sm:px-6 py-3.5 sm:py-8">
         
         {/* Banner Hero */}
-        <div className="relative overflow-hidden rounded-2xl border border-indigo-500/20 bg-slate-900/40 p-6 sm:p-8 mb-8 backdrop-blur-sm">
+        <div className="relative overflow-hidden rounded-xl sm:rounded-2xl border border-indigo-500/20 bg-slate-900/40 p-3.5 sm:p-8 mb-4 sm:mb-8 backdrop-blur-sm">
           <div className="absolute -top-10 -right-10 w-40 h-40 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none"></div>
-          <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+          <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-2.5 sm:gap-6">
             <div>
-              <h2 className="text-xl sm:text-2xl font-extrabold bg-gradient-to-r from-indigo-400 via-purple-400 to-cyan-400 bg-clip-text text-transparent mb-2">
+              <h2 className="text-base sm:text-2xl font-extrabold bg-gradient-to-r from-indigo-400 via-purple-400 to-cyan-400 bg-clip-text text-transparent mb-1 sm:mb-2">
                 {t("Track Model Additions & Removals", "模型个股流入/流出追踪")}
               </h2>
-              <p className="text-xs sm:text-sm text-slate-400 leading-relaxed max-w-xl">
+              <p className="text-[11px] sm:text-sm text-slate-400 leading-snug sm:leading-relaxed max-w-xl">
                 {t(
                   "Every day after the closing bell, our quantitative models re-screen 700+ equities. Below are the latest updates, directly linking to qualitative deep dives.",
                   "每日美股收盘结算后，量化模型自动重新扫描全市场。以下为最新的流入/流出变动明细，提供一键定性深研决策与快捷加仓操作。"
                 )}
               </p>
             </div>
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-900 border border-slate-800 text-xs text-slate-400 font-medium">
-              <Calendar className="w-3.5 h-3.5 text-indigo-400" />
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-900 border border-slate-800 text-[11px] sm:text-xs text-slate-400 font-medium">
+              <Calendar className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-indigo-400 shrink-0" />
               <span>{t("Updated Daily @ 21:35 UTC", "每日固定更替更新")}</span>
             </div>
           </div>
         </div>
 
         {/* Filter bar */}
-        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-between items-stretch sm:items-center mb-8 bg-slate-900/20 p-3 sm:p-4 rounded-xl border border-slate-900">
+        <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 justify-between items-stretch sm:items-center mb-4 sm:mb-8 bg-slate-900/20 p-2.5 sm:p-4 rounded-xl border border-slate-900">
           {/* Strategy Selectors */}
-          <div className="flex overflow-x-auto pb-1 sm:pb-0 sm:flex-wrap gap-2">
+          <div className="flex overflow-x-auto pb-1 sm:pb-0 sm:flex-wrap gap-1.5 sm:gap-2 scrollbar-hide">
             {[
               { id: "all", name: t("All Strategies", "全部策略") },
               { id: "value", name: t("Value", "价值投资") },
@@ -282,7 +282,7 @@ export default function UpdatesPage() {
               <button
                 key={tab.id}
                 onClick={() => setSelectedStrategy(tab.id)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition-all border shrink-0 ${
+                className={`px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg text-[11px] sm:text-xs font-semibold tracking-wide transition-all border shrink-0 ${
                   selectedStrategy === tab.id
                     ? "bg-indigo-600 border-indigo-500 text-white shadow-lg shadow-indigo-500/20"
                     : "bg-slate-900/60 border-slate-800 text-slate-400 hover:text-white hover:border-slate-700"
@@ -328,7 +328,7 @@ export default function UpdatesPage() {
             )}
           </div>
         ) : (
-          <div className="relative border-l-2 border-slate-800 pl-6 sm:pl-8 ml-3 sm:ml-4 space-y-12">
+          <div className="relative border-l-2 border-slate-800 pl-4 sm:pl-8 ml-2 sm:ml-4 space-y-5 sm:space-y-12">
             {filteredChanges.map((change, index) => {
               const details = STRATEGY_DETAILS[change.strategyId] || {
                 icon: Activity,
@@ -343,52 +343,52 @@ export default function UpdatesPage() {
                 <div key={index} className="relative group/item">
                   
                   {/* Timeline point dot */}
-                  <div className={`absolute -left-[45px] sm:-left-[53px] top-1.5 p-2 rounded-full border bg-slate-950 ${details.borderClass} ${details.textClass} transition-transform duration-300 group-hover/item:scale-110 shadow-lg shadow-slate-950`}>
-                    <StrategyIcon className="w-4 h-4" />
+                  <div className={`absolute -left-[29px] sm:-left-[53px] top-1 p-1.5 sm:p-2 rounded-full border bg-slate-950 ${details.borderClass} ${details.textClass} transition-transform duration-300 group-hover/item:scale-110 shadow-lg shadow-slate-950`}>
+                    <StrategyIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                   </div>
 
                   {/* Header info */}
-                  <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+                  <div className="mb-2.5 sm:mb-4 flex flex-wrap items-center justify-between gap-2">
                     <div className="flex items-center gap-2">
-                      <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold border ${details.bgClass} ${details.textClass} ${details.borderClass}`}>
+                      <span className={`px-2 sm:px-2.5 py-0.5 rounded-full text-[11px] sm:text-xs font-bold border ${details.bgClass} ${details.textClass} ${details.borderClass}`}>
                         {lang === "zh" ? change.strategyNameZh : change.strategyName}
                       </span>
-                      <span className="text-xs text-slate-500 font-medium">
+                      <span className="text-[11px] sm:text-xs text-slate-500 font-medium">
                         {getRelativeTime(change.timestamp)}
                       </span>
                     </div>
-                    <div className="text-[11px] text-slate-600 font-mono">
+                    <div className="text-[10px] sm:text-[11px] text-slate-600 font-mono">
                       {formatDate(change.timestamp)}
                     </div>
                   </div>
 
                   {/* Body Content card */}
-                  <div className="rounded-xl border border-slate-800/80 bg-slate-900/20 p-5 sm:p-6 backdrop-blur-sm shadow-xl shadow-slate-950/20 hover:border-slate-700/60 transition-all duration-300">
+                  <div className="rounded-xl border border-slate-800/80 bg-slate-900/20 p-3.5 sm:p-6 backdrop-blur-sm shadow-xl shadow-slate-950/20 hover:border-slate-700/60 transition-all duration-300">
                     
                     {/* Part A: Added Stocks */}
                     {change.added.length > 0 && (
-                      <div className="mb-6 last:mb-0">
-                        <div className="text-xs font-extrabold text-emerald-400 flex items-center gap-1.5 mb-4 tracking-wider uppercase">
+                      <div className="mb-4 sm:mb-6 last:mb-0">
+                        <div className="text-[11px] sm:text-xs font-extrabold text-emerald-400 flex items-center gap-1.5 mb-2.5 sm:mb-4 tracking-wider uppercase">
                           <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
                           {t("Incoming Stocks / Qualified", "新增入选个股")} ({change.added.length})
                         </div>
                         
-                        <div className="space-y-3">
+                        <div className="space-y-2 sm:space-y-3">
                           {change.added.map((stock) => {
                             const isAdded = watchlist.has(stock.symbol);
                             
                             return (
                               <div 
                                 key={stock.symbol}
-                                className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3.5 rounded-lg bg-slate-950/60 border border-slate-850 hover:border-slate-800 hover:bg-slate-900/20 transition-all duration-200 gap-4"
+                                className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-2.5 sm:p-3.5 rounded-lg bg-slate-950/60 border border-slate-850 hover:border-slate-800 hover:bg-slate-900/20 transition-all duration-200 gap-2.5 sm:gap-4"
                               >
-                                <div className="flex items-center gap-3">
-                                  <div className="text-sm font-black font-mono bg-slate-900 text-white border border-slate-850 px-2.5 py-1 rounded">
+                                <div className="flex items-center gap-2.5 sm:gap-3">
+                                  <div className="text-xs sm:text-sm font-black font-mono bg-slate-900 text-white border border-slate-850 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded">
                                     {stock.symbol}
                                   </div>
                                   <div>
                                     <div className="text-xs font-bold text-slate-200 line-clamp-1">{stock.companyName}</div>
-                                    <div className="flex items-center gap-3 text-[10px] text-slate-500 font-mono mt-1">
+                                    <div className="flex items-center gap-2.5 sm:gap-3 text-[10px] text-slate-500 font-mono mt-0.5 sm:mt-1">
                                       {stock.peRatio !== null && (
                                         <span>PE: <strong className="text-slate-400">{stock.peRatio.toFixed(1)}</strong></span>
                                       )}
@@ -402,12 +402,12 @@ export default function UpdatesPage() {
                                   </div>
                                 </div>
                                 
-                                <div className="flex items-center gap-2.5 w-full sm:w-auto justify-end">
+                                <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
                                   {/* Deep Dive Qualitative Report Button */}
                                   <Link
                                     href={`/report/${stock.symbol}?strategy=${change.strategyId}`}
                                     target="_blank"
-                                    className="flex items-center gap-1 px-3 py-1.5 bg-indigo-500/10 hover:bg-indigo-500/25 border border-indigo-500/25 text-indigo-400 rounded-lg text-xs font-bold transition-all"
+                                    className="flex items-center gap-1 px-2.5 sm:px-3 py-1 sm:py-1.5 bg-indigo-500/10 hover:bg-indigo-500/25 border border-indigo-500/25 text-indigo-400 rounded-lg text-[11px] sm:text-xs font-bold transition-all"
                                   >
                                     <span>{t("Deep Report", "定性深研")}</span>
                                     <ExternalLink className="w-3 h-3" />
@@ -417,7 +417,7 @@ export default function UpdatesPage() {
                                   <button
                                     onClick={() => !isAdded && handleAddToWatchlist(stock.symbol)}
                                     disabled={isAdded || addingSymbol === stock.symbol}
-                                    className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold transition-all border ${
+                                    className={`flex items-center gap-1 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg text-[11px] sm:text-xs font-bold transition-all border ${
                                       isAdded 
                                         ? "bg-slate-900 border-slate-850 text-emerald-400 cursor-default"
                                         : addingSymbol === stock.symbol 

@@ -196,16 +196,16 @@ export default function Home() {
       </header>
 
       {/* Hero */}
-      <section className="flex-1 flex flex-col items-center justify-center px-3 sm:px-6 py-4 sm:py-12">
-        <div className="max-w-[1400px] w-full flex flex-col items-center text-center mb-5 sm:mb-10">
-          <div className="inline-flex items-center justify-center px-2.5 sm:px-4 py-1 sm:py-1.5 mb-3 sm:mb-5 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 whitespace-nowrap">
+      <section className="flex-1 flex flex-col items-center justify-center px-3 sm:px-6 py-3 sm:py-12">
+        <div className="max-w-[1400px] w-full flex flex-col items-center text-center mb-3.5 sm:mb-10">
+          <div className="inline-flex items-center justify-center px-2.5 sm:px-4 py-0.5 sm:py-1.5 mb-2 sm:mb-5 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 whitespace-nowrap">
             <Activity className="w-3 h-3 sm:w-3.5 sm:h-3.5 mr-1.5 shrink-0" />
             <span className="text-[10px] sm:text-xs font-semibold tracking-wider uppercase">
               {t("v3.0 Financial Ontology Quant Engine", "v3.0 金融领域本体驱动 · 量化选股系统")}
             </span>
           </div>
 
-          <h1 className="text-2xl sm:text-5xl md:text-6xl font-extrabold tracking-tight mb-2.5 sm:mb-5 leading-[1.15]">
+          <h1 className="text-xl sm:text-5xl md:text-6xl font-extrabold tracking-tight mb-1.5 sm:mb-5 leading-[1.15]">
             {lang === "en" ? (
               <>
                 Find your next{" "}
@@ -225,7 +225,7 @@ export default function Home() {
             )}
           </h1>
 
-          <p className="text-xs sm:text-base text-slate-400 max-w-2xl mb-4 sm:mb-6 leading-relaxed px-1">
+          <p className="text-[11px] sm:text-base text-slate-400 max-w-2xl mb-3 sm:mb-6 leading-snug sm:leading-relaxed px-1">
             {t(
               "Institutional stock screening powered by a Three-Layer Financial Domain Ontology, 27-Sector RRG rotation, and T+5 self-healing AI audit. Tap any '?' indicator for instant ontology formulas.",
               "由三层金融领域本体 (Ontology)、27 板块 RRG 轮动引擎与 T+5 自愈审计驱动的机构级选股平台。点击或悬停带“?”指标即可查看本体定义与公式。"
@@ -233,10 +233,10 @@ export default function Home() {
           </p>
 
           {/* Live Status Action Pills — 2 columns side-by-side on mobile */}
-          <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center justify-center gap-2 sm:gap-3 w-full sm:w-auto mb-5 sm:mb-6">
+          <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center justify-center gap-2 sm:gap-3 w-full sm:w-auto mb-3 sm:mb-6">
             <Link
               href="/updates"
-              className="inline-flex items-center justify-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-2 sm:py-2.5 rounded-xl bg-slate-900/90 hover:bg-slate-800 border border-emerald-500/40 text-[11px] sm:text-sm transition-all hover:scale-[1.02] shadow-md backdrop-blur-md whitespace-nowrap"
+              className="inline-flex items-center justify-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-1.5 sm:py-2.5 rounded-xl bg-slate-900/90 hover:bg-slate-800 border border-emerald-500/40 text-[11px] sm:text-sm transition-all hover:scale-[1.02] shadow-md backdrop-blur-md whitespace-nowrap"
             >
               <span className="flex h-2 w-2 relative shrink-0">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
@@ -248,7 +248,7 @@ export default function Home() {
 
             <Link
               href="/audit"
-              className="inline-flex items-center justify-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-2 sm:py-2.5 rounded-xl bg-slate-900/90 hover:bg-slate-800 border border-purple-500/40 text-[11px] sm:text-sm transition-all hover:scale-[1.02] shadow-md backdrop-blur-md whitespace-nowrap"
+              className="inline-flex items-center justify-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-1.5 sm:py-2.5 rounded-xl bg-slate-900/90 hover:bg-slate-800 border border-purple-500/40 text-[11px] sm:text-sm transition-all hover:scale-[1.02] shadow-md backdrop-blur-md whitespace-nowrap"
             >
               <Sparkles className="w-3.5 h-3.5 text-purple-400 animate-pulse shrink-0" />
               <span className="text-purple-400 font-bold">{t("WIN-RATE", "胜率战报")}</span>
@@ -257,11 +257,11 @@ export default function Home() {
           </div>
 
           {/* v3.0 Three-Layer Financial Domain Ontology Strip */}
-          <div className="w-full max-w-[1400px] rounded-2xl bg-slate-900/90 border border-cyan-500/25 p-3 sm:p-5 text-left shadow-lg">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-2.5 mb-2.5 border-b border-slate-800/80">
-              <div className="flex items-start sm:items-center gap-2.5">
-                <div className="p-2 rounded-lg bg-cyan-500/15 border border-cyan-500/30 text-cyan-400 shrink-0 mt-0.5 sm:mt-0">
-                  <Layers className="w-4 h-4 sm:w-5 sm:h-5" />
+          <div className="w-full max-w-[1400px] rounded-xl sm:rounded-2xl bg-slate-900/90 border border-cyan-500/25 p-2.5 sm:p-5 text-left shadow-lg">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 mb-2 border-b border-slate-800/80">
+              <div className="flex items-start sm:items-center gap-2 sm:gap-2.5">
+                <div className="p-1.5 sm:p-2 rounded-lg bg-cyan-500/15 border border-cyan-500/30 text-cyan-400 shrink-0 mt-0.5 sm:mt-0">
+                  <Layers className="w-3.5 h-3.5 sm:w-5 sm:h-5" />
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center justify-between sm:justify-start gap-2 flex-wrap">
@@ -283,19 +283,19 @@ export default function Home() {
               <div className="flex items-center justify-end shrink-0">
                 <Link
                   href="/whitepaper"
-                  className="text-[11px] sm:text-xs font-semibold text-amber-400 hover:text-amber-300 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/30 transition-colors whitespace-nowrap"
+                  className="text-[11px] sm:text-xs font-semibold text-amber-400 hover:text-amber-300 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/30 transition-colors whitespace-nowrap"
                 >
                   {t("Read v3.0 Whitepaper →", "阅读 v3.0 完整白皮书 →")}
                 </Link>
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-2 sm:gap-3 text-xs">
-              <div className="rounded-xl bg-slate-950/70 border border-slate-800/80 p-2.5 sm:p-3">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-1.5 sm:gap-3 text-xs">
+              <div className="rounded-lg sm:rounded-xl bg-slate-950/70 border border-slate-800/80 p-2 sm:p-3">
                 <div className="text-[10px] font-bold uppercase tracking-wider text-cyan-400 mb-0.5">
                   {t("Layer 1 · Semantic Graph", "第一层 · 语义与知识本体")}
                 </div>
-                <div className="text-xs font-bold text-slate-200 mb-0.5">
+                <div className="text-[11px] sm:text-xs font-bold text-slate-200 mb-0.5">
                   {t("Neo4j 5-Node Graph + GCP 1,500+ Research Vault", "Neo4j 五维图谱 + GCP 1,500+ 深度研报库")}
                 </div>
                 <p className="text-[11px] text-slate-400 leading-snug">
@@ -306,11 +306,11 @@ export default function Home() {
                 </p>
               </div>
 
-              <div className="rounded-xl bg-slate-950/70 border border-slate-800/80 p-2.5 sm:p-3">
+              <div className="rounded-lg sm:rounded-xl bg-slate-950/70 border border-slate-800/80 p-2 sm:p-3">
                 <div className="text-[10px] font-bold uppercase tracking-wider text-indigo-400 mb-0.5">
                   {t("Layer 2 · Data Contract & Lexicon", "第二层 · 数据契约与双语词典")}
                 </div>
-                <div className="text-xs font-bold text-slate-200 mb-0.5">
+                <div className="text-[11px] sm:text-xs font-bold text-slate-200 mb-0.5">
                   {t("Pydantic Contracts + Bilingual Term Tooltips", "Pydantic 强类型契约 + 术语即时弹窗")}
                 </div>
                 <p className="text-[11px] text-slate-400 leading-snug">
@@ -327,11 +327,11 @@ export default function Home() {
                 </p>
               </div>
 
-              <div className="rounded-xl bg-slate-950/70 border border-slate-800/80 p-2.5 sm:p-3">
+              <div className="rounded-lg sm:rounded-xl bg-slate-950/70 border border-slate-800/80 p-2 sm:p-3">
                 <div className="text-[10px] font-bold uppercase tracking-wider text-purple-400 mb-0.5">
                   {t("Layer 3 · Kinetic Operators", "第三层 · 动力与决策算子")}
                 </div>
-                <div className="text-xs font-bold text-slate-200 mb-0.5">
+                <div className="text-[11px] sm:text-xs font-bold text-slate-200 mb-0.5">
                   <TermTooltip term="RRG" showIcon={false} className="text-purple-400">27-Sector RRG</TermTooltip>
                   {" + "}
                   <TermTooltip term="Walk-Forward" showIcon={false} className="text-purple-400">Walk-Forward</TermTooltip>
@@ -352,34 +352,34 @@ export default function Home() {
 
         {/* Strategy Cards — Premium Only */}
         <PremiumGate featureName={t("Quantitative Stock Screener", "量化选股系统")}>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 w-full max-w-[1400px] px-1">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-6 w-full max-w-[1400px] px-1">
           {/* Super Screener Matrix Card */}
           <Link
             href="/screener/matrix"
-            className="group relative overflow-hidden rounded-xl border border-indigo-500/30 bg-slate-800/40 backdrop-blur-sm p-5 sm:p-8 transition-all duration-300 hover:bg-slate-800/80 hover:border-indigo-500/80 hover:shadow-2xl hover:shadow-indigo-500/10 hover:-translate-y-1 cursor-pointer flex flex-col col-span-1"
+            className="group relative overflow-hidden rounded-xl border border-indigo-500/30 bg-slate-800/40 backdrop-blur-sm p-3.5 sm:p-8 transition-all duration-300 hover:bg-slate-800/80 hover:border-indigo-500/80 hover:shadow-2xl hover:shadow-indigo-500/10 hover:-translate-y-1 cursor-pointer flex flex-col col-span-1"
           >
             <div className="absolute -top-4 -right-4 opacity-[0.06] group-hover:opacity-[0.12] transition-opacity duration-500">
-              <Activity className="w-40 h-40" />
+              <Activity className="w-32 h-32 sm:w-40 sm:h-40" />
             </div>
-            <div className="flex items-center gap-3 sm:gap-4 mb-3 sm:mb-4 relative z-10">
-              <div className="p-3 rounded-lg border border-indigo-500/30 bg-indigo-500/20 text-indigo-400">
-                <Activity className="w-6 h-6" />
+            <div className="flex items-center gap-2.5 sm:gap-4 mb-2 sm:mb-4 relative z-10">
+              <div className="p-2 sm:p-3 rounded-lg border border-indigo-500/30 bg-indigo-500/20 text-indigo-400 shrink-0">
+                <Activity className="w-4 h-4 sm:w-6 sm:h-6" />
               </div>
-              <div>
-                <h2 className="text-lg sm:text-xl font-bold bg-gradient-to-r from-indigo-400 to-cyan-400 bg-clip-text text-transparent">
+              <div className="min-w-0">
+                <h2 className="text-base sm:text-xl font-bold bg-gradient-to-r from-indigo-400 to-cyan-400 bg-clip-text text-transparent truncate">
                   {lang === "en" ? "Super Screener" : "多策略共振矩阵"}
                 </h2>
-                <p className="text-sm text-slate-500">
+                <p className="text-xs sm:text-sm text-slate-500 truncate">
                   {lang === "en" ? "多策略共振矩阵" : "Multi-Strategy Matrix"}
                 </p>
               </div>
             </div>
-            <p className="text-xs sm:text-sm text-slate-400 mb-4 sm:mb-6 leading-relaxed relative z-10 flex-1">
+            <p className="text-xs sm:text-sm text-slate-400 mb-3 sm:mb-6 leading-snug sm:leading-relaxed relative z-10 flex-1">
               {lang === "en" 
                 ? "Discover high-conviction stocks that simultaneously pass multiple stringent quantitative models." 
                 : "发现同时通过多个严苛量化筛选模型的高确信度投资标的。"}
             </p>
-            <div className="flex items-center justify-between mt-auto relative z-10 pt-4 sm:pt-5 border-t border-slate-700/50">
+            <div className="flex items-center justify-between mt-auto relative z-10 pt-2.5 sm:pt-5 border-t border-slate-700/50">
               <div className="flex items-center gap-1.5 text-xs font-semibold tracking-wider uppercase text-indigo-400">
                 <Gem className="w-3.5 h-3.5" />
                 <span>Premium Conviction</span>
@@ -403,48 +403,48 @@ export default function Home() {
               <Link
                 key={strategy.id}
                 href={`/screener/${strategy.id}`}
-                className="group relative overflow-hidden rounded-xl border border-slate-700/50 bg-slate-800/40 backdrop-blur-sm p-5 sm:p-8 transition-all duration-300 hover:bg-slate-800/70 hover:border-slate-600/60 hover:shadow-2xl hover:-translate-y-1 cursor-pointer flex flex-col"
+                className="group relative overflow-hidden rounded-xl border border-slate-700/50 bg-slate-800/40 backdrop-blur-sm p-3.5 sm:p-8 transition-all duration-300 hover:bg-slate-800/70 hover:border-slate-600/60 hover:shadow-2xl hover:-translate-y-1 cursor-pointer flex flex-col"
               >
                 {/* Background icon */}
                 <div className="absolute -top-4 -right-4 opacity-[0.06] group-hover:opacity-[0.12] transition-opacity duration-500">
-                  <Icon className="w-40 h-40" />
+                  <Icon className="w-32 h-32 sm:w-40 sm:h-40" />
                 </div>
 
                 {/* Header */}
-                <div className="flex items-center gap-3 sm:gap-4 mb-3 sm:mb-4 relative z-10">
-                  <div className={`p-3 rounded-lg border ${colorClass.replace("text-", "text-").replace("border-", "border-").replace("bg-", "bg-").split(" ").map(c => c.startsWith("bg-") ? c + "/15" : c.startsWith("border-") ? c + "/25" : c).join(" ")}`}>
-                    <Icon className="w-6 h-6" />
+                <div className="flex items-center gap-2.5 sm:gap-4 mb-2 sm:mb-4 relative z-10">
+                  <div className={`p-2 sm:p-3 rounded-lg border shrink-0 ${colorClass.replace("text-", "text-").replace("border-", "border-").replace("bg-", "bg-").split(" ").map(c => c.startsWith("bg-") ? c + "/15" : c.startsWith("border-") ? c + "/25" : c).join(" ")}`}>
+                    <Icon className="w-4 h-4 sm:w-6 sm:h-6" />
                   </div>
-                  <div>
-                    <h2 className="text-lg sm:text-xl font-bold">
+                  <div className="min-w-0">
+                    <h2 className="text-base sm:text-xl font-bold truncate">
                       {lang === "en" ? strategy.name : strategy.nameZh}
                     </h2>
-                    <p className="text-sm text-slate-500">
+                    <p className="text-xs sm:text-sm text-slate-500 truncate">
                       {lang === "en" ? strategy.nameZh : strategy.name}
                     </p>
                   </div>
                 </div>
 
                 {/* Description */}
-                <p className="text-xs sm:text-sm text-slate-400 mb-4 sm:mb-6 leading-relaxed relative z-10 flex-1">
+                <p className="text-xs sm:text-sm text-slate-400 mb-2.5 sm:mb-6 leading-snug sm:leading-relaxed relative z-10 flex-1">
                   {lang === "en" ? strategy.description : strategy.descriptionZh}
                 </p>
 
-                {/* Metrics */}
-                <div className="space-y-1.5 sm:space-y-2 relative z-10 mb-4 sm:mb-6">
+                {/* Metrics — 3-column horizontal strip on mobile, stacked rows on desktop */}
+                <div className="grid grid-cols-3 sm:grid-cols-1 gap-1.5 sm:gap-2 relative z-10 mb-3 sm:mb-6">
                   {strategy.metrics.map((metric) => (
                     <div
                       key={metric.label}
-                      className="flex items-center justify-between px-2.5 sm:px-3 py-2 sm:py-2.5 rounded-lg bg-slate-900/60 border border-slate-700/40"
+                      className="flex flex-col sm:flex-row sm:items-center justify-between px-2 sm:px-3 py-1.5 sm:py-2.5 rounded-lg bg-slate-900/60 border border-slate-700/40"
                     >
-                      <span className="text-xs font-medium text-slate-300">
+                      <span className="text-[10px] sm:text-xs font-medium text-slate-400 sm:text-slate-300 truncate">
                         {"term" in metric && metric.term ? (
                           <TermTooltip term={metric.term}>{metric.label}</TermTooltip>
                         ) : (
                           metric.label
                         )}
                       </span>
-                      <span className={`text-xs font-mono font-semibold ${colorClass.split(" ")[0]}`}>
+                      <span className={`text-[11px] sm:text-xs font-mono font-bold sm:font-semibold mt-0.5 sm:mt-0 truncate ${colorClass.split(" ")[0]}`}>
                         {metric.value}
                       </span>
                     </div>
@@ -452,7 +452,7 @@ export default function Home() {
                 </div>
 
                 {/* CTA */}
-                <div className={`mt-auto text-sm font-semibold flex items-center gap-2 relative z-10 ${colorClass.split(" ")[0]} group-hover:gap-3 transition-all`}>
+                <div className={`mt-auto text-xs sm:text-sm font-semibold flex items-center gap-1.5 sm:gap-2 relative z-10 ${colorClass.split(" ")[0]} group-hover:gap-3 transition-all`}>
                   {t("Start Screening", "开始筛选")}
                   <span className="transition-transform group-hover:translate-x-1">→</span>
                 </div>

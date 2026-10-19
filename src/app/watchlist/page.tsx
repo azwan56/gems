@@ -615,39 +615,33 @@ export default function WatchlistPage() {
   return (
     <div className="min-h-screen flex flex-col">
       {/* Header */}
-      <header className="border-b border-slate-800 px-4 sm:px-6 py-3 sm:py-4 bg-slate-900/50 backdrop-blur-sm sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0">
-          <div className="flex items-center gap-2 sm:gap-4 w-full sm:w-auto">
-            <Link href="/" className="flex items-center gap-1.5 sm:gap-2 text-slate-400 hover:text-white transition-colors">
+      <header className="border-b border-slate-800 px-3 sm:px-6 py-2 sm:py-4 bg-slate-900/50 backdrop-blur-sm sticky top-0 z-10">
+        <div className="max-w-7xl mx-auto flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 sm:gap-4 min-w-0">
+            <Link href="/" className="flex items-center gap-1.5 sm:gap-2 text-slate-400 hover:text-white transition-colors shrink-0">
               <ArrowLeft className="w-4 h-4" />
-              <Gem className="w-5 h-5 text-blue-400" />
+              <Gem className="w-4 h-4 sm:w-5 sm:h-5 text-blue-400" />
               <span className="font-bold text-white hidden sm:inline">Gems</span>
             </Link>
             <div className="h-5 w-px bg-slate-700 hidden sm:block" />
-            <h1 className="text-sm font-semibold truncate">{t("Portfolio Dashboard", "投资组合面板")}</h1>
-            <div className="ml-auto sm:hidden flex items-center gap-2">
-              <button 
-                onClick={() => setLang(lang === "en" ? "zh" : "en")}
-                className="flex items-center gap-1.5 px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs transition-colors border border-slate-700"
-              >
-                <Languages className="w-3.5 h-3.5 text-blue-400" />
-                {lang === "en" ? "中" : "EN"}
-              </button>
-              <UserMenu />
-            </div>
+            <h1 className="text-xs sm:text-sm font-semibold truncate">{t("Portfolio Dashboard", "投资组合面板")}</h1>
+            <span className="sm:hidden px-2 py-0.5 rounded-full bg-slate-800 border border-slate-700 text-[11px] font-mono text-slate-300 shrink-0">
+              <strong className="text-white">{watchlist.length}</strong>/10
+            </span>
           </div>
-          <div className="flex items-center gap-2 sm:gap-6 text-xs sm:text-sm w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0 scrollbar-hide">
-            <div className="text-slate-400 whitespace-nowrap">
-              <span className="hidden sm:inline">{t("Total Conviction Picks:", "总计高信念优选：")}</span> <span className="text-white font-bold">{watchlist.length}</span> / 10
+          <div className="flex items-center gap-1.5 sm:gap-6 text-xs sm:text-sm shrink-0">
+            <div className="hidden sm:block text-slate-400 whitespace-nowrap">
+              <span>{t("Total Conviction Picks:", "总计高信念优选：")}</span> <span className="text-white font-bold">{watchlist.length}</span> / 10
             </div>
             <div className="h-4 sm:h-5 w-px bg-slate-700 hidden sm:block" />
-            <div className="hidden sm:flex items-center gap-3">
+            <div className="flex items-center gap-1.5 sm:gap-3">
               <button 
                 onClick={() => setLang(lang === "en" ? "zh" : "en")}
-                className="flex items-center gap-2 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-sm transition-colors border border-slate-700"
+                className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1 sm:py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-[11px] sm:text-sm transition-colors border border-slate-700"
               >
-                <Languages className="w-4 h-4 text-blue-400" />
-                {lang === "en" ? "中文" : "English"}
+                <Languages className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-blue-400" />
+                <span className="hidden sm:inline">{lang === "en" ? "中文" : "English"}</span>
+                <span className="sm:hidden">{lang === "en" ? "中" : "EN"}</span>
               </button>
               <UserMenu />
             </div>
@@ -657,7 +651,7 @@ export default function WatchlistPage() {
 
       {/* Content — Premium Only */}
       <PremiumGate featureName={t("Portfolio Dashboard", "投资组合面板")}>
-      <div className="flex-1 px-4 sm:px-6 py-6 sm:py-8 overflow-x-auto">
+      <div className="flex-1 px-3 sm:px-6 py-3.5 sm:py-8 overflow-x-auto">
         <div className="max-w-7xl mx-auto w-full">
           {loading ? (
             <div className="flex items-center justify-center py-20">
@@ -678,23 +672,23 @@ export default function WatchlistPage() {
               </Link>
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-2.5 sm:space-y-4">
               {/* Date Header Block */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-900/40 p-4 rounded-xl border border-slate-800">
-                <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center justify-between gap-2 bg-slate-900/40 px-3 sm:px-4 py-2 sm:py-3.5 rounded-xl border border-slate-800">
+                <div className="flex items-center gap-1.5 sm:gap-2">
                   <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                  <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">{t("Market Active", "美股交易跟踪")}</span>
+                  <span className="text-[11px] sm:text-xs font-semibold text-slate-400 uppercase tracking-wider">{t("Market Active", "美股交易跟踪")}</span>
                 </div>
-                <div className="flex items-center gap-4 text-xs font-medium text-slate-400">
+                <div className="flex items-center gap-2 sm:gap-4 text-[11px] sm:text-xs font-medium text-slate-400">
                   <span>
-                    {t("Current Date:", "当前日期：")}
-                    <span className="text-slate-200 font-bold ml-1">{new Date().toLocaleDateString(lang === 'zh' ? 'zh-CN' : 'en-US', { year: 'numeric', month: '2-digit', day: '2-digit' })}</span>
+                    <span className="hidden sm:inline">{t("Current Date:", "当前日期：")}</span>
+                    <span className="text-slate-200 font-bold sm:ml-1">{new Date().toLocaleDateString(lang === 'zh' ? 'zh-CN' : 'en-US', { year: 'numeric', month: '2-digit', day: '2-digit' })}</span>
                   </span>
                   {poolUpdatedAt && (
                     <>
                       <span className="text-slate-700">|</span>
                       <span>
-                        {t("Data Updated:", "行情更新时间：")}
+                        {t("Updated:", "更新：")}
                         <span className="text-slate-200 font-bold ml-1">{new Date(poolUpdatedAt).toLocaleString(lang === 'zh' ? 'zh-CN' : 'en-US', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false })}</span>
                       </span>
                     </>
@@ -730,8 +724,8 @@ export default function WatchlistPage() {
                 const upsidePercent = tp && prevClosePrice > 0 ? ((tp.targetConsensus - prevClosePrice) / prevClosePrice * 100) : null;
 
                 return (
-                  <div key={item.symbol} className="bg-slate-900 border border-slate-800 rounded-xl p-4 hover:border-slate-700 transition-colors">
-                    <div className="grid grid-cols-1 md:grid-cols-[2.5rem_1.2fr_1.3fr_1fr_1fr_5rem_8rem] gap-3 md:gap-4 items-center">
+                  <div key={item.symbol} className="bg-slate-900 border border-slate-800 rounded-xl p-3 sm:p-4 hover:border-slate-700 transition-colors">
+                    <div className="grid grid-cols-1 md:grid-cols-[2.5rem_1.2fr_1.3fr_1fr_1fr_5rem_8rem] gap-2 sm:gap-3 md:gap-4 items-center">
                       
                       {/* Rank */}
                       <div className="hidden md:block">
@@ -740,11 +734,11 @@ export default function WatchlistPage() {
 
                       {/* Stock Info — enriched with company, sector/industry, observe status + Mobile quick actions */}
                       <div className="flex items-start justify-between gap-2">
-                        <div className="flex items-center gap-2.5 min-w-0">
-                          <span className="md:hidden text-xs font-mono font-bold text-slate-500 bg-slate-800 px-1.5 py-0.5 rounded">#{idx + 1}</span>
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className="md:hidden text-[11px] font-mono font-bold text-slate-500 bg-slate-800 px-1.5 py-0.5 rounded shrink-0">#{idx + 1}</span>
                           <div className="min-w-0">
-                            <div className="flex items-center gap-2">
-                              <span className="font-bold text-white text-base">{item.symbol}</span>
+                            <div className="flex items-center gap-1.5">
+                              <span className="font-bold text-white text-sm sm:text-base">{item.symbol}</span>
                               {isObserved && (
                                 <span className="flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-cyan-500/10 border border-cyan-500/20" title={t("Synced to DailyStock observe list", "已同步至观察清单")}>
                                   <Eye className="w-3 h-3 text-cyan-400" />
@@ -752,9 +746,9 @@ export default function WatchlistPage() {
                                 </span>
                               )}
                             </div>
-                            <p className="text-xs text-slate-400 line-clamp-1">{companyName}</p>
+                            <p className="text-[11px] sm:text-xs text-slate-400 line-clamp-1">{companyName}</p>
                             {(sector || industry) && (
-                              <p className="text-[10px] text-slate-500 line-clamp-1 mt-0.5">
+                              <p className="text-[10px] text-slate-500 line-clamp-1">
                                 {sector}{sector && industry ? " · " : ""}{industry}
                               </p>
                             )}
@@ -762,22 +756,22 @@ export default function WatchlistPage() {
                         </div>
 
                         {/* Mobile Action Buttons */}
-                        <div className="flex md:hidden items-center gap-1.5 shrink-0">
+                        <div className="flex md:hidden items-center gap-1 shrink-0">
                           <button
                             onClick={() => openAnalysis(item.symbol)}
-                            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-purple-500/15 hover:bg-purple-500/25 border border-purple-500/30 text-purple-300 text-xs font-semibold transition-colors"
+                            className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-purple-500/15 hover:bg-purple-500/25 border border-purple-500/30 text-purple-300 text-[11px] font-semibold transition-colors"
                           >
-                            <FileText className="w-3.5 h-3.5" />
+                            <FileText className="w-3 h-3" />
                             <span>{t("Report", "研报")}</span>
                           </button>
                           {syncState[item.symbol] === 'synced' || syncState[item.symbol] === 'already_exists' ? (
-                            <span className="p-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
+                            <span className="p-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
                               <Check className="w-3.5 h-3.5" />
                             </span>
                           ) : (
                             <button
                               onClick={() => openSyncConfirm(item.symbol)}
-                              className="p-1.5 rounded-lg bg-slate-800 border border-slate-700 text-slate-300 hover:text-blue-400"
+                              className="p-1 rounded-lg bg-slate-800 border border-slate-700 text-slate-300 hover:text-blue-400"
                               title={t("Sync to DailyStock", "同步到主站")}
                             >
                               <ArrowUpFromLine className="w-3.5 h-3.5" />
@@ -785,7 +779,7 @@ export default function WatchlistPage() {
                           )}
                           <button
                             onClick={() => removeItem(item.symbol)}
-                            className="p-1.5 rounded-lg bg-slate-800 border border-slate-700 text-slate-400 hover:text-red-400"
+                            className="p-1 rounded-lg bg-slate-800 border border-slate-700 text-slate-400 hover:text-red-400"
                             title={t("Remove", "移除")}
                           >
                             <Trash2 className="w-3.5 h-3.5" />
@@ -794,7 +788,7 @@ export default function WatchlistPage() {
                       </div>
 
                       {/* Matched Strategies */}
-                      <div className="flex flex-wrap gap-1.5">
+                      <div className="flex flex-wrap gap-1">
                         {matched.length > 0 ? (
                           matched.map(strat => (
                             <span
@@ -810,20 +804,20 @@ export default function WatchlistPage() {
                       </div>
 
                       {/* Mobile 3-Column Labeled Metrics Strip */}
-                      <div className="grid grid-cols-3 gap-2 p-2.5 rounded-xl bg-slate-950/70 border border-slate-800/80 md:hidden">
+                      <div className="grid grid-cols-3 gap-1.5 px-2.5 py-1.5 rounded-xl bg-slate-950/70 border border-slate-800/80 md:hidden">
                         <div>
-                          <span className="text-[10px] text-slate-500 block mb-0.5">{t("Prev Close", "前收盘价")}</span>
+                          <span className="text-[10px] text-slate-500 block">{t("Prev Close", "前收盘价")}</span>
                           {prevClosePrice > 0 ? (
-                            <span className="text-sm font-bold font-mono text-white">${prevClosePrice.toFixed(2)}</span>
+                            <span className="text-xs font-bold font-mono text-white">${prevClosePrice.toFixed(2)}</span>
                           ) : (
                             <span className="text-xs text-slate-600">—</span>
                           )}
                         </div>
                         <div>
-                          <span className="text-[10px] text-slate-500 block mb-0.5">{t("Wall St Target", "机构目标价")}</span>
+                          <span className="text-[10px] text-slate-500 block">{t("Wall St Target", "机构目标价")}</span>
                           {tp ? (
                             <div className="flex items-baseline gap-1 flex-wrap">
-                              <span className="text-sm font-bold font-mono text-blue-400">${tp.targetConsensus.toFixed(1)}</span>
+                              <span className="text-xs font-bold font-mono text-blue-400">${tp.targetConsensus.toFixed(1)}</span>
                               {upsidePercent !== null && (
                                 <span className={`text-[10px] font-semibold font-mono ${upsidePercent >= 0 ? "text-emerald-400" : "text-red-400"}`}>
                                   {upsidePercent >= 0 ? "+" : "-"}{Math.abs(upsidePercent).toFixed(0)}%
@@ -835,11 +829,11 @@ export default function WatchlistPage() {
                           )}
                         </div>
                         <div>
-                          <span className="text-[10px] text-slate-500 block mb-0.5">
+                          <span className="text-[10px] text-slate-500 block">
                             <TermTooltip term="Beta">Beta</TermTooltip>
                           </span>
                           {stockData?.beta !== undefined && stockData.beta !== null ? (
-                            <span className={`text-sm font-bold font-mono ${stockData.beta > 1.0 ? "text-orange-400" : "text-cyan-400"}`}>
+                            <span className={`text-xs font-bold font-mono ${stockData.beta > 1.0 ? "text-orange-400" : "text-cyan-400"}`}>
                               {stockData.beta.toFixed(2)}
                             </span>
                           ) : (
@@ -1056,9 +1050,9 @@ export default function WatchlistPage() {
         <div className="fixed inset-0 z-[100] flex justify-end overflow-hidden overscroll-contain">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setAnalysisPanel(null)} />
           <div className="relative w-full sm:max-w-2xl h-full bg-slate-900 border-l border-slate-800 shadow-2xl overflow-y-auto overscroll-contain animate-in slide-in-from-right duration-300">
-            <div className="sticky top-0 z-10 bg-slate-900/80 backdrop-blur-md border-b border-slate-800 px-4 sm:px-8 py-4 sm:py-6 flex justify-between items-start">
+            <div className="sticky top-0 z-10 bg-slate-900/80 backdrop-blur-md border-b border-slate-800 px-4 sm:px-8 py-3 sm:py-6 flex justify-between items-start">
               <div>
-                <h2 className="text-2xl sm:text-3xl font-bold text-white mb-0.5 sm:mb-1">{analysisPanel.symbol}</h2>
+                <h2 className="text-xl sm:text-3xl font-bold text-white mb-0.5 sm:mb-1">{analysisPanel.symbol}</h2>
                 <p className="text-xs sm:text-sm text-slate-400">{t("AI Investment Analysis", "AI 投资分析报告")}</p>
               </div>
               <div className="flex items-center gap-2">
@@ -1071,10 +1065,10 @@ export default function WatchlistPage() {
                       }
                     }}
                     disabled={!shareCardUrl || isGeneratingCard}
-                    className="px-3 py-2 bg-emerald-600 hover:bg-emerald-500 disabled:bg-slate-800 disabled:text-slate-500 text-white rounded-lg text-sm font-semibold flex items-center gap-1.5 transition-colors"
+                    className="px-3 py-1.5 sm:py-2 bg-emerald-600 hover:bg-emerald-500 disabled:bg-slate-800 disabled:text-slate-500 text-white rounded-lg text-xs sm:text-sm font-semibold flex items-center gap-1.5 transition-colors"
                     title={t("Download Share Card", "下载分享卡片")}
                   >
-                    {isGeneratingCard ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+                    {isGeneratingCard ? <Loader2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 animate-spin" /> : <Download className="w-3.5 h-3.5 sm:w-4 sm:h-4" />}
                     {t("Share", "分享")}
                   </button>
                 )}
@@ -1085,7 +1079,7 @@ export default function WatchlistPage() {
             </div>
 
             {/* Panel Content */}
-            <div className="px-4 sm:px-8 py-4 sm:py-6 space-y-6 sm:space-y-8 pb-20">
+            <div className="px-3.5 sm:px-8 py-3.5 sm:py-6 space-y-4 sm:space-y-8 pb-20">
               {analysisPanel.loading ? (
                 <div className="flex flex-col items-center justify-center py-16">
                   <Loader2 className="w-8 h-8 text-blue-400 animate-spin mb-4" />
@@ -1093,7 +1087,6 @@ export default function WatchlistPage() {
                 </div>
               ) : analysisPanel.report ? (
                 <>
-                  {/* Analyst Pricing & Targets */}
                   {/* Analyst Pricing & Targets: Dual Wall Street Consensus + AI Fair Value */}
                   {(() => {
                     const wsTarget = analysisPanel.report.analyst.wallStreetTargetPrice;
@@ -1103,119 +1096,121 @@ export default function WatchlistPage() {
                     const hasDual = Boolean(wsTarget && aiTarget && wsTarget !== aiTarget);
 
                     return (
-                      <div className={`grid gap-3 sm:gap-4 ${hasDual ? "grid-cols-1 sm:grid-cols-3" : "grid-cols-2"}`}>
+                      <div className={`grid gap-2 sm:gap-4 ${hasDual ? "grid-cols-3" : "grid-cols-2"}`}>
                         {/* Wall Street Consensus Target */}
-                        <div className="bg-gradient-to-br from-blue-950/40 to-slate-900/60 border border-blue-500/20 rounded-xl p-4">
-                          <div className="flex items-center justify-between mb-2">
-                            <div className="flex items-center gap-1.5 text-blue-400">
-                              <Target className="w-3.5 h-3.5 shrink-0" />
-                              <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider">{t("Wall St Target", "华尔街目标价")}</span>
+                        <div className="bg-gradient-to-br from-blue-950/40 to-slate-900/60 border border-blue-500/20 rounded-xl p-2.5 sm:p-4">
+                          <div className="flex items-center justify-between mb-1 sm:mb-2">
+                            <div className="flex items-center gap-1 text-blue-400 min-w-0">
+                              <Target className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" />
+                              <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider truncate">{t("Wall St Target", "华尔街目标价")}</span>
                             </div>
                             {hasDual && (
-                              <span className="text-[9px] px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-300 font-mono border border-blue-500/20">
+                              <span className="hidden sm:inline-block text-[9px] px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-300 font-mono border border-blue-500/20">
                                 {t("Consensus", "机构中位")}
                               </span>
                             )}
                           </div>
-                          <div className="text-xl sm:text-2xl font-bold text-white truncate">
+                          <div className="text-base sm:text-2xl font-bold text-white truncate">
                             {wsTarget || analysisPanel.report.analyst.targetPrice}
                           </div>
-                          <div className={`text-xs font-semibold mt-1 font-mono ${(wsUpside || analysisPanel.report.analyst.upside || "").startsWith("-") ? "text-rose-400" : "text-emerald-400"}`}>
+                          <div className={`text-[11px] sm:text-xs font-semibold mt-0.5 sm:mt-1 font-mono truncate ${(wsUpside || analysisPanel.report.analyst.upside || "").startsWith("-") ? "text-rose-400" : "text-emerald-400"}`}>
                             {wsUpside || analysisPanel.report.analyst.upside}
                           </div>
                         </div>
 
                         {/* AI Revaluation Target (shown when dual targets exist) */}
                         {hasDual && (
-                          <div className="bg-gradient-to-br from-purple-950/40 to-slate-900/60 border border-purple-500/20 rounded-xl p-4">
-                            <div className="flex items-center justify-between mb-2">
-                              <div className="flex items-center gap-1.5 text-purple-400">
-                                <Sparkles className="w-3.5 h-3.5 shrink-0" />
-                                <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider">{t("AI Fair Value", "AI 基本面重估")}</span>
+                          <div className="bg-gradient-to-br from-purple-950/40 to-slate-900/60 border border-purple-500/20 rounded-xl p-2.5 sm:p-4">
+                            <div className="flex items-center justify-between mb-1 sm:mb-2">
+                              <div className="flex items-center gap-1 text-purple-400 min-w-0">
+                                <Sparkles className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" />
+                                <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider truncate">{t("AI Fair Value", "AI 重估")}</span>
                               </div>
-                              <span className="text-[9px] px-1.5 py-0.5 rounded bg-purple-500/10 text-purple-300 font-mono border border-purple-500/20">
+                              <span className="hidden sm:inline-block text-[9px] px-1.5 py-0.5 rounded bg-purple-500/10 text-purple-300 font-mono border border-purple-500/20">
                                 {t("Forward Model", "前瞻测算")}
                               </span>
                             </div>
-                            <div className="text-xl sm:text-2xl font-bold text-white truncate">
+                            <div className="text-base sm:text-2xl font-bold text-white truncate">
                               {aiTarget}
                             </div>
-                            <div className={`text-xs font-semibold mt-1 font-mono ${(aiUpside || "").startsWith("-") ? "text-rose-400" : "text-emerald-400"}`}>
+                            <div className={`text-[11px] sm:text-xs font-semibold mt-0.5 sm:mt-1 font-mono truncate ${(aiUpside || "").startsWith("-") ? "text-rose-400" : "text-emerald-400"}`}>
                               {aiUpside}
                             </div>
                           </div>
                         )}
 
                         {/* Market Consensus Breakdown */}
-                        <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-4">
-                          <div className="flex items-center gap-1.5 text-slate-400 mb-2">
-                            <Users className="w-3.5 h-3.5 shrink-0" />
-                            <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider">{t("Consensus", "市场共识")}</span>
+                        <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-2.5 sm:p-4">
+                          <div className="flex items-center gap-1 text-slate-400 mb-1 sm:mb-2">
+                            <Users className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" />
+                            <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider truncate">{t("Consensus", "市场共识")}</span>
                           </div>
-                          <div className="text-lg sm:text-xl font-bold text-emerald-400 mb-1 truncate">{t(analysisPanel.report.analyst.consensus, analysisPanel.report.analyst.consensus)}</div>
-                          <div className="text-[10px] text-slate-500 flex flex-wrap gap-x-2">
-                            <span>{t("Buy", "买入")}: {analysisPanel.report.analyst.breakdown.buy}</span>
-                            <span>{t("Hold", "持有")}: {analysisPanel.report.analyst.breakdown.hold}</span>
-                            <span>{t("Sell", "卖出")}: {analysisPanel.report.analyst.breakdown.sell}</span>
+                          <div className="text-sm sm:text-xl font-bold text-emerald-400 mb-0.5 sm:mb-1 truncate">{t(analysisPanel.report.analyst.consensus, analysisPanel.report.analyst.consensus)}</div>
+                          <div className="text-[10px] text-slate-500 flex flex-wrap gap-x-1.5 sm:gap-x-2">
+                            <span>{t("B", "买")}:{analysisPanel.report.analyst.breakdown.buy}</span>
+                            <span>{t("H", "持")}:{analysisPanel.report.analyst.breakdown.hold}</span>
+                            <span>{t("S", "卖")}:{analysisPanel.report.analyst.breakdown.sell}</span>
                           </div>
                         </div>
                       </div>
                     );
                   })()}
 
-                  {/* Quantitative Scores */}
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mt-3 sm:mt-4">
-                    <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-4">
-                      <div className="flex items-center gap-1.5 text-purple-400 mb-2">
-                        <ActivitySquare className="w-3.5 h-3.5 shrink-0" />
-                        <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider">{t("Technical", "技术面评分")}</span>
+                  {/* Quantitative Scores — 3-column horizontal strip on mobile */}
+                  <div className="grid grid-cols-3 gap-2 sm:gap-4 mt-2.5 sm:mt-4">
+                    <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-2.5 sm:p-4">
+                      <div className="flex items-center gap-1 text-purple-400 mb-1 sm:mb-2">
+                        <ActivitySquare className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" />
+                        <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider truncate">{t("Technical", "技术面")}</span>
                       </div>
-                      <div className="flex items-baseline gap-1.5">
-                        <span className="text-xl sm:text-2xl font-bold text-white">{analysisPanel.report.technicalScore}</span>
-                        <span className="text-[10px] text-slate-500">/ 100</span>
+                      <div className="flex items-baseline gap-1">
+                        <span className="text-base sm:text-2xl font-bold text-white">{analysisPanel.report.technicalScore}</span>
+                        <span className="text-[10px] text-slate-500">/100</span>
                       </div>
-                      <div className="w-full bg-slate-900 h-1.5 mt-2 rounded-full overflow-hidden">
+                      <div className="w-full bg-slate-900 h-1.5 mt-1.5 sm:mt-2 rounded-full overflow-hidden">
                         <div className="bg-purple-500 h-full rounded-full" style={{ width: `${analysisPanel.report.technicalScore}%` }} />
                       </div>
                     </div>
 
-                    <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-4">
-                      <div className="flex items-center gap-1.5 text-amber-400 mb-2">
-                        <ShieldAlert className="w-3.5 h-3.5 shrink-0" />
-                        <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider">{t("Fundamental", "基本面评分")}</span>
+                    <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-2.5 sm:p-4">
+                      <div className="flex items-center gap-1 text-amber-400 mb-1 sm:mb-2">
+                        <ShieldAlert className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" />
+                        <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider truncate">{t("Fundamental", "基本面")}</span>
                       </div>
-                      <div className="flex items-baseline gap-1.5">
-                        <span className="text-xl sm:text-2xl font-bold text-white">{analysisPanel.report.fundamentalScore}</span>
-                        <span className="text-[10px] text-slate-500">/ 100</span>
+                      <div className="flex items-baseline gap-1">
+                        <span className="text-base sm:text-2xl font-bold text-white">{analysisPanel.report.fundamentalScore}</span>
+                        <span className="text-[10px] text-slate-500">/100</span>
                       </div>
-                      <div className="w-full bg-slate-900 h-1.5 mt-2 rounded-full overflow-hidden">
+                      <div className="w-full bg-slate-900 h-1.5 mt-1.5 sm:mt-2 rounded-full overflow-hidden">
                         <div className="bg-amber-500 h-full rounded-full" style={{ width: `${analysisPanel.report.fundamentalScore}%` }} />
                       </div>
                     </div>
 
-                    <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-4">
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-1.5 text-blue-400">
-                          <Compass className="w-3.5 h-3.5 shrink-0" />
-                          <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider">{t("Sector Rotation", "板块动能评分")}</span>
+                    <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-2.5 sm:p-4">
+                      <div className="flex items-center justify-between mb-1 sm:mb-2">
+                        <div className="flex items-center gap-1 text-blue-400 min-w-0">
+                          <Compass className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" />
+                          <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider truncate">{t("Sector", "板块动能")}</span>
                         </div>
                         {analysisPanel.report.sectorRotation && (
-                          <SectorWindBadge
-                            wind={analysisPanel.report.sectorRotation.windStatus}
-                            quadrant={analysisPanel.report.sectorRotation.quadrant}
-                            etf={analysisPanel.report.sectorRotation.etf}
-                            subIndustryETF={analysisPanel.report.sectorRotation.subIndustryETF}
-                            subIndustryName={analysisPanel.report.sectorRotation.subIndustryName}
-                            subIndustryQuadrant={analysisPanel.report.sectorRotation.subIndustryQuadrant}
-                            subIndustryWind={analysisPanel.report.sectorRotation.subIndustryWind}
-                          />
+                          <div className="hidden sm:block">
+                            <SectorWindBadge
+                              wind={analysisPanel.report.sectorRotation.windStatus}
+                              quadrant={analysisPanel.report.sectorRotation.quadrant}
+                              etf={analysisPanel.report.sectorRotation.etf}
+                              subIndustryETF={analysisPanel.report.sectorRotation.subIndustryETF}
+                              subIndustryName={analysisPanel.report.sectorRotation.subIndustryName}
+                              subIndustryQuadrant={analysisPanel.report.sectorRotation.subIndustryQuadrant}
+                              subIndustryWind={analysisPanel.report.sectorRotation.subIndustryWind}
+                            />
+                          </div>
                         )}
                       </div>
-                      <div className="flex items-baseline gap-1.5">
-                        <span className="text-xl sm:text-2xl font-bold text-white">{analysisPanel.report.sectorScore ?? 50}</span>
-                        <span className="text-[10px] text-slate-500">/ 100</span>
+                      <div className="flex items-baseline gap-1">
+                        <span className="text-base sm:text-2xl font-bold text-white">{analysisPanel.report.sectorScore ?? 50}</span>
+                        <span className="text-[10px] text-slate-500">/100</span>
                       </div>
-                      <div className="w-full bg-slate-900 h-1.5 mt-2 rounded-full overflow-hidden">
+                      <div className="w-full bg-slate-900 h-1.5 mt-1.5 sm:mt-2 rounded-full overflow-hidden">
                         <div className="bg-blue-500 h-full rounded-full" style={{ width: `${analysisPanel.report.sectorScore ?? 50}%` }} />
                       </div>
                     </div>

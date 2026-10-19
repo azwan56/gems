@@ -54,7 +54,7 @@ export function MobileBottomNav() {
     return (
         <nav
             aria-label="Mobile Primary Navigation"
-            className="md:hidden print:hidden fixed bottom-0 left-0 right-0 z-40 bg-slate-900/95 backdrop-blur-xl border-t border-slate-800/90 px-1.5 pt-1.5 pb-[max(0.375rem,env(safe-area-inset-bottom))] shadow-[0_-8px_30px_rgba(15,23,42,0.2)]"
+            className="md:hidden print:hidden fixed bottom-0 left-0 right-0 z-40 bg-slate-900/95 backdrop-blur-xl border-t border-slate-800/90 px-1.5 pt-1 pb-[max(0.25rem,env(safe-area-inset-bottom))] shadow-[0_-8px_30px_rgba(15,23,42,0.2)]"
         >
             <div className="grid grid-cols-5 gap-1 max-w-md mx-auto">
                 {NAV_ITEMS.map((item) => {
@@ -64,14 +64,14 @@ export function MobileBottomNav() {
                         <Link
                             key={item.href}
                             href={item.href}
-                            className={`flex flex-col items-center justify-center py-1.5 px-1 rounded-xl border transition-all active:scale-95 ${
+                            className={`flex flex-col items-center justify-center py-1 px-1 rounded-xl border transition-all active:scale-95 ${
                                 isActive
                                     ? item.activeColor
                                     : 'border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
                             }`}
                         >
-                            <Icon className={`w-4 h-4 mb-0.5 ${isActive ? 'scale-110' : ''} transition-transform`} />
-                            <span className="text-[11px] font-bold leading-tight tracking-tight truncate max-w-full">
+                            <Icon className={`w-3.5 h-3.5 mb-0.5 ${isActive ? 'scale-110' : ''} transition-transform`} />
+                            <span className="text-[10px] font-bold leading-tight tracking-tight truncate max-w-full">
                                 {item.label}
                             </span>
                             <span className="text-[8px] font-medium opacity-70 leading-none truncate max-w-full">

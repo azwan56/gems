@@ -554,11 +554,11 @@ export default function FunnelScreenerPage() {
   return (
     <div className="min-h-screen flex flex-col bg-slate-950 text-slate-200">
       {/* Header */}
-      <header className="border-b border-slate-800 bg-slate-900 px-4 sm:px-6 py-3 sm:py-4">
+      <header className="border-b border-slate-800 bg-slate-900 px-3 sm:px-6 py-2 sm:py-4">
         <div className="max-w-[1400px] mx-auto flex items-center gap-2 sm:gap-4">
           <Link href="/" className="flex items-center gap-1.5 sm:gap-2 text-slate-400 hover:text-white transition-colors flex-shrink-0">
             <ArrowLeft className="w-4 h-4" />
-            <Gem className="w-5 h-5 text-blue-400" />
+            <Gem className="w-4 h-4 sm:w-5 sm:h-5 text-blue-400" />
             <span className="font-bold hidden sm:inline">Gems</span>
           </Link>
           <div className="h-5 w-px bg-slate-700 hidden sm:block" />
@@ -570,12 +570,12 @@ export default function FunnelScreenerPage() {
               {preset ? (lang === "en" ? preset.nameZh : preset.name) : ""}
             </p>
           </div>
-          <div className="ml-auto flex items-center gap-2 sm:gap-3 flex-shrink-0">
+          <div className="ml-auto flex items-center gap-1.5 sm:gap-3 flex-shrink-0">
             <button 
               onClick={() => setLang(lang === "en" ? "zh" : "en")}
-              className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs sm:text-sm transition-colors border border-slate-700"
+              className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-[11px] sm:text-sm transition-colors border border-slate-700"
             >
-              <Languages className="w-4 h-4 text-blue-400" />
+              <Languages className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-blue-400" />
               <span className="hidden sm:inline">{lang === "en" ? "中文" : "English"}</span>
               <span className="sm:hidden">{lang === "en" ? "中" : "EN"}</span>
             </button>
@@ -587,20 +587,20 @@ export default function FunnelScreenerPage() {
       <PremiumGate featureName={t("Quantitative Stock Screener", "量化选股系统")}>
         {/* Funnel Progress Bar */}
         <div className="bg-slate-900 border-b border-slate-800">
-        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between gap-1 sm:gap-0">
+        <div className="max-w-[1400px] mx-auto px-3 sm:px-6 py-2 sm:py-4 flex items-center justify-between gap-1 sm:gap-0">
           {[
             { step: 1, icon: Activity, title: isSA ? t("Step 1: Skipped", "第一步：已跳过") : t("Step 1: Quantitative", "第一步：定量筛选"), sub: isSA ? t("SA Direct List", "SA 直选") : isValue ? t("Valuation & FCF", "估值与自由现金流") : t("Growth & Scale", "成长与规模"), shortTitle: isSA ? t("Skipped", "已跳过") : t("Quant", "定量") },
             { step: 2, icon: BrainCircuit, title: t("Step 2: Qualitative", "第二步：定性深研"), sub: isValue ? t("Moat & Catalyst", "护城河与催化剂") : t("TAM & Dominance", "潜在市场与统治力"), shortTitle: t("Qual", "定性") },
             { step: 3, icon: LineChart, title: t("Step 3: Technical & Final", "第三步：技术与最终决策"), sub: t("Timing & Analysis", "择时与分析"), shortTitle: t("Final", "最终") },
           ].map((s, i) => (
             <div key={s.step} className="flex items-center flex-1 min-w-0">
-              <div className={`flex items-center gap-2 sm:gap-3 min-w-0 ${currentStep === s.step ? "opacity-100" : currentStep > s.step || (isSA && s.step === 1) ? "opacity-60" : "opacity-30 grayscale"}`}>
+              <div className={`flex items-center gap-1.5 sm:gap-3 min-w-0 ${currentStep === s.step ? "opacity-100" : currentStep > s.step || (isSA && s.step === 1) ? "opacity-60" : "opacity-30 grayscale"}`}>
                 <div className={`p-1.5 sm:p-2.5 rounded-lg border flex-shrink-0 ${
                   currentStep === s.step 
                     ? stepColorClasses[preset?.color || "blue"] || "bg-blue-500/20 border-blue-500/50 text-blue-400"
                     : "bg-slate-800 border-slate-700 text-slate-400"
                 }`}>
-                  <s.icon className="w-4 h-4 sm:w-5 sm:h-5" />
+                  <s.icon className="w-3.5 h-3.5 sm:w-5 sm:h-5" />
                 </div>
                 <div className="min-w-0">
                   <p className={`text-xs sm:text-sm font-bold truncate ${currentStep === s.step ? "text-white" : ""}`}>
@@ -610,14 +610,14 @@ export default function FunnelScreenerPage() {
                   <p className="text-[10px] sm:text-xs text-slate-500 hidden sm:block">{s.sub}</p>
                 </div>
               </div>
-              {i < 2 && <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 mx-1 sm:mx-auto text-slate-700 flex-shrink-0" />}
+              {i < 2 && <ChevronRight className="w-3.5 h-3.5 sm:w-5 sm:h-5 mx-1 sm:mx-auto text-slate-700 flex-shrink-0" />}
             </div>
           ))}
         </div>
       </div>
 
       {/* Main Content Area */}
-      <div className="flex-1 px-4 sm:px-6 py-5 sm:py-8">
+      <div className="flex-1 px-3 sm:px-6 py-3 sm:py-8">
         <div className="max-w-[1400px] mx-auto">
           {loading ? (
             <div className="flex justify-center py-20"><Loader2 className="w-8 h-8 animate-spin text-blue-400" /></div>
@@ -630,7 +630,7 @@ export default function FunnelScreenerPage() {
                 <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
                   {/* Seeking Alpha Custom List Management */}
                   {isSA && (
-                    <div className="mb-4 rounded-xl border border-amber-500/20 bg-gradient-to-br from-amber-900/10 to-amber-800/5 p-5">
+                    <div className="mb-3 sm:mb-4 rounded-xl border border-amber-500/20 bg-gradient-to-br from-amber-900/10 to-amber-800/5 p-3.5 sm:p-5">
                       <div className="flex items-center gap-2 mb-3">
                         <BookOpen className="w-4.5 h-4.5 text-amber-400" />
                         <h3 className="text-sm font-bold text-amber-300 uppercase tracking-wider">
@@ -701,7 +701,7 @@ export default function FunnelScreenerPage() {
                   )}
 
                   {/* Data source indicator — auto-refreshed daily after market close */}
-                  <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-4 px-3 sm:px-4 py-2.5 rounded-lg bg-slate-900/80 border border-slate-800 text-xs">
+                  <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-3 sm:mb-4 px-2.5 sm:px-4 py-2 sm:py-2.5 rounded-lg bg-slate-900/80 border border-slate-800 text-xs">
                     {dataSource === "fmp" ? (
                       <span className="flex items-center gap-1.5 text-emerald-400">
                         <Cloud className="w-3.5 h-3.5" /> {t("FMP Market Data", "FMP 市场数据")}
@@ -711,7 +711,7 @@ export default function FunnelScreenerPage() {
                         <Database className="w-3.5 h-3.5" /> {t("Mock Data", "模拟数据")}
                       </span>
                     )}
-                    <span className="text-slate-600 hidden sm:inline">|</span>
+                    <span className="text-slate-600">|</span>
                     <span className="text-slate-500">
                       {poolUpdatedAt
                         ? `${t("Updated", "更新于")} ${new Date(poolUpdatedAt).toLocaleString(lang === "en" ? "en-US" : "zh-CN", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}`
@@ -721,54 +721,56 @@ export default function FunnelScreenerPage() {
                     <span className="text-slate-600 italic hidden sm:inline">
                       {t("Auto-refresh: weekdays 5 PM ET", "自动刷新：交易日收盘后1小时")}
                     </span>
-                    <button
-                      onClick={() => {
-                        setRrgHighlight({});
-                        setShowRrgModal(true);
-                      }}
-                      title={t("View Sector Rotation RRG Quadrant Chart", "查看板块与细分赛道 RRG 四象限图")}
-                      className="w-full sm:w-auto mt-2 sm:mt-0 sm:ml-auto flex items-center justify-center gap-1.5 px-2.5 py-1.5 sm:py-1 rounded bg-blue-600/20 hover:bg-blue-600/30 text-blue-300 border border-blue-500/30 transition-colors text-xs font-medium"
-                    >
-                      <Compass className="w-3.5 h-3.5 text-blue-400" />
-                      <span>{t("RRG Quadrant Chart", "RRG 轮动象限图")}</span>
-                    </button>
-                    <button
-                      onClick={refreshPool}
-                      disabled={refreshing}
-                      title={t("Force refresh data from FMP API", "强制从 FMP API 刷新数据")}
-                      className="w-full sm:w-auto mt-2 sm:mt-0 flex items-center justify-center gap-1.5 px-2.5 py-1.5 sm:py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition-colors disabled:opacity-50"
-                    >
-                      <RefreshCw className={`w-3 h-3 ${refreshing ? "animate-spin" : ""}`} />
-                      {refreshing ? t("Refreshing...", "刷新中...") : t("Manual Refresh", "手动刷新")}
-                    </button>
+                    <div className="flex items-center gap-2 w-full sm:w-auto sm:ml-auto mt-1 sm:mt-0">
+                      <button
+                        onClick={() => {
+                          setRrgHighlight({});
+                          setShowRrgModal(true);
+                        }}
+                        title={t("View Sector Rotation RRG Quadrant Chart", "查看板块与细分赛道 RRG 四象限图")}
+                        className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-2.5 py-1 rounded bg-blue-600/20 hover:bg-blue-600/30 text-blue-300 border border-blue-500/30 transition-colors text-[11px] sm:text-xs font-medium whitespace-nowrap"
+                      >
+                        <Compass className="w-3.5 h-3.5 text-blue-400 shrink-0" />
+                        <span>{t("RRG Quadrant Chart", "RRG 轮动象限图")}</span>
+                      </button>
+                      <button
+                        onClick={refreshPool}
+                        disabled={refreshing}
+                        title={t("Force refresh data from FMP API", "强制从 FMP API 刷新数据")}
+                        className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition-colors disabled:opacity-50 text-[11px] sm:text-xs whitespace-nowrap"
+                      >
+                        <RefreshCw className={`w-3 h-3 shrink-0 ${refreshing ? "animate-spin" : ""}`} />
+                        {refreshing ? t("Refreshing...", "刷新中...") : t("Manual Refresh", "手动刷新")}
+                      </button>
+                    </div>
                   </div>
 
-                  <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 md:gap-0 mb-6">
+                  <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-2.5 md:gap-0 mb-3 sm:mb-6">
                     <div>
-                      <h2 className="text-lg sm:text-xl font-bold text-white mb-1 flex items-center gap-3">
+                      <h2 className="text-base sm:text-xl font-bold text-white mb-0.5 sm:mb-1 flex items-center gap-2 sm:gap-3">
                         {t("Quantitative Pool", "定量股票池")} 
-                        <span className="px-2 py-0.5 rounded bg-slate-800 text-slate-300 text-sm font-mono border border-slate-700">
+                        <span className="px-2 py-0.5 rounded bg-slate-800 text-slate-300 text-xs sm:text-sm font-mono border border-slate-700">
                           {postureFilter === "all" ? `${stocks.length} ${t("matches", "只符合条件")}` : `${displayedStocks.length} / ${stocks.length} ${t("matches", "只符合条件")}`}
                         </span>
                       </h2>
-                      <p className="text-xs sm:text-sm text-slate-400">
+                      <p className="text-[11px] sm:text-sm text-slate-400">
                         {t("Select candidates that pass the hard financial metrics to advance to deep dive.", "选择通过硬性财务指标筛选的候选股票进入定性深研环节。")}
                       </p>
                     </div>
                     
-                    <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
+                    <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-3 w-full md:w-auto">
                       {!isSA && (
-                        <div className="flex flex-col sm:flex-row items-center gap-2">
-                          <div className="flex bg-slate-800/80 p-1 rounded-lg border border-slate-700/50 w-full sm:w-auto">
+                        <div className="flex items-center gap-2 w-full sm:w-auto">
+                          <div className="flex bg-slate-800/80 p-1 rounded-lg border border-slate-700/50 flex-1 sm:flex-none">
                             <button 
                               onClick={() => setIsBacktestMode(true)}
-                              className={`flex-1 sm:flex-none px-4 py-1.5 text-xs sm:text-sm font-medium rounded-md transition-all ${isBacktestMode ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-700/50'}`}
+                              className={`flex-1 sm:flex-none px-3 sm:px-4 py-1 sm:py-1.5 text-xs sm:text-sm font-medium rounded-md transition-all ${isBacktestMode ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-700/50'}`}
                             >
                               {t("Backtest Mode", "历史回测组合")}
                             </button>
                             <button 
                               onClick={() => setIsBacktestMode(false)}
-                              className={`flex-1 sm:flex-none px-4 py-1.5 text-xs sm:text-sm font-medium rounded-md transition-all ${!isBacktestMode ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-700/50'}`}
+                              className={`flex-1 sm:flex-none px-3 sm:px-4 py-1 sm:py-1.5 text-xs sm:text-sm font-medium rounded-md transition-all ${!isBacktestMode ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-700/50'}`}
                             >
                               {t("Live Screener", "实时动态筛选")}
                             </button>
@@ -778,7 +780,7 @@ export default function FunnelScreenerPage() {
                             <select 
                               value={rosterYear}
                               onChange={(e) => setRosterYear(Number(e.target.value))}
-                              className="px-3 py-1.5 bg-slate-800 text-slate-300 text-sm font-medium rounded-lg border border-slate-700 focus:outline-none focus:border-indigo-500 w-full sm:w-auto"
+                              className="px-2.5 sm:px-3 py-1 sm:py-1.5 bg-slate-800 text-slate-300 text-xs sm:text-sm font-medium rounded-lg border border-slate-700 focus:outline-none focus:border-indigo-500 shrink-0"
                             >
                               {[...Array(5)].map((_, i) => {
                                 const y = new Date().getFullYear() - i;
@@ -792,7 +794,7 @@ export default function FunnelScreenerPage() {
                       <button
                         disabled={selectedInStep1.size === 0}
                         onClick={() => setCurrentStep(2)}
-                        className="w-full sm:w-auto px-4 py-2.5 sm:py-2 bg-blue-600 hover:bg-blue-500 disabled:bg-slate-800 disabled:text-slate-500 text-white rounded-lg font-semibold flex items-center justify-center gap-2 transition-colors"
+                        className="hidden sm:flex w-full sm:w-auto px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:bg-slate-800 disabled:text-slate-500 text-white rounded-lg font-semibold items-center justify-center gap-2 transition-colors"
                       >
                         {t("Run Deep Dive", "进行定性深研")} ({selectedInStep1.size}) <ChevronRight className="w-4 h-4" />
                       </button>
@@ -800,11 +802,11 @@ export default function FunnelScreenerPage() {
                   </div>
 
                   {/* Tactical Posture Filter Bar */}
-                  <div className="flex flex-wrap items-center gap-1.5 mb-4 px-3 py-2 rounded-xl bg-slate-900/60 border border-slate-800 text-xs">
+                  <div className="flex flex-wrap items-center gap-1 sm:gap-1.5 mb-3 sm:mb-4 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl bg-slate-900/60 border border-slate-800 text-xs">
                     <span className="text-slate-500 mr-1 text-[11px] font-medium">{t("Filter by Sector Action", "按板块战术姿态筛选:")}</span>
                     <button
                       onClick={() => setPostureFilter("all")}
-                      className={`px-2.5 py-1 rounded-md text-xs font-medium transition-all ${
+                      className={`px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-md text-[11px] sm:text-xs font-medium transition-all ${
                         postureFilter === "all"
                           ? "bg-slate-700 text-white font-medium"
                           : "text-slate-400 hover:text-slate-200 hover:bg-slate-800"
@@ -814,7 +816,7 @@ export default function FunnelScreenerPage() {
                     </button>
                     <button
                       onClick={() => setPostureFilter("ACCUMULATE")}
-                      className={`px-2.5 py-1 rounded-md text-xs font-medium transition-all flex items-center gap-1.5 ${
+                      className={`px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-md text-[11px] sm:text-xs font-medium transition-all flex items-center gap-1 ${
                         postureFilter === "ACCUMULATE"
                           ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-bold"
                           : "text-emerald-400/80 hover:bg-emerald-500/10"
@@ -825,7 +827,7 @@ export default function FunnelScreenerPage() {
                     </button>
                     <button
                       onClick={() => setPostureFilter("HOLD")}
-                      className={`px-2.5 py-1 rounded-md text-xs font-medium transition-all flex items-center gap-1.5 ${
+                      className={`px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-md text-[11px] sm:text-xs font-medium transition-all flex items-center gap-1 ${
                         postureFilter === "HOLD"
                           ? "bg-blue-500/20 text-blue-300 border border-blue-500/40 font-bold"
                           : "text-blue-400/80 hover:bg-blue-500/10"
@@ -836,7 +838,7 @@ export default function FunnelScreenerPage() {
                     </button>
                     <button
                       onClick={() => setPostureFilter("NEUTRAL")}
-                      className={`px-2.5 py-1 rounded-md text-xs font-medium transition-all flex items-center gap-1.5 ${
+                      className={`px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-md text-[11px] sm:text-xs font-medium transition-all flex items-center gap-1 ${
                         postureFilter === "NEUTRAL"
                           ? "bg-slate-600/40 text-slate-200 border border-slate-500/50 font-bold"
                           : "text-slate-400 hover:text-slate-300 hover:bg-slate-800"
@@ -847,7 +849,7 @@ export default function FunnelScreenerPage() {
                     </button>
                     <button
                       onClick={() => setPostureFilter("REDUCE")}
-                      className={`px-2.5 py-1 rounded-md text-xs font-medium transition-all flex items-center gap-1.5 ${
+                      className={`px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-md text-[11px] sm:text-xs font-medium transition-all flex items-center gap-1 ${
                         postureFilter === "REDUCE"
                           ? "bg-amber-500/20 text-amber-300 border border-amber-500/40 font-bold"
                           : "text-amber-400/80 hover:bg-amber-500/10"
@@ -858,7 +860,7 @@ export default function FunnelScreenerPage() {
                     </button>
                     <button
                       onClick={() => setPostureFilter("AVOID")}
-                      className={`px-2.5 py-1 rounded-md text-xs font-medium transition-all flex items-center gap-1.5 ${
+                      className={`px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-md text-[11px] sm:text-xs font-medium transition-all flex items-center gap-1 ${
                         postureFilter === "AVOID"
                           ? "bg-rose-500/20 text-rose-300 border border-rose-500/40 font-bold"
                           : "text-rose-400/80 hover:bg-rose-500/10"
@@ -979,7 +981,7 @@ export default function FunnelScreenerPage() {
                   </div>
 
                   {/* Mobile Card View */}
-                  <div className="md:hidden space-y-3 pb-16">
+                  <div className="md:hidden space-y-2.5 pb-16">
                     {displayedStocks.map(s => {
                       const isSelected = selectedInStep1.has(s.symbol);
                       const entryInfo = getStockEntryInfo(s, isSA, undefined, saEntryDates, saEntryPrices);
@@ -991,19 +993,19 @@ export default function FunnelScreenerPage() {
                         <div 
                           key={s.symbol} 
                           onClick={() => toggleSelection(1, s.symbol)}
-                          className={`rounded-xl border p-4 transition-all cursor-pointer ${
+                          className={`rounded-xl border p-3 transition-all cursor-pointer ${
                             isSelected ? 'border-blue-500 bg-blue-900/10 ring-1 ring-blue-500/50' : 'border-slate-800 bg-slate-900/50 hover:border-slate-700'
                           }`}
                         >
-                          <div className="flex items-start justify-between mb-3 border-b border-slate-800/60 pb-3">
-                            <div className="flex items-center gap-3 min-w-0">
+                          <div className="flex items-start justify-between mb-2 border-b border-slate-800/60 pb-2">
+                            <div className="flex items-center gap-2.5 min-w-0">
                               <div className="pt-0.5 shrink-0">
-                                <div className={`w-5 h-5 rounded-md flex items-center justify-center border ${isSelected ? 'bg-blue-500 border-blue-500' : 'bg-slate-800 border-slate-600'}`}>
-                                  {isSelected && <CheckCircle2 className="w-3.5 h-3.5 text-white" />}
+                                <div className={`w-4 h-4 rounded flex items-center justify-center border ${isSelected ? 'bg-blue-500 border-blue-500' : 'bg-slate-800 border-slate-600'}`}>
+                                  {isSelected && <CheckCircle2 className="w-3 h-3 text-white" />}
                                 </div>
                               </div>
                               <div className="min-w-0">
-                                <h3 className="text-base font-bold text-white flex flex-wrap items-center gap-1.5">
+                                <h3 className="text-sm font-bold text-white flex flex-wrap items-center gap-1.5">
                                   <span>{s.symbol}</span>
                                   <SectorWindBadge
                                     wind={s.sectorWind}
@@ -1021,7 +1023,7 @@ export default function FunnelScreenerPage() {
                                     {returnPct >= 0 ? `+${returnPct.toFixed(1)}%` : `${returnPct.toFixed(1)}%`}
                                   </span>
                                 </h3>
-                                <p className="text-xs text-slate-400 line-clamp-1">{s.companyName}</p>
+                                <p className="text-[11px] text-slate-400 line-clamp-1">{s.companyName}</p>
                               </div>
                             </div>
                             <button
@@ -1030,39 +1032,39 @@ export default function FunnelScreenerPage() {
                                 e.stopPropagation();
                                 openAnalysis(s);
                               }}
-                              className="shrink-0 inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-blue-500/15 hover:bg-blue-500/25 border border-blue-500/40 text-blue-300 text-xs font-semibold transition-colors"
+                              className="shrink-0 inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-blue-500/15 hover:bg-blue-500/25 border border-blue-500/40 text-blue-300 text-[11px] font-semibold transition-colors"
                             >
-                              <FileText className="w-3.5 h-3.5" />
+                              <FileText className="w-3 h-3" />
                               <span>{t("AI Report", "AI 研报")}</span>
                             </button>
                           </div>
 
-                          <div className="grid grid-cols-3 gap-2 mb-2 p-2 rounded-lg bg-slate-950/60 border border-slate-800/60 text-xs">
+                          <div className="grid grid-cols-3 gap-1.5 mb-1.5 px-2 py-1.5 rounded-lg bg-slate-950/60 border border-slate-800/60 text-xs">
                             <div>
                               <span className="text-slate-500 text-[10px] block">{t("Entry Date", "入选日期")}</span>
-                              <span className="text-slate-300 font-mono font-medium">{entryDate}</span>
+                              <span className="text-slate-300 font-mono font-medium text-[11px]">{entryDate}</span>
                             </div>
                             <div>
                               <span className="text-slate-500 text-[10px] block">{t("Entry → Now", "入选 → 现价")}</span>
-                              <span className="text-slate-200 font-mono font-semibold">${entryPrice.toFixed(1)} → ${s.price.toFixed(1)}</span>
+                              <span className="text-slate-200 font-mono font-semibold text-[11px]">${entryPrice.toFixed(1)} → ${s.price.toFixed(1)}</span>
                             </div>
                             <div>
                               <span className="text-slate-500 text-[10px] block">{t("Market Cap", "总市值")}</span>
-                              <span className="text-slate-300 font-mono font-medium">{formatMarketCap(s.marketCap)}</span>
+                              <span className="text-slate-300 font-mono font-medium text-[11px]">{formatMarketCap(s.marketCap)}</span>
                             </div>
                           </div>
                           
-                          <div className="grid grid-cols-2 gap-2">
+                          <div className="grid grid-cols-2 gap-1.5">
                             {step1Columns.map(c => (
-                              <div key={c.key} className="bg-slate-800/40 rounded-lg px-2.5 py-1.5 flex flex-col">
-                                <span className="text-[10px] text-slate-400 uppercase tracking-wider mb-0.5 flex items-center gap-1">
+                              <div key={c.key} className="bg-slate-800/40 rounded-lg px-2 py-1 flex items-center justify-between gap-1">
+                                <span className="text-[10px] text-slate-400 uppercase tracking-wider truncate flex items-center gap-0.5">
                                   {c.term ? (
                                     <TermTooltip term={c.term}>{c.label}</TermTooltip>
                                   ) : (
                                     c.label
                                   )}
                                 </span>
-                                <span className="text-sm font-mono text-slate-200 font-semibold">
+                                <span className="text-xs font-mono text-slate-200 font-semibold shrink-0">
                                   {formatNum(s[c.key as keyof StockMetrics] as number, c.suffix)}
                                 </span>
                               </div>
@@ -1493,7 +1495,7 @@ export default function FunnelScreenerPage() {
             </div>
 
             {/* Panel Content */}
-            <div className="px-4 sm:px-8 py-4 sm:py-6 space-y-6 sm:space-y-8 pb-20">
+            <div className="px-3.5 sm:px-8 py-3.5 sm:py-6 space-y-4 sm:space-y-8 pb-20">
               {analysisLoading ? (
                 <div className="flex flex-col items-center justify-center py-16">
                   <Loader2 className="w-8 h-8 text-blue-400 animate-spin mb-4" />
@@ -1501,7 +1503,6 @@ export default function FunnelScreenerPage() {
                 </div>
               ) : analysisReport ? (
                 <>
-                  {/* Analyst Pricing & Targets */}
                   {/* Analyst Pricing & Targets: Dual Wall Street Consensus + AI Fair Value */}
                   {(() => {
                     const wsTarget = analysisReport.analyst.wallStreetTargetPrice;
@@ -1511,119 +1512,121 @@ export default function FunnelScreenerPage() {
                     const hasDual = Boolean(wsTarget && aiTarget && wsTarget !== aiTarget);
 
                     return (
-                      <div className={`grid gap-3 sm:gap-4 ${hasDual ? "grid-cols-1 sm:grid-cols-3" : "grid-cols-2"}`}>
+                      <div className={`grid gap-2 sm:gap-4 ${hasDual ? "grid-cols-3" : "grid-cols-2"}`}>
                         {/* Wall Street Consensus Target */}
-                        <div className="bg-gradient-to-br from-blue-950/40 to-slate-900/60 border border-blue-500/20 rounded-xl p-4">
-                          <div className="flex items-center justify-between mb-2">
-                            <div className="flex items-center gap-1.5 text-blue-400">
-                              <Target className="w-3.5 h-3.5 shrink-0" />
-                              <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider">{t("Wall St Target", "华尔街目标价")}</span>
+                        <div className="bg-gradient-to-br from-blue-950/40 to-slate-900/60 border border-blue-500/20 rounded-xl p-2.5 sm:p-4">
+                          <div className="flex items-center justify-between mb-1 sm:mb-2">
+                            <div className="flex items-center gap-1 text-blue-400 min-w-0">
+                              <Target className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" />
+                              <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider truncate">{t("Wall St Target", "华尔街目标价")}</span>
                             </div>
                             {hasDual && (
-                              <span className="text-[9px] px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-300 font-mono border border-blue-500/20">
+                              <span className="hidden sm:inline-block text-[9px] px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-300 font-mono border border-blue-500/20">
                                 {t("Consensus", "机构中位")}
                               </span>
                             )}
                           </div>
-                          <div className="text-xl sm:text-2xl font-bold text-white truncate">
+                          <div className="text-base sm:text-2xl font-bold text-white truncate">
                             {wsTarget || analysisReport.analyst.targetPrice}
                           </div>
-                          <div className={`text-xs font-semibold mt-1 font-mono ${(wsUpside || analysisReport.analyst.upside || "").startsWith("-") ? "text-rose-400" : "text-emerald-400"}`}>
+                          <div className={`text-[11px] sm:text-xs font-semibold mt-0.5 sm:mt-1 font-mono truncate ${(wsUpside || analysisReport.analyst.upside || "").startsWith("-") ? "text-rose-400" : "text-emerald-400"}`}>
                             {wsUpside || analysisReport.analyst.upside}
                           </div>
                         </div>
 
                         {/* AI Revaluation Target (shown when dual targets exist) */}
                         {hasDual && (
-                          <div className="bg-gradient-to-br from-purple-950/40 to-slate-900/60 border border-purple-500/20 rounded-xl p-4">
-                            <div className="flex items-center justify-between mb-2">
-                              <div className="flex items-center gap-1.5 text-purple-400">
-                                <Sparkles className="w-3.5 h-3.5 shrink-0" />
-                                <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider">{t("AI Fair Value", "AI 基本面重估")}</span>
+                          <div className="bg-gradient-to-br from-purple-950/40 to-slate-900/60 border border-purple-500/20 rounded-xl p-2.5 sm:p-4">
+                            <div className="flex items-center justify-between mb-1 sm:mb-2">
+                              <div className="flex items-center gap-1 text-purple-400 min-w-0">
+                                <Sparkles className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" />
+                                <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider truncate">{t("AI Fair Value", "AI 重估")}</span>
                               </div>
-                              <span className="text-[9px] px-1.5 py-0.5 rounded bg-purple-500/10 text-purple-300 font-mono border border-purple-500/20">
+                              <span className="hidden sm:inline-block text-[9px] px-1.5 py-0.5 rounded bg-purple-500/10 text-purple-300 font-mono border border-purple-500/20">
                                 {t("Forward Model", "前瞻测算")}
                               </span>
                             </div>
-                            <div className="text-xl sm:text-2xl font-bold text-white truncate">
+                            <div className="text-base sm:text-2xl font-bold text-white truncate">
                               {aiTarget}
                             </div>
-                            <div className={`text-xs font-semibold mt-1 font-mono ${(aiUpside || "").startsWith("-") ? "text-rose-400" : "text-emerald-400"}`}>
+                            <div className={`text-[11px] sm:text-xs font-semibold mt-0.5 sm:mt-1 font-mono truncate ${(aiUpside || "").startsWith("-") ? "text-rose-400" : "text-emerald-400"}`}>
                               {aiUpside}
                             </div>
                           </div>
                         )}
 
                         {/* Market Consensus Breakdown */}
-                        <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-4">
-                          <div className="flex items-center gap-1.5 text-slate-400 mb-2">
-                            <Users className="w-3.5 h-3.5 shrink-0" />
-                            <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider">{t("Consensus", "市场共识")}</span>
+                        <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-2.5 sm:p-4">
+                          <div className="flex items-center gap-1 text-slate-400 mb-1 sm:mb-2">
+                            <Users className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" />
+                            <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider truncate">{t("Consensus", "市场共识")}</span>
                           </div>
-                          <div className="text-lg sm:text-xl font-bold text-emerald-400 mb-1 truncate">{t(analysisReport.analyst.consensus, analysisReport.analyst.consensus)}</div>
-                          <div className="text-[10px] text-slate-500 flex flex-wrap gap-x-2">
-                            <span>{t("Buy", "买入")}: {analysisReport.analyst.breakdown.buy}</span>
-                            <span>{t("Hold", "持有")}: {analysisReport.analyst.breakdown.hold}</span>
-                            <span>{t("Sell", "卖出")}: {analysisReport.analyst.breakdown.sell}</span>
+                          <div className="text-sm sm:text-xl font-bold text-emerald-400 mb-0.5 sm:mb-1 truncate">{t(analysisReport.analyst.consensus, analysisReport.analyst.consensus)}</div>
+                          <div className="text-[10px] text-slate-500 flex flex-wrap gap-x-1.5 sm:gap-x-2">
+                            <span>{t("B", "买")}:{analysisReport.analyst.breakdown.buy}</span>
+                            <span>{t("H", "持")}:{analysisReport.analyst.breakdown.hold}</span>
+                            <span>{t("S", "卖")}:{analysisReport.analyst.breakdown.sell}</span>
                           </div>
                         </div>
                       </div>
                     );
                   })()}
 
-                  {/* Quantitative Scores */}
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mt-3 sm:mt-4">
-                    <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-4">
-                      <div className="flex items-center gap-1.5 text-purple-400 mb-2">
-                        <ActivitySquare className="w-3.5 h-3.5 shrink-0" />
-                        <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider">{t("Technical", "技术面评分")}</span>
+                  {/* Quantitative Scores — 3-column horizontal strip on mobile */}
+                  <div className="grid grid-cols-3 gap-2 sm:gap-4 mt-2.5 sm:mt-4">
+                    <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-2.5 sm:p-4">
+                      <div className="flex items-center gap-1 text-purple-400 mb-1 sm:mb-2">
+                        <ActivitySquare className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" />
+                        <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider truncate">{t("Technical", "技术面")}</span>
                       </div>
-                      <div className="flex items-baseline gap-1.5">
-                        <span className="text-xl sm:text-2xl font-bold text-white">{analysisReport.technicalScore}</span>
-                        <span className="text-[10px] text-slate-500">/ 100</span>
+                      <div className="flex items-baseline gap-1">
+                        <span className="text-base sm:text-2xl font-bold text-white">{analysisReport.technicalScore}</span>
+                        <span className="text-[10px] text-slate-500">/100</span>
                       </div>
-                      <div className="w-full bg-slate-900 h-1.5 mt-2 rounded-full overflow-hidden">
+                      <div className="w-full bg-slate-900 h-1.5 mt-1.5 sm:mt-2 rounded-full overflow-hidden">
                         <div className="bg-purple-500 h-full rounded-full" style={{ width: `${analysisReport.technicalScore}%` }} />
                       </div>
                     </div>
 
-                    <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-4">
-                      <div className="flex items-center gap-1.5 text-amber-400 mb-2">
-                        <ShieldAlert className="w-3.5 h-3.5 shrink-0" />
-                        <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider">{t("Fundamental", "基本面评分")}</span>
+                    <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-2.5 sm:p-4">
+                      <div className="flex items-center gap-1 text-amber-400 mb-1 sm:mb-2">
+                        <ShieldAlert className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" />
+                        <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider truncate">{t("Fundamental", "基本面")}</span>
                       </div>
-                      <div className="flex items-baseline gap-1.5">
-                        <span className="text-xl sm:text-2xl font-bold text-white">{analysisReport.fundamentalScore}</span>
-                        <span className="text-[10px] text-slate-500">/ 100</span>
+                      <div className="flex items-baseline gap-1">
+                        <span className="text-base sm:text-2xl font-bold text-white">{analysisReport.fundamentalScore}</span>
+                        <span className="text-[10px] text-slate-500">/100</span>
                       </div>
-                      <div className="w-full bg-slate-900 h-1.5 mt-2 rounded-full overflow-hidden">
+                      <div className="w-full bg-slate-900 h-1.5 mt-1.5 sm:mt-2 rounded-full overflow-hidden">
                         <div className="bg-amber-500 h-full rounded-full" style={{ width: `${analysisReport.fundamentalScore}%` }} />
                       </div>
                     </div>
 
-                    <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-4">
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-1.5 text-blue-400">
-                          <Compass className="w-3.5 h-3.5 shrink-0" />
-                          <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider">{t("Sector Rotation", "板块动能评分")}</span>
+                    <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-2.5 sm:p-4">
+                      <div className="flex items-center justify-between mb-1 sm:mb-2">
+                        <div className="flex items-center gap-1 text-blue-400 min-w-0">
+                          <Compass className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" />
+                          <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider truncate">{t("Sector", "板块动能")}</span>
                         </div>
                         {analysisReport.sectorRotation && (
-                          <SectorWindBadge
-                            wind={analysisReport.sectorRotation.windStatus}
-                            quadrant={analysisReport.sectorRotation.quadrant}
-                            etf={analysisReport.sectorRotation.etf}
-                            subIndustryETF={analysisReport.sectorRotation.subIndustryETF}
-                            subIndustryName={analysisReport.sectorRotation.subIndustryName}
-                            subIndustryQuadrant={analysisReport.sectorRotation.subIndustryQuadrant}
-                            subIndustryWind={analysisReport.sectorRotation.subIndustryWind}
-                          />
+                          <div className="hidden sm:block">
+                            <SectorWindBadge
+                              wind={analysisReport.sectorRotation.windStatus}
+                              quadrant={analysisReport.sectorRotation.quadrant}
+                              etf={analysisReport.sectorRotation.etf}
+                              subIndustryETF={analysisReport.sectorRotation.subIndustryETF}
+                              subIndustryName={analysisReport.sectorRotation.subIndustryName}
+                              subIndustryQuadrant={analysisReport.sectorRotation.subIndustryQuadrant}
+                              subIndustryWind={analysisReport.sectorRotation.subIndustryWind}
+                            />
+                          </div>
                         )}
                       </div>
-                      <div className="flex items-baseline gap-1.5">
-                        <span className="text-xl sm:text-2xl font-bold text-white">{analysisReport.sectorScore ?? 50}</span>
-                        <span className="text-[10px] text-slate-500">/ 100</span>
+                      <div className="flex items-baseline gap-1">
+                        <span className="text-base sm:text-2xl font-bold text-white">{analysisReport.sectorScore ?? 50}</span>
+                        <span className="text-[10px] text-slate-500">/100</span>
                       </div>
-                      <div className="w-full bg-slate-900 h-1.5 mt-2 rounded-full overflow-hidden">
+                      <div className="w-full bg-slate-900 h-1.5 mt-1.5 sm:mt-2 rounded-full overflow-hidden">
                         <div className="bg-blue-500 h-full rounded-full" style={{ width: `${analysisReport.sectorScore ?? 50}%` }} />
                       </div>
                     </div>

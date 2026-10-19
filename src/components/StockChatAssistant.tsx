@@ -418,7 +418,7 @@ export default function StockChatAssistant({
                   setLayoutMode(layoutMode === "sidebar" ? "floating" : "sidebar");
                 }}
                 title={layoutMode === "sidebar" ? t("Switch to floating window", "切回浮窗模式") : t("Switch to 1/4 sidebar mode", "切到右侧 1/4 分屏模式")}
-                className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-xs text-emerald-400 border border-slate-700 rounded-lg transition-all flex items-center gap-1 font-mono shadow-sm"
+                className="hidden sm:flex px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-xs text-emerald-400 border border-slate-700 rounded-lg transition-all items-center gap-1 font-mono shadow-sm"
               >
                 {layoutMode === "sidebar" ? t("🔲 Float", "🔲 浮窗") : t("📐 1/4 Split", "📐 1/4分屏")}
               </button>
@@ -432,7 +432,7 @@ export default function StockChatAssistant({
           </div>
 
           {/* Conversation History */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-thin scrollbar-thumb-slate-800 scrollbar-track-transparent">
+          <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-3 sm:space-y-4 scrollbar-thin scrollbar-thumb-slate-800 scrollbar-track-transparent">
             {messages.length === 0 ? (
               <div className="h-full flex flex-col justify-center items-center text-center p-4">
                 <Sparkles className="w-10 h-10 text-emerald-400/50 mb-3" />
@@ -460,7 +460,7 @@ export default function StockChatAssistant({
                 </div>
               </div>
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-3 sm:space-y-4">
                 {messages.map((m, idx) => {
                   const isUser = m.role === "user";
                   const isLastUserMsg = isUser && (idx === messages.length - 1 || idx === messages.length - 2);
@@ -470,24 +470,24 @@ export default function StockChatAssistant({
                       ref={isLastUserMsg ? lastMessageRef : null}
                       className={`flex ${isUser ? "justify-end" : "justify-start"}`}
                     >
-                      <div className="max-w-[88%] flex flex-col spacing-y-1">
+                      <div className={`${isUser ? "max-w-[85%]" : "w-full sm:max-w-[88%]"} flex flex-col spacing-y-1`}>
                         {/* Role tag */}
-                        <span className={`text-[9px] font-semibold text-slate-500 mb-1 ${isUser ? "text-right" : "text-left"}`}>
+                        <span className={`text-[9px] font-semibold text-slate-500 mb-0.5 sm:mb-1 hidden sm:block ${isUser ? "text-right" : "text-left"}`}>
                           {isUser ? t("You", "您") : t("GEMS AI", "GEMS 助手")}
                         </span>
 
                         {/* Bubble */}
                         <div
-                          className={`px-4 py-2.5 rounded-2xl text-sm ${
+                          className={`${
                             isUser
-                              ? "bg-gradient-to-br from-teal-600 to-emerald-600 text-white rounded-tr-none shadow-md shadow-teal-500/10"
-                              : "bg-slate-900 border border-slate-800/80 text-slate-200 rounded-tl-none shadow-sm"
+                              ? "px-3.5 py-2 sm:px-4 sm:py-2.5 rounded-2xl text-xs sm:text-sm bg-gradient-to-br from-teal-600 to-emerald-600 text-white rounded-tr-none shadow-md shadow-teal-500/10"
+                              : "px-1 py-1 sm:px-4 sm:py-2.5 sm:rounded-2xl text-[13px] sm:text-sm bg-transparent sm:bg-slate-900 border-0 sm:border sm:border-slate-800/80 text-slate-200 sm:rounded-tl-none sm:shadow-sm"
                           }`}
                         >
                           {isUser ? (
                             <p className="whitespace-pre-wrap leading-relaxed">{m.content}</p>
                           ) : (
-                            <div className="prose prose-invert prose-xs text-slate-300">
+                            <div className="prose prose-invert prose-xs text-slate-300 max-w-none">
                               {parseMarkdownToReact(m.content)}
                             </div>
                           )}

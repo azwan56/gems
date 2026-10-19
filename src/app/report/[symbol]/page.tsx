@@ -216,30 +216,30 @@ export default function ReportPage() {
         </div>
 
         {/* A4 Page Container */}
-        <div id="report-content" className="max-w-[800px] mx-auto bg-white shadow-xl mt-3 sm:mt-8 mb-28 sm:mb-24 min-h-[1122px] p-4 sm:p-10 relative print:shadow-none print:m-0 print:mt-0 print:mb-0 print:max-w-none print:min-h-0 print:p-0">
+        <div id="report-content" className="max-w-[800px] mx-auto bg-white shadow-xl mt-2 sm:mt-8 mb-28 sm:mb-24 min-h-[1122px] p-3.5 sm:p-10 relative print:shadow-none print:m-0 print:mt-0 print:mb-0 print:max-w-none print:min-h-0 print:p-0">
           
           {/* Header */}
-          <header className="report-section border-b-2 border-blue-900 pb-4 sm:pb-6 mb-6 sm:mb-8 flex flex-col sm:flex-row sm:justify-between sm:items-end gap-2">
+          <header className="report-section border-b-2 border-blue-900 pb-3 sm:pb-6 mb-4 sm:mb-8 flex flex-col sm:flex-row sm:justify-between sm:items-end gap-1.5 sm:gap-2">
             <div>
-              <div className="flex items-center gap-2 mb-2">
-                <div className="w-8 h-8 bg-blue-600 rounded-md flex items-center justify-center">
-                  <Gem className="w-5 h-5 text-white" />
+              <div className="flex items-center gap-2 mb-1 sm:mb-2">
+                <div className="w-7 h-7 sm:w-8 sm:h-8 bg-blue-600 rounded-md flex items-center justify-center">
+                  <Gem className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
                 </div>
-                <h1 className="text-xl sm:text-2xl font-black text-blue-900 tracking-tight">GEMS QUANT</h1>
+                <h1 className="text-lg sm:text-2xl font-black text-blue-900 tracking-tight">GEMS QUANT</h1>
               </div>
-              <p className="text-xs sm:text-sm font-semibold text-slate-500 tracking-widest uppercase">{t("AI Investment Research Report", "AI 投资研究报告")}</p>
+              <p className="text-[11px] sm:text-sm font-semibold text-slate-500 tracking-widest uppercase">{t("AI Investment Research Report", "AI 投资研究报告")}</p>
             </div>
-            <div className="sm:text-right">
-              <p className="text-xs text-slate-400 font-mono">{t("Date", "日期")}: {new Date().toLocaleDateString(lang === "zh" ? "zh-CN" : "en-US")}</p>
-              <p className="text-xs text-slate-400 font-mono mt-1">{t("Strategy", "策略")}: {strategyLabel}</p>
+            <div className="flex sm:block items-center justify-between sm:text-right">
+              <p className="text-[11px] sm:text-xs text-slate-400 font-mono">{t("Date", "日期")}: {new Date().toLocaleDateString(lang === "zh" ? "zh-CN" : "en-US")}</p>
+              <p className="text-[11px] sm:text-xs text-slate-400 font-mono sm:mt-1">{t("Strategy", "策略")}: {strategyLabel}</p>
             </div>
           </header>
 
           {/* Company Title & Sector Badge */}
-          <div className="report-section flex justify-between items-start mb-6">
+          <div className="report-section flex justify-between items-start mb-4 sm:mb-6">
             <div>
               <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-                <h2 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">
+                <h2 className="text-2xl sm:text-4xl font-black text-slate-900 tracking-tight">
                   {report.symbol}
                 </h2>
                 {report.sectorRotation && (
@@ -256,7 +256,7 @@ export default function ReportPage() {
                   />
                 )}
               </div>
-              <p className="text-slate-500 mt-1 text-sm font-medium">
+              <p className="text-slate-500 mt-0.5 sm:mt-1 text-xs sm:text-sm font-medium">
                 {formatConsensus(report.analyst.consensus)} {t("Consensus Rating", "市场共识评级")}
               </p>
             </div>
@@ -271,90 +271,90 @@ export default function ReportPage() {
             const hasDual = Boolean(wsTarget && aiTarget && wsTarget !== aiTarget);
 
             return (
-              <div className={`report-section grid gap-3 sm:gap-4 mb-6 ${hasDual ? "grid-cols-1 sm:grid-cols-3 print:grid-cols-3" : "grid-cols-1 sm:grid-cols-2 print:grid-cols-2"}`}>
+              <div className={`report-section grid gap-2 sm:gap-4 mb-4 sm:mb-6 ${hasDual ? "grid-cols-3 print:grid-cols-3" : "grid-cols-2 print:grid-cols-2"}`}>
                 {/* Wall Street Consensus Target */}
-                <div className="border border-blue-200 bg-blue-50/40 rounded-xl p-4 flex flex-col justify-between">
+                <div className="border border-blue-200 bg-blue-50/40 rounded-xl p-2.5 sm:p-4 flex flex-col justify-between">
                   <div>
-                    <div className="flex items-center justify-between mb-1.5">
-                      <span className="text-xs font-bold text-blue-900 uppercase tracking-wider flex items-center gap-1.5">
-                        <Target className="w-3.5 h-3.5 text-blue-600" />
-                        {t("Wall St Target", "华尔街目标价")}
+                    <div className="flex items-center justify-between mb-1 sm:mb-1.5">
+                      <span className="text-[10px] sm:text-xs font-bold text-blue-900 uppercase tracking-wider flex items-center gap-1 truncate">
+                        <Target className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-blue-600 shrink-0" />
+                        <span className="truncate">{t("Wall St Target", "华尔街目标价")}</span>
                       </span>
                       {hasDual && (
-                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-100 text-blue-700 font-semibold border border-blue-200 font-mono">
+                        <span className="hidden sm:inline-block text-[10px] px-1.5 py-0.5 rounded bg-blue-100 text-blue-700 font-semibold border border-blue-200 font-mono">
                           {t("Consensus", "机构中位")}
                         </span>
                       )}
                     </div>
-                    <div className="flex items-baseline gap-2 mt-1">
-                      <span className="text-2xl font-black text-slate-900">
+                    <div className="flex flex-col sm:flex-row sm:items-baseline sm:gap-2 mt-0.5 sm:mt-1">
+                      <span className="text-base sm:text-2xl font-black text-slate-900 truncate">
                         {wsTarget || report.analyst.targetPrice}
                       </span>
-                      <span className={`text-sm font-bold font-mono ${(wsUpside || report.analyst.upside || "").startsWith("-") ? "text-rose-600" : "text-emerald-600"}`}>
+                      <span className={`text-[11px] sm:text-sm font-bold font-mono truncate ${(wsUpside || report.analyst.upside || "").startsWith("-") ? "text-rose-600" : "text-emerald-600"}`}>
                         {wsUpside || report.analyst.upside}
                       </span>
                     </div>
                   </div>
                   
-                  <div className="mt-3 pt-2 border-t border-blue-100 text-[11px] text-slate-500 flex justify-between items-center">
-                    <span>{t("Wall Street High", "机构最高价")}</span>
+                  <div className="mt-2 sm:mt-3 pt-1.5 sm:pt-2 border-t border-blue-100 text-[10px] sm:text-[11px] text-slate-500 flex justify-between items-center">
+                    <span className="truncate">{t("High", "最高")}</span>
                     <span className="font-bold text-slate-700 font-mono">
-                      {analystTarget?.targetHigh ? `$${analystTarget.targetHigh.toFixed(2)}` : "-"}
+                      {analystTarget?.targetHigh ? `$${analystTarget.targetHigh.toFixed(0)}` : "-"}
                     </span>
                   </div>
                 </div>
 
                 {/* AI Revaluation Target */}
                 {hasDual && (
-                  <div className="border border-purple-200 bg-purple-50/40 rounded-xl p-4 flex flex-col justify-between">
+                  <div className="border border-purple-200 bg-purple-50/40 rounded-xl p-2.5 sm:p-4 flex flex-col justify-between">
                     <div>
-                      <div className="flex items-center justify-between mb-1.5">
-                        <span className="text-xs font-bold text-purple-900 uppercase tracking-wider flex items-center gap-1.5">
-                          <Sparkles className="w-3.5 h-3.5 text-purple-600" />
-                          {t("AI Fair Value", "AI 基本面重估")}
+                      <div className="flex items-center justify-between mb-1 sm:mb-1.5">
+                        <span className="text-[10px] sm:text-xs font-bold text-purple-900 uppercase tracking-wider flex items-center gap-1 truncate">
+                          <Sparkles className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-purple-600 shrink-0" />
+                          <span className="truncate">{t("AI Fair Value", "AI 重估")}</span>
                         </span>
-                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-purple-100 text-purple-700 font-semibold border border-purple-200 font-mono">
+                        <span className="hidden sm:inline-block text-[10px] px-1.5 py-0.5 rounded bg-purple-100 text-purple-700 font-semibold border border-purple-200 font-mono">
                           {t("Forward Model", "前瞻测算")}
                         </span>
                       </div>
-                      <div className="flex items-baseline gap-2 mt-1">
-                        <span className="text-2xl font-black text-slate-900">
+                      <div className="flex flex-col sm:flex-row sm:items-baseline sm:gap-2 mt-0.5 sm:mt-1">
+                        <span className="text-base sm:text-2xl font-black text-slate-900 truncate">
                           {aiTarget}
                         </span>
-                        <span className={`text-sm font-bold font-mono ${(aiUpside || "").startsWith("-") ? "text-rose-600" : "text-emerald-600"}`}>
+                        <span className={`text-[11px] sm:text-sm font-bold font-mono truncate ${(aiUpside || "").startsWith("-") ? "text-rose-600" : "text-emerald-600"}`}>
                           {aiUpside}
                         </span>
                       </div>
                     </div>
                     
-                    <div className="mt-3 pt-2 border-t border-purple-100 text-[11px] text-slate-500 flex justify-between items-center">
-                      <span>{t("Valuation Basis", "测算基准")}</span>
-                      <span className="font-medium text-purple-800">{t("Multi-Factor DCF", "多因子内在价值")}</span>
+                    <div className="mt-2 sm:mt-3 pt-1.5 sm:pt-2 border-t border-purple-100 text-[10px] sm:text-[11px] text-slate-500 flex justify-between items-center">
+                      <span className="truncate">{t("Basis", "基准")}</span>
+                      <span className="font-medium text-purple-800 truncate">{t("DCF", "多因子")}</span>
                     </div>
                   </div>
                 )}
 
                 {/* Market Consensus Breakdown */}
-                <div className="border border-slate-200 bg-slate-50/60 rounded-xl p-4 flex flex-col justify-between">
+                <div className="border border-slate-200 bg-slate-50/60 rounded-xl p-2.5 sm:p-4 flex flex-col justify-between">
                   <div>
-                    <div className="flex items-center justify-between mb-1.5">
-                      <span className="text-xs font-bold text-slate-600 uppercase tracking-wider flex items-center gap-1.5">
-                        <Users className="w-3.5 h-3.5 text-slate-500" />
-                        {t("Consensus", "市场共识")}
+                    <div className="flex items-center justify-between mb-1 sm:mb-1.5">
+                      <span className="text-[10px] sm:text-xs font-bold text-slate-600 uppercase tracking-wider flex items-center gap-1 truncate">
+                        <Users className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-slate-500 shrink-0" />
+                        <span className="truncate">{t("Consensus", "市场共识")}</span>
                       </span>
-                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-200 text-slate-700 font-semibold">
+                      <span className="hidden sm:inline-block text-[10px] px-1.5 py-0.5 rounded bg-slate-200 text-slate-700 font-semibold">
                         {t("Institutional", "机构覆盖")}
                       </span>
                     </div>
-                    <div className="text-xl font-bold text-emerald-700 mt-1">
+                    <div className="text-sm sm:text-xl font-bold text-emerald-700 mt-0.5 sm:mt-1 truncate">
                       {formatConsensus(report.analyst.consensus)}
                     </div>
                   </div>
 
-                  <div className="mt-3 pt-2 border-t border-slate-200 text-[11px] text-slate-500 flex justify-between items-center font-mono">
-                    <span className="text-emerald-700 font-medium">{t("Buy", "买入")}: {report.analyst.breakdown.buy}</span>
-                    <span className="text-slate-600 font-medium">{t("Hold", "持有")}: {report.analyst.breakdown.hold}</span>
-                    <span className="text-rose-600 font-medium">{t("Sell", "卖出")}: {report.analyst.breakdown.sell}</span>
+                  <div className="mt-2 sm:mt-3 pt-1.5 sm:pt-2 border-t border-slate-200 text-[10px] sm:text-[11px] text-slate-500 flex justify-between items-center font-mono">
+                    <span className="text-emerald-700 font-medium">{t("B", "买")}:{report.analyst.breakdown.buy}</span>
+                    <span className="text-slate-600 font-medium">{t("H", "持")}:{report.analyst.breakdown.hold}</span>
+                    <span className="text-rose-600 font-medium">{t("S", "卖")}:{report.analyst.breakdown.sell}</span>
                   </div>
                 </div>
               </div>
@@ -362,53 +362,56 @@ export default function ReportPage() {
           })()}
 
           {/* Scores */}
-          <div className="report-section grid grid-cols-1 sm:grid-cols-3 print:grid-cols-3 gap-3 sm:gap-4 mb-6">
-            <div className="border border-purple-200 rounded-xl p-4 bg-gradient-to-br from-purple-50 to-white relative overflow-hidden print:bg-purple-50">
-              <div className="flex justify-between items-start mb-2">
-                <h3 className="text-xs font-bold text-slate-600 uppercase flex items-center gap-1.5">
-                  <ActivitySquare className="w-3.5 h-3.5 text-purple-600" /> {t("Technical Score", "技术面评分")}
+          <div className="report-section grid grid-cols-3 print:grid-cols-3 gap-2 sm:gap-4 mb-4 sm:mb-6">
+            <div className="border border-purple-200 rounded-xl p-2.5 sm:p-4 bg-gradient-to-br from-purple-50 to-white relative overflow-hidden print:bg-purple-50">
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start mb-1.5 sm:mb-2">
+                <h3 className="text-[10px] sm:text-xs font-bold text-slate-600 uppercase flex items-center gap-1 truncate">
+                  <ActivitySquare className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-purple-600 shrink-0" />
+                  <span className="truncate">{t("Technical", "技术面")}</span>
                 </h3>
-                <div className="flex items-baseline gap-1">
-                  <span className="text-2xl font-black text-purple-900">{report.technicalScore}</span>
-                  <span className="text-[10px] text-slate-400">/ 100</span>
+                <div className="flex items-baseline gap-1 mt-0.5 sm:mt-0">
+                  <span className="text-base sm:text-2xl font-black text-purple-900">{report.technicalScore}</span>
+                  <span className="text-[10px] text-slate-400">/100</span>
                 </div>
               </div>
               <div className="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden">
                 <div className="bg-purple-600 h-full rounded-full" style={{ width: `${report.technicalScore}%` }} />
               </div>
-              <p className="text-[11px] text-slate-500 mt-2 font-medium">{t("Momentum & Trend Analysis", "动量与趋势分析")}</p>
+              <p className="text-[10px] sm:text-[11px] text-slate-500 mt-1.5 sm:mt-2 font-medium hidden sm:block">{t("Momentum & Trend Analysis", "动量与趋势分析")}</p>
             </div>
 
-            <div className="border border-amber-200 rounded-xl p-4 bg-gradient-to-br from-amber-50 to-white relative overflow-hidden print:bg-amber-50">
-              <div className="flex justify-between items-start mb-2">
-                <h3 className="text-xs font-bold text-slate-600 uppercase flex items-center gap-1.5">
-                  <TrendingUp className="w-3.5 h-3.5 text-amber-600" /> {t("Fundamental Score", "基本面评分")}
+            <div className="border border-amber-200 rounded-xl p-2.5 sm:p-4 bg-gradient-to-br from-amber-50 to-white relative overflow-hidden print:bg-amber-50">
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start mb-1.5 sm:mb-2">
+                <h3 className="text-[10px] sm:text-xs font-bold text-slate-600 uppercase flex items-center gap-1 truncate">
+                  <TrendingUp className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-amber-600 shrink-0" />
+                  <span className="truncate">{t("Fundamental", "基本面")}</span>
                 </h3>
-                <div className="flex items-baseline gap-1">
-                  <span className="text-2xl font-black text-amber-900">{report.fundamentalScore}</span>
-                  <span className="text-[10px] text-slate-400">/ 100</span>
+                <div className="flex items-baseline gap-1 mt-0.5 sm:mt-0">
+                  <span className="text-base sm:text-2xl font-black text-amber-900">{report.fundamentalScore}</span>
+                  <span className="text-[10px] text-slate-400">/100</span>
                 </div>
               </div>
               <div className="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden">
                 <div className="bg-amber-600 h-full rounded-full" style={{ width: `${report.fundamentalScore}%` }} />
               </div>
-              <p className="text-[11px] text-slate-500 mt-2 font-medium">{t("Profitability & Growth", "盈利能力与成长性指标")}</p>
+              <p className="text-[10px] sm:text-[11px] text-slate-500 mt-1.5 sm:mt-2 font-medium hidden sm:block">{t("Profitability & Growth", "盈利能力与成长性指标")}</p>
             </div>
 
-            <div className="border border-blue-200 rounded-xl p-4 bg-gradient-to-br from-blue-50 to-white relative overflow-hidden print:bg-blue-50">
-              <div className="flex justify-between items-start mb-2">
-                <h3 className="text-xs font-bold text-slate-600 uppercase flex items-center gap-1.5">
-                  <Compass className="w-3.5 h-3.5 text-blue-600" /> {t("Sector Rotation", "板块动能评分")}
+            <div className="border border-blue-200 rounded-xl p-2.5 sm:p-4 bg-gradient-to-br from-blue-50 to-white relative overflow-hidden print:bg-blue-50">
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start mb-1.5 sm:mb-2">
+                <h3 className="text-[10px] sm:text-xs font-bold text-slate-600 uppercase flex items-center gap-1 truncate">
+                  <Compass className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-blue-600 shrink-0" />
+                  <span className="truncate">{t("Sector", "板块动能")}</span>
                 </h3>
-                <div className="flex items-baseline gap-1">
-                  <span className="text-2xl font-black text-blue-900">{report.sectorScore ?? 50}</span>
-                  <span className="text-[10px] text-slate-400">/ 100</span>
+                <div className="flex items-baseline gap-1 mt-0.5 sm:mt-0">
+                  <span className="text-base sm:text-2xl font-black text-blue-900">{report.sectorScore ?? 50}</span>
+                  <span className="text-[10px] text-slate-400">/100</span>
                 </div>
               </div>
               <div className="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden">
                 <div className="bg-blue-600 h-full rounded-full" style={{ width: `${report.sectorScore ?? 50}%` }} />
               </div>
-              <p className="text-[11px] text-slate-500 mt-2 font-medium truncate">
+              <p className="text-[10px] sm:text-[11px] text-slate-500 mt-1.5 sm:mt-2 font-medium truncate hidden sm:block">
                 {report.sectorRotation?.subIndustryName || report.sectorRotation?.sectorName || t("Macro Sector", "宏观板块")} · RRG {report.sectorRotation?.subIndustryQuadrant || report.sectorRotation?.quadrant || t("Neutral", "中性")}
               </p>
             </div>
