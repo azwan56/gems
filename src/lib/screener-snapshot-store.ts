@@ -69,7 +69,12 @@ let firestoreDb: FirebaseFirestore.Firestore | null | undefined = undefined;
 async function getFirestoreDb(): Promise<FirebaseFirestore.Firestore | null> {
   if (firestoreDb !== undefined) return firestoreDb;
 
-  if (!process.env.FIREBASE_SERVICE_ACCOUNT_KEY) {
+  if (
+    !process.env.FIREBASE_SERVICE_ACCOUNT_KEY &&
+    !process.env.K_SERVICE &&
+    !process.env.GOOGLE_CLOUD_PROJECT &&
+    !process.env.GCP_PROJECT_ID
+  ) {
     firestoreDb = null;
     return null;
   }

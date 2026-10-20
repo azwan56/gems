@@ -9,12 +9,12 @@ import { getAuth, type Auth } from "firebase/auth";
 import { getFirestore, type Firestore } from "firebase/firestore";
 
 const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "AIzaSyBd55Vunk0gixXv9HO5XE5Ey_wyim59uh4",
   authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || "dailystockrpt.firebaseapp.com",
   projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || "dailystockrpt",
   storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || "dailystockrpt.firebasestorage.app",
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || "91000643407",
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || "1:91000643407:web:3205521bc141d34a99af3a",
 };
 
 let app: FirebaseApp | null = null;
