@@ -13,7 +13,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { loadStockPool } from "@/lib/stock-pool-store";
-import { applyFilters } from "@/lib/screener-engine";
+import { applyFilters, enrichStockScores } from "@/lib/screener-engine";
 import { getStrategyPreset } from "@/lib/strategies";
 import { loadSAList } from "@/lib/seeking-alpha-store";
 import { StockMetrics } from "@/lib/types";
@@ -27,8 +27,16 @@ import {
 import { fanOutScreenerAlerts } from "@/lib/webhook-notifier";
 import { isTradingDay } from "@/lib/market-calendar";
 
-// All strategies to monitor (including seeking_alpha)
-const MONITORED_STRATEGIES = ["value", "large_growth", "small_growth", "seeking_alpha"] as const;
+// All 7 strategies to monitor (including seeking_alpha)
+const MONITORED_STRATEGIES = [
+  "value",
+  "large_growth",
+  "small_growth",
+  "garp",
+  "wide_moat",
+  "short_term_catalyst",
+  "seeking_alpha",
+] as const;
 
 export const maxDuration = 60;
 
@@ -93,6 +101,10 @@ export async function GET(request: NextRequest) {
       console.warn("[screener-alert] Failed to load SA list, skipping SA strategy.");
     }
 
+    // Pre-enrich stocks with computed scores (fundamentalScore, technicalScore, totalScore)
+    // so strategies that filter on fundamentalScore (e.g. value) evaluate accurately.
+    const enrichedPoolStocks = pool.stocks.map((s) => enrichStockScores(s));
+
     // ---- Run screener + diff for each strategy ----
     const allDiffs: ScreenerDiff[] = [];
     let totalAdded = 0;
@@ -108,10 +120,10 @@ export async function GET(request: NextRequest) {
         // SA strategy: match pool stocks against the SA symbol list
         // No quantitative filters — the "screener result" IS the SA list
         const saSet = new Set(saSymbols.map((s) => s.toUpperCase()));
-        filtered = pool.stocks.filter((s) => saSet.has(s.symbol.toUpperCase()));
+        filtered = enrichedPoolStocks.filter((s) => saSet.has(s.symbol.toUpperCase()));
       } else {
-        // Normal strategy: apply default filters
-        filtered = applyFilters(pool.stocks, preset.defaultFilters);
+        // Normal strategy: apply default filters on enriched stocks
+        filtered = applyFilters(enrichedPoolStocks, preset.defaultFilters);
       }
 
       // Load previous snapshot
