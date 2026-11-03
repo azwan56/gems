@@ -10,14 +10,38 @@ import json
 import tarfile
 import tempfile
 import dotenv
+import google.auth
+from google.auth.exceptions import DefaultCredentialsError
+from google.oauth2.credentials import Credentials
 from google.cloud import storage
 import googleapiclient.discovery
 from googleapiclient.errors import HttpError
 
-# Load .env from Gems/stock-screener and fallback from daily-mkt-rpt
+# Load .env from Gems/stock-screener and fallback from parent daily-mkt-rpt repo
 screener_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+parent_repo_dir = os.path.abspath(os.path.join(screener_dir, '..'))
 dotenv.load_dotenv(os.path.join(screener_dir, '.env'))
+dotenv.load_dotenv(os.path.join(parent_repo_dir, 'backend', '.env'))
+dotenv.load_dotenv(os.path.join(parent_repo_dir, '.env'))
 dotenv.load_dotenv('/Users/azwan/Projects/daily-mkt-rpt/.env')
+
+def resolve_gcp_credentials():
+    """Use ADC if configured; otherwise fall back to authenticated Firebase CLI user token."""
+    try:
+        creds, _ = google.auth.default(scopes=['https://www.googleapis.com/auth/cloud-platform'])
+        return creds
+    except DefaultCredentialsError:
+        fb_cfg = os.path.expanduser('~/.config/configstore/firebase-tools.json')
+        if os.path.exists(fb_cfg):
+            with open(fb_cfg, 'r') as f:
+                fb_data = json.load(f)
+            access_token = fb_data.get('tokens', {}).get('access_token')
+            if access_token:
+                print("🔑 Using authenticated Firebase CLI credentials...")
+                return Credentials(token=access_token)
+        raise
+
+gcp_creds = resolve_gcp_credentials()
 
 PROJECT_ID = os.getenv('GCP_PROJECT_ID', 'dailystockrpt')
 REGION = os.getenv('GCP_REGION', 'us-central1')
@@ -61,7 +85,7 @@ print(f"Created source archive: {os.path.getsize(tmp_tar_path):,} bytes.")
 
 # Step 2: Upload to Cloud Storage
 print(f"📤 [2/5] Uploading archive to gs://{BUCKET_NAME}/{object_name}...")
-storage_client = storage.Client(project=PROJECT_ID)
+storage_client = storage.Client(project=PROJECT_ID, credentials=gcp_creds)
 bucket = storage_client.bucket(BUCKET_NAME)
 blob = bucket.blob(object_name)
 blob.chunk_size = 5 * 1024 * 1024
@@ -71,7 +95,7 @@ print("Upload completed successfully!")
 
 # Step 3: Trigger Cloud Build
 print("⚡ [3/5] Submitting container build to Google Cloud Build API...")
-cb_client = googleapiclient.discovery.build('cloudbuild', 'v1', cache_discovery=False)
+cb_client = googleapiclient.discovery.build('cloudbuild', 'v1', credentials=gcp_creds, cache_discovery=False)
 
 build_body = {
     'source': {
@@ -113,20 +137,39 @@ while True:
 
 # Step 4: Deploy to Cloud Run via Cloud Run v2 API
 print("\n🚀 [4/5] Deploying container image to GCP Cloud Run via v2 API...")
-run_client = googleapiclient.discovery.build('run', 'v2', cache_discovery=False)
+run_client = googleapiclient.discovery.build('run', 'v2', credentials=gcp_creds, cache_discovery=False)
 
-fmp_key = os.getenv('FMP_API_KEY', '')
-gemini_key = os.getenv('GEMINI_API_KEY', '')
-vault_secret = os.getenv('ALIYUN_VAULT_SECRET', 'Zhangjiang2025@@@')
-sa_key = os.getenv('FIREBASE_SERVICE_ACCOUNT_KEY', '')
-dailystock_api_url = 'https://gems-backend-oc26gauvga-uc.a.run.app/api'
+parent = f"projects/{PROJECT_ID}/locations/{REGION}"
+service_full_name = f"{parent}/services/{SERVICE_NAME}"
+
+existing = None
+existing_env = {}
+try:
+    existing = run_client.projects().locations().services().get(name=service_full_name).execute()
+    containers = existing.get("template", {}).get("containers", [])
+    if containers:
+        existing_env = {
+            e["name"]: e["value"]
+            for e in containers[0].get("env", [])
+            if "name" in e and "value" in e
+        }
+except HttpError as e:
+    if e.resp.status != 404:
+        raise
+
+fmp_key = os.getenv('FMP_API_KEY') or existing_env.get('FMP_API_KEY', '')
+gemini_key = os.getenv('GEMINI_API_KEY') or existing_env.get('GEMINI_API_KEY', '')
+vault_secret = os.getenv('ALIYUN_VAULT_SECRET') or existing_env.get('ALIYUN_VAULT_SECRET', 'Zhangjiang2025@@@')
+sa_key = os.getenv('FIREBASE_SERVICE_ACCOUNT_KEY') or existing_env.get('FIREBASE_SERVICE_ACCOUNT_KEY', '')
+dailystock_api_url = existing_env.get('DAILYSTOCK_API_URL') or 'https://gems-backend-oc26gauvga-uc.a.run.app/api'
+effective_cron_secret = os.getenv('CRON_SECRET') or existing_env.get('CRON_SECRET') or CRON_SECRET
 
 env_list = [
     {"name": "GOOGLE_CLOUD_PROJECT", "value": PROJECT_ID},
     {"name": "GCP_PROJECT_ID", "value": PROJECT_ID},
     {"name": "FMP_API_KEY", "value": fmp_key},
     {"name": "GEMINI_API_KEY", "value": gemini_key},
-    {"name": "CRON_SECRET", "value": CRON_SECRET},
+    {"name": "CRON_SECRET", "value": effective_cron_secret},
     {"name": "ALIYUN_VAULT_SECRET", "value": vault_secret},
     {"name": "DAILYSTOCK_API_URL", "value": dailystock_api_url},
     {"name": "NEXT_PUBLIC_PYTHON_BACKEND_URL", "value": "https://gems-backend-oc26gauvga-uc.a.run.app"},
@@ -136,9 +179,6 @@ env_list = [
 ]
 if sa_key:
     env_list.append({"name": "FIREBASE_SERVICE_ACCOUNT_KEY", "value": sa_key})
-
-parent = f"projects/{PROJECT_ID}/locations/{REGION}"
-service_full_name = f"{parent}/services/{SERVICE_NAME}"
 
 service_body = {
     "ingress": "INGRESS_TRAFFIC_ALL",
@@ -164,23 +204,19 @@ service_body = {
     }
 }
 
-try:
-    existing = run_client.projects().locations().services().get(name=service_full_name).execute()
+if existing is not None:
     print(f"Updating existing Cloud Run service: {service_full_name}...")
     op = run_client.projects().locations().services().patch(
         name=service_full_name,
         body=service_body
     ).execute()
-except HttpError as e:
-    if e.resp.status == 404:
-        print(f"Creating new Cloud Run service: {service_full_name}...")
-        op = run_client.projects().locations().services().create(
-            parent=parent,
-            serviceId=SERVICE_NAME,
-            body=service_body
-        ).execute()
-    else:
-        raise
+else:
+    print(f"Creating new Cloud Run service: {service_full_name}...")
+    op = run_client.projects().locations().services().create(
+        parent=parent,
+        serviceId=SERVICE_NAME,
+        body=service_body
+    ).execute()
 
 # Wait for Cloud Run operation to finish
 op_name = op.get("name")
@@ -215,7 +251,7 @@ print(f"🌐 Cloud Run Service URL: {service_url}")
 
 # Step 5: Configure the 12 Cron Jobs in Google Cloud Scheduler via API
 print("\n⏰ [5/5] Configuring 12 Cron Jobs in Google Cloud Scheduler...")
-sched_client = googleapiclient.discovery.build('cloudscheduler', 'v1', cache_discovery=False)
+sched_client = googleapiclient.discovery.build('cloudscheduler', 'v1', credentials=gcp_creds, cache_discovery=False)
 
 with open(os.path.join(screener_dir, "vercel.json"), "r") as f:
     vercel_cfg = json.load(f)

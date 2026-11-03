@@ -7,7 +7,8 @@ import {
   Gem, ArrowLeft, Star, Activity, BrainCircuit, LineChart, 
   ChevronRight, CheckCircle2, AlertCircle, Loader2, Play, Sparkles,
   FileText, X, Target, ShieldAlert, Zap, TrendingUp, Users, Languages,
-  RefreshCw, Database, Cloud, BookOpen, Plus, Trash2, HelpCircle, Download, ExternalLink, ActivitySquare, Rocket, Compass
+  RefreshCw, Database, Cloud, BookOpen, Plus, Trash2, HelpCircle, Download, ExternalLink, ActivitySquare, Rocket, Compass,
+  LayoutGrid, Table2
 } from "lucide-react";
 import type { StockMetrics, FilterCriterion, ScreenerResponse, StrategyType, StrategyPreset } from "@/lib/types";
 import type { StockAnalysisReport } from "@/lib/analysis-engine";
@@ -18,6 +19,7 @@ import PremiumGate from "@/components/PremiumGate";
 import StockChatAssistant from "@/components/StockChatAssistant";
 import { SectorWindBadge } from "@/components/SectorWindBadge";
 import RrgQuadrantChart from "@/components/RrgQuadrantChart";
+import QuickThesisDialog from "@/components/QuickThesisDialog";
 import { TermTooltip, TextWithTooltips } from "@/components/TermTooltip";
 
 import { DEFAULT_STRATEGY_PRESETS } from "@/lib/strategy-constants";
@@ -142,6 +144,7 @@ export default function FunnelScreenerPage() {
 
   // Sector Tactical Posture Filter in Step 1
   const [postureFilter, setPostureFilter] = useState<string>("all");
+  const [step1ViewMode, setStep1ViewMode] = useState<"focus" | "table">("focus");
 
   const postureCounts = useMemo(() => {
     const counts: Record<string, number> = {
@@ -869,12 +872,146 @@ export default function FunnelScreenerPage() {
                       <span className="w-1.5 h-1.5 rounded-full bg-rose-400" />
                       {t("Avoid", "严格规避")} ({postureCounts.AVOID})
                     </button>
+
+                    {/* Desktop View Toggle: Focus Signal Cards vs Full Quant Table */}
+                    <div className="hidden md:inline-flex items-center p-0.5 rounded-lg bg-slate-950 border border-slate-800 ml-auto">
+                      <button
+                        type="button"
+                        onClick={() => setStep1ViewMode("focus")}
+                        className={`px-2.5 py-1 rounded-md text-xs font-semibold flex items-center gap-1 transition-all cursor-pointer ${
+                          step1ViewMode === "focus" ? "bg-slate-800 text-cyan-300" : "text-slate-400 hover:text-slate-200"
+                        }`}
+                      >
+                        <LayoutGrid className="w-3.5 h-3.5" />
+                        <span>{t("Focus Cards", "聚焦信号卡")}</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setStep1ViewMode("table")}
+                        className={`px-2.5 py-1 rounded-md text-xs font-semibold flex items-center gap-1 transition-all cursor-pointer ${
+                          step1ViewMode === "table" ? "bg-slate-800 text-cyan-300" : "text-slate-400 hover:text-slate-200"
+                        }`}
+                      >
+                        <Table2 className="w-3.5 h-3.5" />
+                        <span>{t("Full Table", "完整量化表")}</span>
+                      </button>
+                    </div>
                   </div>
 
-                  {/* Desktop Table View */}
-                  <div className="hidden md:block border border-slate-800 rounded-xl bg-slate-900/50 overflow-x-auto">
+                  {/* Desktop Focus Signal Grid (Default: avoids overwhelming 11-column tables) */}
+                  {step1ViewMode === "focus" && (
+                    <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-3 gap-3.5 vp-contain-section">
+                      {displayedStocks.map((s) => {
+                        const isSelected = selectedInStep1.has(s.symbol);
+                        const entryInfo = getStockEntryInfo(s, isSA, undefined, saEntryDates, saEntryPrices);
+                        const firstEntryDate = entryInfo.firstEntryDate;
+                        const firstEntryPrice =
+                          saEntryPrices[s.symbol.toUpperCase()] ||
+                          historicalPrices[s.symbol]?.[firstEntryDate] ||
+                          entryInfo.firstEntryPrice;
+                        const totalReturnPct = firstEntryPrice > 0 ? ((s.price - firstEntryPrice) / firstEntryPrice) * 100 : 0;
+
+                        return (
+                          <div
+                            key={s.symbol}
+                            onClick={() => toggleSelection(1, s.symbol)}
+                            className={`vp-contain-card rounded-xl border p-4 transition-all cursor-pointer flex flex-col justify-between gap-3 ${
+                              isSelected
+                                ? "border-blue-500 bg-blue-950/20 ring-1 ring-blue-500/40"
+                                : "border-slate-800 bg-slate-900/70 hover:border-cyan-500/40 hover:bg-slate-900"
+                            }`}
+                          >
+                            <div>
+                              <div className="flex items-start justify-between gap-2 mb-2">
+                                <div className="flex items-center gap-2 min-w-0">
+                                  <input
+                                    type="checkbox"
+                                    className="w-4 h-4 rounded border-slate-600 bg-slate-800 accent-blue-500 cursor-pointer shrink-0"
+                                    checked={isSelected}
+                                    onChange={() => {}}
+                                  />
+                                  <div className="min-w-0">
+                                    <div className="flex items-center gap-1.5 flex-wrap">
+                                      <span className="text-base font-extrabold text-white">{s.symbol}</span>
+                                      <SectorWindBadge
+                                        wind={s.sectorWind}
+                                        quadrant={s.sectorQuadrant}
+                                        etf={s.sectorETF}
+                                        sectorName={s.sector}
+                                        subIndustryETF={s.subIndustryETF}
+                                        subIndustryName={s.subIndustryName}
+                                        subIndustryQuadrant={s.subIndustryQuadrant}
+                                        subIndustryWind={s.subIndustryWind}
+                                      />
+                                    </div>
+                                    <p className="text-xs text-slate-400 truncate max-w-[190px]">{s.companyName}</p>
+                                  </div>
+                                </div>
+
+                                <div className="text-right shrink-0 font-mono">
+                                  <div className="text-base font-extrabold text-white">${s.price.toFixed(2)}</div>
+                                  <span
+                                    className={`inline-block px-1.5 py-0.5 rounded text-[11px] font-bold ${
+                                      totalReturnPct >= 0
+                                        ? "bg-emerald-500/15 text-emerald-400"
+                                        : "bg-rose-500/15 text-rose-400"
+                                    }`}
+                                  >
+                                    {totalReturnPct >= 0 ? `+${totalReturnPct.toFixed(1)}%` : `${totalReturnPct.toFixed(1)}%`}
+                                  </span>
+                                </div>
+                              </div>
+
+                              {/* Core Strategy Indicators (4 high-signal metrics) */}
+                              <div className="grid grid-cols-2 gap-1.5 pt-2 border-t border-slate-800/70">
+                                {step1Columns.map((c) => (
+                                  <div
+                                    key={c.key}
+                                    className="rounded-lg bg-slate-950/70 border border-slate-800/80 px-2.5 py-1.5 flex items-center justify-between gap-1"
+                                  >
+                                    <span className="text-[11px] text-slate-400 truncate">
+                                      {c.term ? <TermTooltip term={c.term}>{c.label}</TermTooltip> : c.label}
+                                    </span>
+                                    <span className="text-xs font-mono font-bold text-slate-200 shrink-0">
+                                      {formatNum(s[c.key as keyof StockMetrics] as number, c.suffix)}
+                                    </span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+
+                            <div className="flex items-center justify-between pt-2 border-t border-slate-800/70 text-xs">
+                              <span className="text-slate-500 font-mono">
+                                {formatMarketCap(s.marketCap)} · {firstEntryDate}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  openAnalysis(s);
+                                }}
+                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-cyan-500/15 hover:bg-cyan-500/25 border border-cyan-500/35 text-cyan-300 font-bold transition-colors cursor-pointer"
+                              >
+                                <FileText className="w-3.5 h-3.5" />
+                                <span>{t("5s Thesis", "速览逻辑")}</span>
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {/* Desktop Full Semantic Table View (with sticky headers & container query support) */}
+                  {step1ViewMode === "table" && (
+                  <div
+                    tabIndex={0}
+                    role="region"
+                    aria-label={t("Quantitative Screener Full Metrics Table", "定量选股完整财务指标表")}
+                    className="hidden md:block vp-table-region border border-slate-800 rounded-xl bg-slate-900/50"
+                  >
                     <table className="w-full text-sm text-left">
-                      <thead className="bg-slate-800/80 text-slate-400">
+                      <thead className="bg-slate-900 text-slate-400 border-b border-slate-800">
                         <tr>
                           <th className="p-4 w-12 text-center rounded-tl-xl">{t("Select", "选择")}</th>
                           <th className="p-4 font-semibold">{t("Symbol", "代码")}</th>
@@ -915,7 +1052,7 @@ export default function FunnelScreenerPage() {
                                   onChange={() => toggleSelection(1, s.symbol)}
                                 />
                               </td>
-                              <td className="p-4 font-bold text-white">
+                              <th scope="row" className="p-4 font-bold text-white">
                                 <div className="flex items-center gap-2">
                                   <span>{s.symbol}</span>
                                   <SectorWindBadge
@@ -929,7 +1066,7 @@ export default function FunnelScreenerPage() {
                                     subIndustryWind={s.subIndustryWind}
                                   />
                                 </div>
-                              </td>
+                              </th>
                               <td className="p-4 text-slate-300">{s.companyName}</td>
                               <td className="p-4 font-mono text-slate-300 text-xs">
                                 <span className="block text-slate-400">{firstEntryDate}</span>
@@ -967,10 +1104,10 @@ export default function FunnelScreenerPage() {
                                     e.stopPropagation();
                                     openAnalysis(s);
                                   }}
-                                  className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/30 text-blue-300 text-xs font-semibold transition-colors whitespace-nowrap"
+                                  className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/30 text-blue-300 text-xs font-semibold transition-colors whitespace-nowrap cursor-pointer"
                                 >
                                   <FileText className="w-3.5 h-3.5" />
-                                  <span>{t("AI Report", "AI 研报")}</span>
+                                  <span>{t("5s Thesis", "速览逻辑")}</span>
                                 </button>
                               </td>
                             </tr>
@@ -979,6 +1116,7 @@ export default function FunnelScreenerPage() {
                       </tbody>
                     </table>
                   </div>
+                  )}
 
                   {/* Mobile Card View */}
                   <div className="md:hidden space-y-2.5 pb-16">
@@ -1449,397 +1587,20 @@ export default function FunnelScreenerPage() {
         </div>
       </div>
 
-      {/* AI Deep Analysis Slide-out Panel */}
-      {analyzingStock && (
-        <div className="fixed inset-0 z-[100] flex justify-end overflow-hidden overscroll-contain">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setAnalyzingStock(null)} />
-          <div className="relative w-full sm:max-w-2xl h-full bg-slate-900 border-l border-slate-800 shadow-2xl overflow-y-auto overscroll-contain animate-in slide-in-from-right duration-300">
-            {/* Panel Header */}
-            <div className="sticky top-0 z-10 bg-slate-900/80 backdrop-blur-md border-b border-slate-800 px-4 sm:px-8 py-4 sm:py-6 flex justify-between items-start">
-              <div>
-                <div className="flex items-center gap-2 sm:gap-3 mb-1 sm:mb-2">
-                  <h2 className="text-2xl sm:text-3xl font-bold text-white">{analyzingStock.symbol}</h2>
-                  <span className="px-2 sm:px-2.5 py-0.5 sm:py-1 rounded bg-slate-800 text-slate-300 text-[10px] sm:text-xs font-mono border border-slate-700">{analyzingStock.sector}</span>
-                </div>
-                <p className="text-xs sm:text-sm text-slate-400 line-clamp-1">{analyzingStock.companyName}</p>
-              </div>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setChatOpenKey((prev) => prev + 1)}
-                  className="px-3 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-lg text-sm font-semibold flex items-center gap-1.5 transition-all shadow-md shadow-emerald-500/20"
-                  title={t("Ask AI Assistant about " + analyzingStock.symbol, "向 AI 选股助手提问关于 " + analyzingStock.symbol)}
-                >
-                  <Sparkles className="w-4 h-4 text-emerald-200" />
-                  <span>{t("AI Assistant", "AI 选股助手")}</span>
-                </button>
-                {analysisReport && (
-                  <button
-                    onClick={async () => {
-                      if (shareCardUrl && analyzingStock) {
-                        const { downloadShareCard } = await import("@/lib/share-card");
-                        downloadShareCard(shareCardUrl, analyzingStock.symbol);
-                      }
-                    }}
-                    disabled={!shareCardUrl || isGeneratingCard}
-                    className="px-3 py-2 bg-emerald-600 hover:bg-emerald-500 disabled:bg-slate-800 disabled:text-slate-500 text-white rounded-lg text-sm font-semibold flex items-center gap-1.5 transition-colors"
-                    title={t("Download Share Card", "下载分享卡片")}
-                  >
-                    {isGeneratingCard ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
-                    {t("Share", "分享")}
-                  </button>
-                )}
-                <button onClick={() => setAnalyzingStock(null)} className="p-1.5 sm:p-2 rounded-full hover:bg-slate-800 text-slate-400 hover:text-white transition-colors">
-                  <X className="w-5 h-5 sm:w-6 sm:h-6" />
-                </button>
-              </div>
-            </div>
-
-            {/* Panel Content */}
-            <div className="px-3.5 sm:px-8 py-3.5 sm:py-6 space-y-4 sm:space-y-8 pb-20">
-              {analysisLoading ? (
-                <div className="flex flex-col items-center justify-center py-16">
-                  <Loader2 className="w-8 h-8 text-blue-400 animate-spin mb-4" />
-                  <p className="text-slate-400 text-sm">{t("Generating investment analysis...", "正在生成投资分析报告...")}</p>
-                </div>
-              ) : analysisReport ? (
-                <>
-                  {/* Analyst Pricing & Targets: Dual Wall Street Consensus + AI Fair Value */}
-                  {(() => {
-                    const wsTarget = analysisReport.analyst.wallStreetTargetPrice;
-                    const wsUpside = analysisReport.analyst.wallStreetUpside;
-                    const aiTarget = analysisReport.analyst.aiTargetPrice;
-                    const aiUpside = analysisReport.analyst.aiUpside;
-                    const hasDual = Boolean(wsTarget && aiTarget && wsTarget !== aiTarget);
-
-                    return (
-                      <div className={`grid gap-2 sm:gap-4 ${hasDual ? "grid-cols-3" : "grid-cols-2"}`}>
-                        {/* Wall Street Consensus Target */}
-                        <div className="bg-gradient-to-br from-blue-950/40 to-slate-900/60 border border-blue-500/20 rounded-xl p-2.5 sm:p-4">
-                          <div className="flex items-center justify-between mb-1 sm:mb-2">
-                            <div className="flex items-center gap-1 text-blue-400 min-w-0">
-                              <Target className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" />
-                              <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider truncate">{t("Wall St Target", "华尔街目标价")}</span>
-                            </div>
-                            {hasDual && (
-                              <span className="hidden sm:inline-block text-[9px] px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-300 font-mono border border-blue-500/20">
-                                {t("Consensus", "机构中位")}
-                              </span>
-                            )}
-                          </div>
-                          <div className="text-base sm:text-2xl font-bold text-white truncate">
-                            {wsTarget || analysisReport.analyst.targetPrice}
-                          </div>
-                          <div className={`text-[11px] sm:text-xs font-semibold mt-0.5 sm:mt-1 font-mono truncate ${(wsUpside || analysisReport.analyst.upside || "").startsWith("-") ? "text-rose-400" : "text-emerald-400"}`}>
-                            {wsUpside || analysisReport.analyst.upside}
-                          </div>
-                        </div>
-
-                        {/* AI Revaluation Target (shown when dual targets exist) */}
-                        {hasDual && (
-                          <div className="bg-gradient-to-br from-purple-950/40 to-slate-900/60 border border-purple-500/20 rounded-xl p-2.5 sm:p-4">
-                            <div className="flex items-center justify-between mb-1 sm:mb-2">
-                              <div className="flex items-center gap-1 text-purple-400 min-w-0">
-                                <Sparkles className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" />
-                                <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider truncate">{t("AI Fair Value", "AI 重估")}</span>
-                              </div>
-                              <span className="hidden sm:inline-block text-[9px] px-1.5 py-0.5 rounded bg-purple-500/10 text-purple-300 font-mono border border-purple-500/20">
-                                {t("Forward Model", "前瞻测算")}
-                              </span>
-                            </div>
-                            <div className="text-base sm:text-2xl font-bold text-white truncate">
-                              {aiTarget}
-                            </div>
-                            <div className={`text-[11px] sm:text-xs font-semibold mt-0.5 sm:mt-1 font-mono truncate ${(aiUpside || "").startsWith("-") ? "text-rose-400" : "text-emerald-400"}`}>
-                              {aiUpside}
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Market Consensus Breakdown */}
-                        <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-2.5 sm:p-4">
-                          <div className="flex items-center gap-1 text-slate-400 mb-1 sm:mb-2">
-                            <Users className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" />
-                            <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider truncate">{t("Consensus", "市场共识")}</span>
-                          </div>
-                          <div className="text-sm sm:text-xl font-bold text-emerald-400 mb-0.5 sm:mb-1 truncate">{t(analysisReport.analyst.consensus, analysisReport.analyst.consensus)}</div>
-                          <div className="text-[10px] text-slate-500 flex flex-wrap gap-x-1.5 sm:gap-x-2">
-                            <span>{t("B", "买")}:{analysisReport.analyst.breakdown.buy}</span>
-                            <span>{t("H", "持")}:{analysisReport.analyst.breakdown.hold}</span>
-                            <span>{t("S", "卖")}:{analysisReport.analyst.breakdown.sell}</span>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })()}
-
-                  {/* Quantitative Scores — 3-column horizontal strip on mobile */}
-                  <div className="grid grid-cols-3 gap-2 sm:gap-4 mt-2.5 sm:mt-4">
-                    <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-2.5 sm:p-4">
-                      <div className="flex items-center gap-1 text-purple-400 mb-1 sm:mb-2">
-                        <ActivitySquare className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" />
-                        <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider truncate">{t("Technical", "技术面")}</span>
-                      </div>
-                      <div className="flex items-baseline gap-1">
-                        <span className="text-base sm:text-2xl font-bold text-white">{analysisReport.technicalScore}</span>
-                        <span className="text-[10px] text-slate-500">/100</span>
-                      </div>
-                      <div className="w-full bg-slate-900 h-1.5 mt-1.5 sm:mt-2 rounded-full overflow-hidden">
-                        <div className="bg-purple-500 h-full rounded-full" style={{ width: `${analysisReport.technicalScore}%` }} />
-                      </div>
-                    </div>
-
-                    <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-2.5 sm:p-4">
-                      <div className="flex items-center gap-1 text-amber-400 mb-1 sm:mb-2">
-                        <ShieldAlert className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" />
-                        <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider truncate">{t("Fundamental", "基本面")}</span>
-                      </div>
-                      <div className="flex items-baseline gap-1">
-                        <span className="text-base sm:text-2xl font-bold text-white">{analysisReport.fundamentalScore}</span>
-                        <span className="text-[10px] text-slate-500">/100</span>
-                      </div>
-                      <div className="w-full bg-slate-900 h-1.5 mt-1.5 sm:mt-2 rounded-full overflow-hidden">
-                        <div className="bg-amber-500 h-full rounded-full" style={{ width: `${analysisReport.fundamentalScore}%` }} />
-                      </div>
-                    </div>
-
-                    <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-2.5 sm:p-4">
-                      <div className="flex items-center justify-between mb-1 sm:mb-2">
-                        <div className="flex items-center gap-1 text-blue-400 min-w-0">
-                          <Compass className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" />
-                          <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider truncate">{t("Sector", "板块动能")}</span>
-                        </div>
-                        {analysisReport.sectorRotation && (
-                          <div className="hidden sm:block">
-                            <SectorWindBadge
-                              wind={analysisReport.sectorRotation.windStatus}
-                              quadrant={analysisReport.sectorRotation.quadrant}
-                              etf={analysisReport.sectorRotation.etf}
-                              subIndustryETF={analysisReport.sectorRotation.subIndustryETF}
-                              subIndustryName={analysisReport.sectorRotation.subIndustryName}
-                              subIndustryQuadrant={analysisReport.sectorRotation.subIndustryQuadrant}
-                              subIndustryWind={analysisReport.sectorRotation.subIndustryWind}
-                            />
-                          </div>
-                        )}
-                      </div>
-                      <div className="flex items-baseline gap-1">
-                        <span className="text-base sm:text-2xl font-bold text-white">{analysisReport.sectorScore ?? 50}</span>
-                        <span className="text-[10px] text-slate-500">/100</span>
-                      </div>
-                      <div className="w-full bg-slate-900 h-1.5 mt-1.5 sm:mt-2 rounded-full overflow-hidden">
-                        <div className="bg-blue-500 h-full rounded-full" style={{ width: `${analysisReport.sectorScore ?? 50}%` }} />
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Overview */}
-                  <section>
-                    <h3 className="text-sm font-bold text-slate-300 uppercase tracking-widest mb-3 flex items-center gap-2">
-                      <FileText className="w-4 h-4 text-blue-400" /> {t("Company Overview", "公司概况")}
-                    </h3>
-                    <p className="text-slate-400 text-sm leading-relaxed">
-                      <TextWithTooltips text={analysisReport.overview} />
-                    </p>
-                  </section>
-
-                  {/* Fundamentals */}
-                  <section>
-                    <h3 className="text-sm font-bold text-slate-300 uppercase tracking-widest mb-3 flex items-center gap-2">
-                      <TrendingUp className="w-4 h-4 text-emerald-400" /> {t("Fundamentals", "基本面")}
-                    </h3>
-                    <p className="text-slate-400 text-sm leading-relaxed">
-                      <TextWithTooltips text={analysisReport.fundamentals} />
-                    </p>
-                  </section>
-
-                  {/* Products & Services */}
-                  <section>
-                    <h3 className="text-sm font-bold text-slate-300 uppercase tracking-widest mb-3 flex items-center gap-2">
-                      <Activity className="w-4 h-4 text-purple-400" /> {t("Products & Services", "产品与服务")}
-                    </h3>
-                    <p className="text-slate-400 text-sm leading-relaxed">
-                      <TextWithTooltips text={analysisReport.products} />
-                    </p>
-                  </section>
-
-                  {/* Top-Down Sector Rotation Validation */}
-                  {analysisReport.sectorRotation && (
-                    <section className="bg-blue-500/5 border border-blue-500/15 rounded-xl p-4 sm:p-5">
-                      <div className="flex flex-wrap items-center justify-between gap-2 mb-2.5">
-                        <h3 className="text-sm font-bold text-blue-400 uppercase tracking-widest flex items-center gap-2">
-                          <Compass className="w-4 h-4" /> {t("Sector Rotation Context", "自上而下板块大势与宏观契合度")}
-                        </h3>
-                        <div className="flex items-center gap-2">
-                          <button
-                            onClick={() => {
-                              setRrgHighlight({
-                                etf: analysisReport.sectorRotation?.etf,
-                                subEtf: analysisReport.sectorRotation?.subIndustryETF,
-                                symbol: analyzingStock?.symbol,
-                              });
-                              setShowRrgModal(true);
-                            }}
-                            className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-blue-600/20 hover:bg-blue-600/30 border border-blue-500/40 text-blue-300 text-xs transition-colors font-medium"
-                            title="在 RRG 四象限图中查看当前标的的板块及细分赛道动能位置"
-                          >
-                            <Compass className="w-3.5 h-3.5 text-blue-400" />
-                            <span>在四象限图中定位</span>
-                          </button>
-                          <SectorWindBadge
-                            wind={analysisReport.sectorRotation.windStatus}
-                            quadrant={analysisReport.sectorRotation.quadrant}
-                            etf={analysisReport.sectorRotation.etf}
-                            subIndustryETF={analysisReport.sectorRotation.subIndustryETF}
-                            subIndustryName={analysisReport.sectorRotation.subIndustryName}
-                            subIndustryQuadrant={analysisReport.sectorRotation.subIndustryQuadrant}
-                            subIndustryWind={analysisReport.sectorRotation.subIndustryWind}
-                            size="md"
-                          />
-                        </div>
-                      </div>
-                      <p className="text-slate-300 text-sm leading-relaxed mb-3">
-                        <TextWithTooltips text={analysisReport.sectorRotation.advice} />
-                      </p>
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs pt-2 border-t border-slate-800/80">
-                        <div>
-                          <span className="text-slate-500 block text-[10px]">{t("Sector / Sub-Industry", "所属大类 / 细分")}</span>
-                          <strong className="text-slate-200">
-                            {analysisReport.sectorRotation.subIndustryName
-                              ? `${analysisReport.sectorRotation.subIndustryName} (${analysisReport.sectorRotation.sectorName})`
-                              : analysisReport.sectorRotation.sectorName}
-                          </strong>
-                        </div>
-                        <div>
-                          <span className="text-slate-500 block text-[10px]">{t("Benchmark ETFs", "追踪 ETF (细分 / 大类)")}</span>
-                          <strong className="text-blue-400 font-mono">
-                            {analysisReport.sectorRotation.subIndustryETF
-                              ? `${analysisReport.sectorRotation.subIndustryETF} / ${analysisReport.sectorRotation.etf}`
-                              : analysisReport.sectorRotation.etf}
-                          </strong>
-                        </div>
-                        <div>
-                          <span className="text-slate-500 block text-[10px]">{t("RRG Quadrant", "RRG 轮动象限")}</span>
-                          <strong className="text-slate-200">
-                            {analysisReport.sectorRotation.subIndustryQuadrant
-                              ? `${analysisReport.sectorRotation.subIndustryQuadrant} (大类: ${analysisReport.sectorRotation.quadrant})`
-                              : analysisReport.sectorRotation.quadrant}
-                          </strong>
-                        </div>
-                        <div>
-                          <span className="text-slate-500 block text-[10px]">{t("Tactical Posture", "战术姿态")}</span>
-                          <strong className="text-slate-200">{analysisReport.sectorRotation.action}</strong>
-                        </div>
-                      </div>
-                    </section>
-                  )}
-
-                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 pt-2 sm:pt-4">
-                    {/* Rationale */}
-                    <section className="bg-emerald-500/5 border border-emerald-500/10 rounded-xl p-5">
-                      <h3 className="text-sm font-bold text-emerald-400 uppercase tracking-widest mb-3 flex items-center gap-2">
-                        <Zap className="w-4 h-4" /> {t("Why We Like It", "看多理由")}
-                      </h3>
-                      <ul className="space-y-2 text-sm text-slate-400">
-                        {analysisReport.rationale.map((line, i) => (
-                          <li key={i} className="flex gap-2">
-                            <span className="text-emerald-500 mt-0.5">•</span>
-                            <span className="leading-relaxed">
-                              <TextWithTooltips text={line} />
-                            </span>
-                          </li>
-                        ))}
-                      </ul>
-                    </section>
-
-                    {/* Risks */}
-                    <section className="bg-red-500/5 border border-red-500/10 rounded-xl p-5">
-                      <h3 className="text-sm font-bold text-red-400 uppercase tracking-widest mb-3 flex items-center gap-2">
-                        <ShieldAlert className="w-4 h-4" /> {t("Key Risks", "主要风险")}
-                      </h3>
-                      <ul className="space-y-2 text-sm text-slate-400">
-                        {analysisReport.risks.map((line, i) => (
-                          <li key={i} className="flex gap-2">
-                            <span className="text-red-500 mt-0.5">•</span>
-                            <span className="leading-relaxed">
-                              <TextWithTooltips text={line} />
-                            </span>
-                          </li>
-                        ))}
-                      </ul>
-                    </section>
-                    
-                    {/* Catalysts */}
-                    {analysisReport.catalysts && analysisReport.catalysts.length > 0 && (
-                      <section className="bg-blue-500/5 border border-blue-500/10 rounded-xl p-5">
-                        <h3 className="text-sm font-bold text-blue-400 uppercase tracking-widest mb-3 flex items-center gap-2">
-                          <Rocket className="w-4 h-4" /> {t("Catalysts", "核心催化剂")}
-                        </h3>
-                        <ul className="space-y-2 text-sm text-slate-400">
-                          {analysisReport.catalysts.map((line, i) => (
-                            <li key={i} className="flex gap-2">
-                              <span className="text-blue-500 mt-0.5">•</span>
-                              <span className="leading-relaxed">
-                                <TextWithTooltips text={line} />
-                              </span>
-                            </li>
-                          ))}
-                        </ul>
-                      </section>
-                    )}
-                  </div>
-
-                  {/* Share Card Section */}
-                  <div className="mt-8 pt-6 border-t border-slate-800">
-                    <div className="flex justify-between items-end mb-4">
-                      <div>
-                        <h3 className="text-lg font-bold text-white mb-1">{t("Share Report", "分享报告")}</h3>
-                        <p className="text-sm text-slate-400">{t("Download this deep dive as a shareable image.", "将此深度研报下载为图片分享。")}</p>
-                      </div>
-                      <div className="flex flex-col sm:flex-row gap-3">
-                        <Link
-                          href={`/report/${analyzingStock.symbol}?strategy=${strategyId}&lang=${lang}`}
-                          target="_blank"
-                          className="px-4 py-2 border border-slate-700 hover:bg-slate-800 text-slate-300 rounded-lg font-semibold flex items-center justify-center gap-2 transition-colors"
-                        >
-                          <FileText className="w-4 h-4" />
-                          {t("Full PDF Report", "完整 PDF 研报")}
-                        </Link>
-                        <button
-                          onClick={async () => {
-                            if (shareCardUrl && analyzingStock) {
-                              const { downloadShareCard } = await import("@/lib/share-card");
-                              downloadShareCard(shareCardUrl, analyzingStock.symbol);
-                            }
-                          }}
-                          disabled={!shareCardUrl || isGeneratingCard}
-                          className="px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:bg-slate-800 disabled:text-slate-500 text-white rounded-lg font-semibold flex items-center justify-center gap-2 transition-colors"
-                        >
-                          {isGeneratingCard ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
-                          {t("Download Card", "下载分享卡片")}
-                        </button>
-                      </div>
-                    </div>
-                    <div className="bg-slate-950 border border-slate-800 rounded-xl p-4 flex justify-center overflow-hidden relative">
-                      {isGeneratingCard ? (
-                         <div className="flex flex-col items-center justify-center py-12">
-                           <Loader2 className="w-6 h-6 text-blue-400 animate-spin mb-3" />
-                           <p className="text-sm text-slate-500">{t("Generating high-res card...", "正在生成高清分享卡片...")}</p>
-                         </div>
-                      ) : shareCardUrl ? (
-                         <img src={shareCardUrl} alt="Share Card Preview" className="max-w-full h-auto rounded-lg border border-slate-800 shadow-2xl" style={{ maxHeight: "400px" }} />
-                      ) : (
-                         <div className="py-12 text-slate-600 text-sm">{t("Card preview unavailable", "暂无预览")}</div>
-                      )}
-                    </div>
-                  </div>
-                </>
-              ) : (
-                <div className="text-center py-16 text-slate-500">{t("Failed to load analysis.", "分析报告加载失败。")}</div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Native <dialog closedby="any"> Slide-out Thesis Drawer */}
+      <QuickThesisDialog
+        stock={analyzingStock}
+        strategyId={strategyId}
+        strategyLabel={preset ? (lang === "en" ? preset.name : preset.nameZh) : strategyId}
+        onClose={() => setAnalyzingStock(null)}
+        inWatchlist={analyzingStock ? watchlist.has(analyzingStock.symbol) : false}
+        onToggleWatchlist={user?.uid ? (sym) => addToPortfolio(sym) : undefined}
+        onAskAi={() => setChatOpenKey((prev) => prev + 1)}
+        onLocateRrg={(ctx) => {
+          setRrgHighlight(ctx);
+          setShowRrgModal(true);
+        }}
+      />
       {/* RRG Quadrant Chart Modal Dialog */}
       {showRrgModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">

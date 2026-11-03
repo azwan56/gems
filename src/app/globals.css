@@ -151,3 +151,196 @@ html[data-theme="light"] :is(
     display: none;
   }
 }
+
+/* ============================================================
+   Vanpower 2.0 Modern Web Primitives:
+   1. Native <dialog> modal scroll containment & top-layer motion
+   2. Container-query responsive tables with sticky context
+   3. CSS content-visibility layout containment for complex grids
+   ============================================================ */
+
+dialog:modal {
+  overscroll-behavior: contain;
+}
+
+dialog::backdrop {
+  overflow: hidden;
+  overscroll-behavior: contain;
+  background-color: rgb(2 6 23 / 0);
+  backdrop-filter: blur(0px);
+  transition-property: background-color, backdrop-filter, display, overlay;
+  transition-duration: 0.26s;
+  transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  transition-behavior: allow-discrete;
+}
+
+dialog.vp-drawer {
+  margin: 0 0 0 auto;
+  max-height: 100dvh;
+  height: 100dvh;
+  max-width: min(42rem, 100vw);
+  width: 100%;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: inherit;
+  opacity: 0;
+  transform: translateX(1.75rem);
+  transition-property: opacity, transform, display, overlay;
+  transition-duration: 0.26s;
+  transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  transition-behavior: allow-discrete;
+}
+
+dialog.vp-modal-center {
+  margin: auto;
+  max-width: min(56rem, calc(100vw - 1.5rem));
+  max-height: min(88dvh, 52rem);
+  width: 100%;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: inherit;
+  opacity: 0;
+  transform: scale(0.96);
+  transition-property: opacity, transform, display, overlay;
+  transition-duration: 0.24s;
+  transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  transition-behavior: allow-discrete;
+}
+
+:is(dialog.vp-drawer[open], dialog.vp-modal-center[open]):where(:not([data-closing])) {
+  opacity: 1;
+  transform: none;
+
+  @starting-style {
+    opacity: 0;
+    transform: translateX(1.5rem);
+  }
+
+  &::backdrop {
+    background-color: rgb(2 6 23 / 0.68);
+    backdrop-filter: blur(4px);
+
+    @starting-style {
+      background-color: rgb(2 6 23 / 0);
+      backdrop-filter: blur(0px);
+    }
+  }
+}
+
+:is(dialog.vp-modal-center[open]):where(:not([data-closing])) {
+  @starting-style {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  dialog.vp-drawer,
+  dialog.vp-modal-center,
+  dialog::backdrop {
+    transform: none;
+    transition-duration: 0.08s;
+  }
+
+  @starting-style {
+    dialog.vp-drawer[open],
+    dialog.vp-modal-center[open] {
+      transform: none;
+    }
+  }
+}
+
+/* Responsive semantic table container */
+.vp-table-region {
+  overflow: auto;
+  max-inline-size: 100%;
+  max-block-size: min(72vh, 760px);
+  container-type: inline-size;
+}
+
+.vp-table-region table {
+  border-collapse: separate;
+  border-spacing: 0;
+  width: 100%;
+}
+
+.vp-table-region thead {
+  position: sticky;
+  inset-block-start: 0;
+  z-index: 2;
+}
+
+.vp-table-region tbody th[scope="row"] {
+  position: sticky;
+  inset-inline-start: 0;
+  z-index: 1;
+  background-color: var(--color-slate-900, #0f172a);
+}
+
+@container (width < 640px) {
+  .vp-table-region.vp-table-stackable table,
+  .vp-table-region.vp-table-stackable thead,
+  .vp-table-region.vp-table-stackable tbody,
+  .vp-table-region.vp-table-stackable tr,
+  .vp-table-region.vp-table-stackable th,
+  .vp-table-region.vp-table-stackable td {
+    display: block;
+  }
+
+  .vp-table-region.vp-table-stackable thead {
+    display: none;
+  }
+
+  .vp-table-region.vp-table-stackable tbody tr {
+    margin-block-end: 0.75rem;
+    border: 1px solid rgba(51, 65, 85, 0.7);
+    border-radius: 0.75rem;
+    overflow: hidden;
+    background: rgba(15, 23, 42, 0.75);
+  }
+
+  .vp-table-region.vp-table-stackable tbody th[scope="row"] {
+    position: sticky;
+    inset-block-start: 0;
+    z-index: 2;
+    padding: 0.65rem 0.85rem;
+    border-bottom: 1px solid rgba(51, 65, 85, 0.6);
+  }
+
+  .vp-table-region.vp-table-stackable tbody td[data-label] {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.5rem 0.85rem;
+  }
+
+  .vp-table-region.vp-table-stackable tbody td[data-label]::before {
+    content: attr(data-label) ": ";
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--color-slate-400, #94a3b8);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+}
+
+/* Complex-layout rendering isolation to keep INP snappy */
+.vp-contain-section {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 340px auto 520px;
+}
+
+.vp-contain-card {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 320px auto 260px;
+}
+
+@supports not (content-visibility: auto) {
+  .vp-contain-section,
+  .vp-contain-card {
+    contain: layout style paint;
+  }
+}

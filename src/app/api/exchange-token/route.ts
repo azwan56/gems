@@ -12,15 +12,41 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ensureInitialized } from "@/lib/firebase";
 
+const ALLOWED_ORIGINS = new Set([
+  "https://dailystock.vanpower.live",
+  "https://dailystockrpt.web.app",
+  "https://dailystockrpt.firebaseapp.com",
+  "https://gems.vanpower.live",
+]);
+
+function withCors(response: NextResponse, origin: string | null) {
+  if (origin && ALLOWED_ORIGINS.has(origin)) {
+    response.headers.set("Access-Control-Allow-Origin", origin);
+    response.headers.set("Vary", "Origin");
+  }
+  response.headers.set("Access-Control-Allow-Methods", "POST, OPTIONS");
+  response.headers.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  return response;
+}
+
+export async function OPTIONS(request: NextRequest) {
+  const origin = request.headers.get("origin");
+  return withCors(new NextResponse(null, { status: 204 }), origin);
+}
+
 export async function POST(request: NextRequest) {
+  const origin = request.headers.get("origin");
   try {
     const body = await request.json();
     const { idToken } = body;
 
     if (!idToken || typeof idToken !== "string") {
-      return NextResponse.json(
-        { error: "MISSING_TOKEN", message: "idToken is required" },
-        { status: 400 }
+      return withCors(
+        NextResponse.json(
+          { error: "MISSING_TOKEN", message: "idToken is required" },
+          { status: 400 }
+        ),
+        origin
       );
     }
 
@@ -32,32 +58,32 @@ export async function POST(request: NextRequest) {
     const decodedToken = await adminAuth.verifyIdToken(idToken);
     const uid = decodedToken.uid;
 
-    // Create a custom token for this user so the Gems client can sign in
+    // Create a custom token for this user so the client can sign in across subdomains
     const customToken = await adminAuth.createCustomToken(uid);
 
-    return NextResponse.json({ customToken });
+    return withCors(NextResponse.json({ customToken }), origin);
   } catch (error) {
     const errCode = (error as { code?: string })?.code || "UNKNOWN";
     const errMsg = error instanceof Error ? error.message : String(error);
     console.error(`exchange-token failed [${errCode}]:`, errMsg);
 
-    // Distinguish between expired and otherwise-invalid tokens so the
-    // client can show an appropriate message (e.g. "please log in again"
-    // vs a generic "authentication failed" toast).
     const isExpired =
       errCode === "auth/id-token-expired" ||
       errMsg.includes("expired") ||
       errMsg.includes("Firebase ID token has expired");
 
-    return NextResponse.json(
-      {
-        error: isExpired ? "TOKEN_EXPIRED" : "TOKEN_EXCHANGE_FAILED",
-        code: errCode,
-        message: isExpired
-          ? "The authentication token has expired. Please log in again on DailyStock and retry."
-          : errMsg,
-      },
-      { status: 401 }
+    return withCors(
+      NextResponse.json(
+        {
+          error: isExpired ? "TOKEN_EXPIRED" : "TOKEN_EXCHANGE_FAILED",
+          code: errCode,
+          message: isExpired
+            ? "The authentication token has expired. Please log in again and retry."
+            : errMsg,
+        },
+        { status: 401 }
+      ),
+      origin
     );
   }
 }
