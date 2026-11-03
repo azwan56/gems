@@ -60,6 +60,36 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 
 /** paid and super users have premium access */
 const PREMIUM_PLANS: PlanType[] = ["paid", "super"];
+const PROFILE_CACHE_PREFIX = "gems_profile_v1_";
+
+function getSafeIdToken(fbUser: User | null, forceRefresh = false, timeoutMs = 2200): Promise<string | null> {
+  if (!fbUser) return Promise.resolve(null);
+  return Promise.race([
+    fbUser.getIdToken(forceRefresh).catch(() => null),
+    new Promise<null>((resolve) => setTimeout(() => resolve(null), timeoutMs)),
+  ]);
+}
+
+function readCachedProfile(uid: string): UserProfile | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = localStorage.getItem(`${PROFILE_CACHE_PREFIX}${uid}`);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as UserProfile;
+    if (parsed && parsed.uid === uid) {
+      const { isPremium, isExpired } = isPlanPremium(parsed.planType || "trial", parsed.planEndDate);
+      return { ...parsed, isPremium, isExpired };
+    }
+  } catch {}
+  return null;
+}
+
+function writeCachedProfile(profile: UserProfile): void {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(`${PROFILE_CACHE_PREFIX}${profile.uid}`, JSON.stringify(profile));
+  } catch {}
+}
 
 function isPlanPremium(planType: PlanType, planEndDate?: string): { isPremium: boolean; isExpired: boolean } {
   if (!PREMIUM_PLANS.includes(planType)) {
@@ -84,20 +114,56 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch or create user profile from Firestore
+  // Fetch or create user profile via same-origin API first (avoids browser firestore.googleapis.com stalls),
+  // with a fast client-Firestore fallback
   const loadUserProfile = useCallback(async (fbUser: User): Promise<UserProfile> => {
+    const token = await getSafeIdToken(fbUser, false, 2000);
+    if (token) {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 3500);
+      try {
+        const res = await fetch("/api/user-profile", {
+          headers: { Authorization: `Bearer ${token}` },
+          signal: controller.signal,
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data?.profile) {
+            const resolved: UserProfile = {
+              uid: fbUser.uid,
+              email: fbUser.email || data.profile.email || null,
+              displayName: fbUser.displayName || data.profile.displayName || null,
+              photoURL: fbUser.photoURL || data.profile.photoURL || null,
+              planType: (data.profile.planType as PlanType) || "trial",
+              isPremium: Boolean(data.profile.isPremium),
+              planEndDate: data.profile.planEndDate,
+              isExpired: Boolean(data.profile.isExpired),
+            };
+            writeCachedProfile(resolved);
+            return resolved;
+          }
+        }
+      } catch {
+        // Fall through to bounded Firestore lookup
+      } finally {
+        clearTimeout(timer);
+      }
+    }
+
     const db = getClientDb();
     const userRef = doc(db, "users", fbUser.uid);
-    const snap = await getDoc(userRef);
+    const snap = await Promise.race([
+      getDoc(userRef),
+      new Promise<null>((resolve) => setTimeout(() => resolve(null), 2500)),
+    ]);
 
-    if (snap.exists()) {
+    if (snap && snap.exists()) {
       const data = snap.data();
-      // DailyStock uses `plan_type` field with values: trial, paid, super
       const planType = (data.plan_type as PlanType) || "trial";
       const planEndDate = data.plan_end_date as string | undefined;
       const { isPremium, isExpired } = isPlanPremium(planType, planEndDate);
 
-      return {
+      const resolved: UserProfile = {
         uid: fbUser.uid,
         email: fbUser.email,
         displayName: fbUser.displayName || data.displayName || null,
@@ -107,13 +173,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         planEndDate,
         isExpired,
       };
+      writeCachedProfile(resolved);
+      return resolved;
+    }
+
+    if (!snap) {
+      // Both network paths timed out: return cached profile or safe non-blocking fallback
+      return (
+        readCachedProfile(fbUser.uid) || {
+          uid: fbUser.uid,
+          email: fbUser.email,
+          displayName: fbUser.displayName,
+          photoURL: fbUser.photoURL,
+          planType: "trial",
+          isPremium: false,
+          isExpired: false,
+        }
+      );
     }
 
     // New user from Gems — create minimal profile
-    // IMPORTANT: Do NOT set `watchlist` or other DailyStock fields here,
-    // as merge:true would still overwrite arrays on existing documents.
     const now = new Date();
-    const trialEnd = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000); // 30 days trial
+    const trialEnd = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
     const planEndDate = trialEnd.toISOString().split("T")[0];
 
     const newProfile = {
@@ -123,9 +204,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       registered_from: "gems",
       created_at: serverTimestamp(),
     };
-    await setDoc(userRef, newProfile, { merge: true });
+    await Promise.race([
+      setDoc(userRef, newProfile, { merge: true }),
+      new Promise((resolve) => setTimeout(resolve, 2000)),
+    ]);
 
-    return {
+    const created: UserProfile = {
       uid: fbUser.uid,
       email: fbUser.email,
       displayName: fbUser.displayName,
@@ -135,6 +219,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       planEndDate,
       isExpired: false,
     };
+    writeCachedProfile(created);
+    return created;
   }, []);
 
   // Handle cross-subdomain auth token from DailyStock
@@ -204,9 +290,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  // Listen to auth state changes
+  // Listen to auth state changes (with hard 2.2s unlock guarantee)
   useEffect(() => {
     const auth = getClientAuth();
+    const unlockTimer = setTimeout(() => {
+      setLoading(false);
+    }, 2200);
 
     // First try cross-subdomain auth, then listen for state changes
     handleCrossSubdomainAuth();
@@ -214,27 +303,46 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
       setFirebaseUser(fbUser);
       if (fbUser) {
+        const cached = readCachedProfile(fbUser.uid);
+        if (cached) {
+          setUser(cached);
+          clearTimeout(unlockTimer);
+          setLoading(false);
+        }
         try {
           const profile = await loadUserProfile(fbUser);
           setUser(profile);
         } catch (err) {
           console.error("Failed to load user profile:", err);
-          setUser(null);
+          if (!cached) {
+            setUser({
+              uid: fbUser.uid,
+              email: fbUser.email,
+              displayName: fbUser.displayName,
+              photoURL: fbUser.photoURL,
+              planType: "trial",
+              isPremium: false,
+              isExpired: false,
+            });
+          }
         }
       } else {
         setUser(null);
       }
+      clearTimeout(unlockTimer);
       setLoading(false);
     });
 
-    return () => unsubscribe();
+    return () => {
+      clearTimeout(unlockTimer);
+      unsubscribe();
+    };
   }, [loadUserProfile, handleCrossSubdomainAuth]);
 
   // ---- Auth methods ----
 
   const getIdToken = useCallback(async (): Promise<string | null> => {
-    if (!firebaseUser) return null;
-    return firebaseUser.getIdToken();
+    return getSafeIdToken(firebaseUser, false, 2500);
   }, [firebaseUser]);
 
   const signInWithGoogle = useCallback(async () => {

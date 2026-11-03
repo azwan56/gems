@@ -402,22 +402,43 @@ export default function Home() {
     };
   }, [user?.isPremium, topResonancePicks, getIdToken]);
 
-  // Cross-subdomain SSO handoff to DailyStock
+  // Cross-subdomain SSO handoff to DailyStock (never hangs on about:blank)
   const handleDailyStockRedirect = useCallback(
     async (e?: React.MouseEvent) => {
       if (e) e.preventDefault();
-      const popup = window.open("about:blank", "_blank");
       let targetUrl = DAILYSTOCK_URL;
+
+      if (!firebaseUser) {
+        const opened = window.open(targetUrl, "_blank");
+        if (!opened) window.location.href = targetUrl;
+        return;
+      }
+
+      const popup = window.open("", "_blank");
+      if (popup) {
+        try {
+          popup.document.open();
+          popup.document.write(
+            '<!doctype html><html><head><meta charset="utf-8"><meta http-equiv="refresh" content="3;url=https://dailystock.vanpower.live"><title>DailyStock 2.0</title></head><body style="margin:0;height:100vh;display:flex;align-items:center;justify-content:center;background:#020617;color:#e2e8f0;font-family:system-ui,-apple-system,sans-serif;font-size:14px;">🌅 正在无缝接入 DailyStock 大盘节奏与持仓研报中心…</body></html>'
+          );
+          popup.document.close();
+        } catch {}
+      }
+
       try {
-        if (firebaseUser) {
-          const idToken = await firebaseUser.getIdToken(true);
+        const idToken = await Promise.race([
+          firebaseUser.getIdToken(false),
+          new Promise<null>((resolve) => setTimeout(() => resolve(null), 1500)),
+        ]);
+        if (idToken) {
           targetUrl = `${DAILYSTOCK_URL}?authToken=${encodeURIComponent(idToken)}`;
         }
       } catch {
         // Fallback to normal navigation
       }
+
       if (popup) {
-        popup.location.href = targetUrl;
+        popup.location.replace(targetUrl);
       } else {
         window.location.href = targetUrl;
       }

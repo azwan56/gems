@@ -135,6 +135,11 @@ while True:
         print(f"  Transient poll error: {e}, retrying in 5s...")
     time.sleep(5)
 
+# Pin exact sha256 digest from Cloud Build so Cloud Run v2 patch always rolls out a new revision
+built_images = build_info.get('results', {}).get('images', [])
+built_digest = built_images[0].get('digest') if built_images else None
+DEPLOY_IMAGE = f"gcr.io/{PROJECT_ID}/{SERVICE_NAME}@{built_digest}" if built_digest else IMAGE_NAME
+
 # Step 4: Deploy to Cloud Run via Cloud Run v2 API
 print("\n🚀 [4/5] Deploying container image to GCP Cloud Run via v2 API...")
 run_client = googleapiclient.discovery.build('run', 'v2', credentials=gcp_creds, cache_discovery=False)
@@ -176,12 +181,19 @@ env_list = [
     {"name": "NEXT_PUBLIC_FIREBASE_PROJECT_ID", "value": PROJECT_ID},
     {"name": "NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN", "value": f"{PROJECT_ID}.firebaseapp.com"},
     {"name": "NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET", "value": f"{PROJECT_ID}.firebasestorage.app"},
+    {"name": "DEPLOYED_AT", "value": str(int(time.time()))},
 ]
 if sa_key:
     env_list.append({"name": "FIREBASE_SERVICE_ACCOUNT_KEY", "value": sa_key})
 
 service_body = {
     "ingress": "INGRESS_TRAFFIC_ALL",
+    "traffic": [
+        {
+            "type": "TRAFFIC_TARGET_ALLOCATION_TYPE_LATEST",
+            "percent": 100,
+        }
+    ],
     "template": {
         "scaling": {
             "minInstanceCount": 0,
@@ -190,7 +202,7 @@ service_body = {
         "timeout": "900s",
         "containers": [
             {
-                "image": IMAGE_NAME,
+                "image": DEPLOY_IMAGE,
                 "ports": [{"containerPort": 8080}],
                 "resources": {
                     "limits": {
